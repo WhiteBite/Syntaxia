@@ -4,7 +4,6 @@ package repair
 const (
 	langGo         = "go"
 	langTypeScript = "typescript"
-	langTS         = "ts"
 	langJavaScript = "javascript"
 )
 

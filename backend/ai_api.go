@@ -15,9 +15,11 @@ func (a *App) GenerateCode(systemPrompt, userPrompt string) (string, error) {
 // GenerateCodeStream generates code with streaming response via Wails events
 func (a *App) GenerateCodeStream(systemPrompt, userPrompt string) {
 	go func() {
-		a.aiHandler.GenerateCodeStream(a.ctx, systemPrompt, userPrompt, func(chunk domain.StreamChunk) {
+		if err := a.aiHandler.GenerateCodeStream(a.ctx, systemPrompt, userPrompt, func(chunk domain.StreamChunk) {
 			a.bridge.Emit("ai:stream:chunk", chunk)
-		})
+		}); err != nil {
+			a.bridge.Emit("ai:stream:chunk", domain.StreamChunk{Done: true, Error: err.Error()})
+		}
 	}()
 }
 

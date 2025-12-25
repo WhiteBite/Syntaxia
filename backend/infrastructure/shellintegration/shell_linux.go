@@ -40,7 +40,7 @@ func (s *Service) registerOS(exePath string) error {
 "%s" "$NAUTILUS_SCRIPT_CURRENT_URI"
 `, exePath)
 
-	if err := os.WriteFile(s.getDesktopFilePath(), []byte(nautilusScript), 0755); err != nil {
+	if err := os.WriteFile(s.getDesktopFilePath(), []byte(nautilusScript), 0700); err != nil {
 		return fmt.Errorf("failed to write nautilus script: %w", err)
 	}
 
@@ -59,7 +59,7 @@ Categories=Development;
 MimeType=inode/directory;
 `, exePath, exePath)
 
-	if err := os.WriteFile(s.getDesktopEntryPath(), []byte(desktopEntry), 0644); err != nil {
+	if err := os.WriteFile(s.getDesktopEntryPath(), []byte(desktopEntry), 0600); err != nil {
 		return fmt.Errorf("failed to write desktop entry: %w", err)
 	}
 

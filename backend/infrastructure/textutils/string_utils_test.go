@@ -72,14 +72,14 @@ func TestTruncateLines(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := TruncateLines(tt.input, tt.maxLines)
-			if tt.maxLines > 0 && len(result) > 0 && result[:len(tt.contains)] != tt.contains[:min(len(tt.contains), len(result))] {
+			if tt.maxLines > 0 && len(result) > 0 && result[:len(tt.contains)] != tt.contains[:minInt(len(tt.contains), len(result))] {
 				t.Errorf("TruncateLines result doesn't start with expected content")
 			}
 		})
 	}
 }
 
-func min(a, b int) int {
+func minInt(a, b int) int {
 	if a < b {
 		return a
 	}

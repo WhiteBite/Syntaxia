@@ -188,7 +188,7 @@ func (a *App) AddToGitignore(projectPath string, pattern string) error {
 	}
 	newContent += pattern + "\n"
 
-	if err := os.WriteFile(gitignorePath, []byte(newContent), 0o644); err != nil {
+	if err := os.WriteFile(gitignorePath, []byte(newContent), 0o600); err != nil {
 		return fmt.Errorf("failed to write .gitignore: %w", err)
 	}
 

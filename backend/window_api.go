@@ -46,7 +46,7 @@ func (a *App) SaveWindowState() error {
 		return err
 	}
 
-	return os.WriteFile(filepath.Join(configDir, "window-state.json"), data, 0o644)
+	return os.WriteFile(filepath.Join(configDir, "window-state.json"), data, 0o600)
 }
 
 // LoadWindowState loads and applies saved window state

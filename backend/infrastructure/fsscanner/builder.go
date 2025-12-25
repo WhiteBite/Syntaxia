@@ -151,7 +151,7 @@ func (b *fileTreeBuilder) checkIgnored(relPath string, isDir bool, gi, ci *gitig
 // createFileNode creates a FileNode from directory entry
 func (b *fileTreeBuilder) createFileNode(path, relPath string, d fs.DirEntry, isGi, isCi bool) *domain.FileNode {
 	var fsize int64
-	contentType := "unknown"
+	var contentType string
 
 	if d.IsDir() {
 		contentType = ""

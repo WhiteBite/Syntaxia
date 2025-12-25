@@ -12,14 +12,8 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
-const (
-	// QwenMaxContextTokens is the maximum context window for qwen-coder-plus (1M tokens)
-	QwenMaxContextTokens = 1000000
-
-	// Qwen model names
-	qwenCoderPlusLatest  = "qwen-coder-plus-latest"
-	qwenCoderTurboLatest = "qwen-coder-turbo-latest"
-)
+// QwenMaxContextTokens is the maximum context window for qwen-coder-plus (1M tokens)
+const QwenMaxContextTokens = 1000000
 
 // QwenProviderImpl implements domain.AIProvider for Alibaba Qwen models
 type QwenProviderImpl struct {

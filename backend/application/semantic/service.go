@@ -235,13 +235,8 @@ func (s *ServiceImpl) hybridSearch(ctx context.Context, req domain.SemanticSearc
 }
 
 // FindSimilar finds similar code
-func (s *ServiceImpl) FindSimilar(_ context.Context, req domain.SimilarCodeRequest) (*domain.SemanticSearchResponse, error) {
+func (s *ServiceImpl) FindSimilar(_ context.Context, _ domain.SimilarCodeRequest) (*domain.SemanticSearchResponse, error) {
 	startTime := time.Now()
-
-	topK := req.TopK
-	if topK == 0 {
-		topK = 10
-	}
 
 	// This is a simplified implementation - full implementation would read file content
 	return &domain.SemanticSearchResponse{

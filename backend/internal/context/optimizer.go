@@ -375,9 +375,5 @@ func (s *Service) isTestFile(filePath string) bool {
 		}
 	}
 
-	if strings.HasPrefix(lower, "test_") {
-		return true
-	}
-
-	return false
+	return strings.HasPrefix(lower, "test_")
 }
