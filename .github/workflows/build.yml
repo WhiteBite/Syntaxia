@@ -1,4 +1,4 @@
-name: Cross‑platform Build + Release — Syntaxia
+name: Cross-platform Build + Release - Syntaxia
 
 on:
   push:
@@ -16,7 +16,6 @@ env:
   NODE_OPTIONS: "--max-old-space-size=4096"
 
 jobs:
-  # ───────────────────────── TEST ─────────────────────────
   test:
     runs-on: ubuntu-latest
     steps:
@@ -60,7 +59,6 @@ jobs:
           working-directory: backend
           args: --config .golangci.yml --timeout 5m
 
-  # ───────────────────── BUILD LINUX/WINDOWS ─────────────────────
   build:
     needs: test
     strategy:
@@ -113,7 +111,6 @@ jobs:
           path: ${{ matrix.artifact_path }}
           if-no-files-found: error
 
-  # ───────────────────── BUILD MACOS (manual) ─────────────────────
   build-macos:
     needs: test
     runs-on: macos-latest
@@ -157,7 +154,6 @@ jobs:
           path: backend/build/bin/SyntaxiaWB.app.zip
           if-no-files-found: error
 
-  # ─────────────────────── RELEASE ────────────────────────
   release:
     needs: [build, build-macos]
     runs-on: ubuntu-latest
@@ -200,18 +196,15 @@ jobs:
       - name: Generate changelog
         id: changelog
         run: |
-          # Get commits since last tag
           LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
           if [ -n "$LAST_TAG" ]; then
-            COMMITS=$(git log --pretty=format:"• %s" $LAST_TAG..HEAD --no-merges | head -20)
+            COMMITS=$(git log --pretty=format:"- %s" $LAST_TAG..HEAD --no-merges | head -15)
           else
-            COMMITS=$(git log --pretty=format:"• %s" -20 --no-merges)
+            COMMITS=$(git log --pretty=format:"- %s" -15 --no-merges)
           fi
-          # Escape for GitHub Actions
-          COMMITS="${COMMITS//'%'/'%25'}"
-          COMMITS="${COMMITS//$'\n'/'%0A'}"
-          COMMITS="${COMMITS//$'\r'/'%0D'}"
-          echo "commits=$COMMITS" >> $GITHUB_OUTPUT
+          echo "commits<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMITS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -219,15 +212,12 @@ jobs:
           tag_name: ${{ steps.prep.outputs.tag_name }}
           name: ${{ steps.prep.outputs.release_name }}
           body: |
-            <div align="center">
+            <p align="center">
+              <img src="https://raw.githubusercontent.com/WhiteBite/Syntaxia/main/syntaxia-icon.png" width="80">
+            </p>
             
-            ![Syntaxia](https://raw.githubusercontent.com/WhiteBite/Syntaxia/main/syntaxia-icon.png)
-            
-            # 🚀 Syntaxia ${{ steps.prep.outputs.tag_name }}
-            
-            **AI-Powered Code Context Builder**
-            
-            </div>
+            <h2 align="center">🚀 Syntaxia ${{ steps.prep.outputs.tag_name }}</h2>
+            <p align="center"><i>AI-Powered Code Context Builder</i></p>
             
             ---
             
@@ -249,10 +239,7 @@ jobs:
             
             ## 🔗 Links
             
-            - 📖 [Documentation](https://github.com/WhiteBite/Syntaxia#readme)
-            - 💬 [Telegram](https://t.me/whitebite_devsoft)
-            - 🐛 [Report Issue](https://github.com/WhiteBite/Syntaxia/issues)
-            
+            [📖 Documentation](https://github.com/WhiteBite/Syntaxia#readme) • [💬 Telegram](https://t.me/whitebite_devsoft) • [🐛 Report Issue](https://github.com/WhiteBite/Syntaxia/issues)
           draft: false
           prerelease: ${{ steps.prep.outputs.is_tag == 'false' }}
           files: release-assets/**/*
@@ -266,16 +253,4 @@ jobs:
             -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
             -d message_thread_id="96" \
             -d parse_mode="HTML" \
-            -d disable_web_page_preview="false" \
-            -d text="🚀 <b>Syntaxia ${{ steps.prep.outputs.tag_name }}</b>
-
-<i>AI-Powered Code Context Builder</i>
-
-📦 <b>Downloads:</b>
-• Windows (x64)
-• Linux (x64)
-• macOS (Apple Silicon)
-
-🔗 <a href=\"https://github.com/WhiteBite/Syntaxia/releases/tag/${{ steps.prep.outputs.tag_name }}\">GitHub Release</a>
-
-#syntaxia #release #opensource"
+            -d text="🚀 <b>Syntaxia ${{ steps.prep.outputs.tag_name }}</b>%0A%0A<i>AI-Powered Code Context Builder</i>%0A%0A📦 <b>Downloads:</b>%0A• Windows (x64)%0A• Linux (x64)%0A• macOS (Apple Silicon)%0A%0A🔗 <a href=\"https://github.com/WhiteBite/Syntaxia/releases/tag/${{ steps.prep.outputs.tag_name }}\">GitHub Release</a>%0A%0A#syntaxia #release"
