@@ -1,0 +1,126 @@
+/* ============================================
+   ACCESSIBILITY STYLES
+   Focus indicators, skip links, screen reader utilities
+   ============================================ */
+
+/* Focus visible for keyboard navigation */
+:focus-visible {
+    outline: 2px solid var(--accent-indigo);
+    outline-offset: 2px;
+}
+
+/* Remove default focus for mouse users */
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Button focus states */
+.btn:focus-visible,
+.btn-unified:focus-visible,
+.action-btn:focus-visible,
+.tool-btn:focus-visible {
+    outline: 2px solid var(--accent-indigo);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+}
+
+/* Icon button focus */
+.icon-btn:focus-visible,
+.icon-btn-sm:focus-visible,
+.sidebar-tab-icon:focus-visible {
+    outline: 2px solid var(--accent-indigo);
+    outline-offset: 2px;
+    border-radius: var(--radius-lg);
+}
+
+/* Input focus (enhanced) */
+.input:focus-visible,
+.search-input:focus-visible,
+.textarea:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    outline: none;
+    border-color: var(--accent-indigo);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+/* Checkbox focus */
+input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--accent-indigo);
+    outline-offset: 2px;
+}
+
+/* Tree row focus */
+.tree-row:focus-visible,
+.virtual-tree-row:focus-visible {
+    outline: 2px solid var(--accent-indigo);
+    outline-offset: -2px;
+    background-color: rgba(99, 102, 241, 0.1);
+}
+
+/* Tab focus */
+.tab-btn:focus-visible,
+.tab-btn-inactive:focus-visible {
+    outline: 2px solid var(--accent-indigo);
+    outline-offset: 2px;
+}
+
+/* Link focus */
+a:focus-visible {
+    outline: 2px solid var(--accent-indigo);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* Skip link for keyboard navigation */
+.skip-link {
+    position: absolute;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent-indigo);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-lg);
+    z-index: 9999;
+    font-weight: 500;
+    text-decoration: none;
+    transition: top 0.2s ease-out;
+}
+
+.skip-link:focus {
+    top: 1rem;
+}
+
+/* Screen reader only (visually hidden but accessible) */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Make focus ring more visible on dark backgrounds */
+@media (prefers-contrast: more) {
+    :focus-visible {
+        outline-width: 3px;
+        outline-color: #ffffff;
+    }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

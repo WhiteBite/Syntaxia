@@ -1,0 +1,48 @@
+/* ============================================
+   LOADING STATES
+   ============================================ */
+
+.loading-overlay {
+    @apply fixed inset-0 flex items-center justify-center;
+    @apply bg-black/60 backdrop-blur-sm;
+    z-index: var(--z-modal);
+}
+
+.loading-card {
+    @apply p-8 rounded-2xl text-center;
+    background: var(--bg-1);
+    border: 1px solid var(--border-default);
+}
+
+.loading-spinner {
+    @apply animate-spin w-8 h-8;
+    color: var(--accent-primary);
+}
+
+.loading-title {
+    @apply text-lg font-semibold mt-4 mb-2;
+    color: var(--text-primary);
+}
+
+.loading-text {
+    @apply text-sm;
+    color: var(--text-muted);
+}
+
+/* Skeleton Loading */
+.skeleton {
+    @apply rounded-lg;
+    background: linear-gradient(
+        90deg,
+        rgba(55, 65, 81, 0.4) 0%,
+        rgba(75, 85, 99, 0.4) 50%,
+        rgba(55, 65, 81, 0.4) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}

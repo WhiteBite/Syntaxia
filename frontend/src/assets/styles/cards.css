@@ -1,0 +1,102 @@
+/* ============================================
+   CARD & PANEL COMPONENTS
+   ============================================ */
+
+.card {
+    background: var(--bg-1);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    transition: all 150ms ease-out;
+}
+
+.card-hover:hover {
+    background: var(--bg-2);
+    border-color: var(--border-default);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.card-interactive {
+    cursor: pointer;
+}
+
+.card-interactive:hover {
+    border-color: var(--accent-indigo-border);
+    box-shadow: 0 0 0 1px var(--accent-indigo-border), var(--shadow-glow-indigo);
+}
+
+/* Panel Components */
+.panel {
+    background: var(--bg-1);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+}
+
+.panel-header {
+    @apply flex items-center justify-between px-4 py-3;
+    border-bottom: 1px solid var(--border-default);
+    background: var(--bg-1);
+}
+
+.panel-header-unified {
+    @apply flex items-center justify-between px-3 py-2.5;
+    border-bottom: 1px solid var(--border-subtle);
+    background: rgba(11, 16, 32, 0.5);
+}
+
+.panel-header-unified-title {
+    @apply flex items-center gap-2 text-sm font-semibold text-white;
+}
+
+.panel-header-unified-icon {
+    @apply w-8 h-8 rounded-lg flex items-center justify-center;
+}
+
+.panel-header-unified-icon svg {
+    @apply w-4 h-4;
+}
+
+.panel-header-unified-icon-primary {
+    background: rgba(139, 92, 246, 0.25);
+}
+
+.panel-header-unified-icon-primary svg {
+    @apply text-purple-300;
+}
+
+.panel-header-unified-icon-indigo {
+    background: var(--accent-indigo-bg);
+}
+
+.panel-header-unified-icon-indigo svg {
+    color: var(--accent-indigo);
+}
+
+/* Breadcrumbs */
+.breadcrumb-segment {
+    @apply px-2 py-1 rounded flex items-center gap-1.5 transition-colors;
+}
+
+.breadcrumb-segment-active {
+    @apply text-white;
+    background: var(--bg-2);
+}
+
+.breadcrumb-segment-link {
+    @apply text-gray-400 cursor-pointer;
+}
+
+.breadcrumb-segment-link:hover {
+    @apply text-white underline;
+    background: var(--bg-2);
+}
+
+.breadcrumb-action {
+    @apply ml-1 p-1.5 rounded transition-colors;
+    color: var(--text-muted);
+}
+
+.breadcrumb-action:hover {
+    color: var(--text-primary);
+    background: var(--bg-2);
+}

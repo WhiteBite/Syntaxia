@@ -1,0 +1,123 @@
+/* ============================================
+   BADGE & CHIP COMPONENTS
+   ============================================ */
+
+/* Chip Unified */
+.chip-unified {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1;
+    @apply text-xs font-semibold rounded-full;
+    transition: all 150ms ease-out;
+}
+
+.chip-unified-default {
+    background: var(--bg-2);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-default);
+}
+
+.chip-unified-default:hover {
+    background: var(--bg-3);
+    border-color: var(--border-strong);
+    color: var(--text-primary);
+}
+
+.chip-unified-active {
+    background: var(--accent-purple-bg);
+    color: white;
+    border: 1px solid var(--accent-purple-border);
+}
+
+.chip-unified-accent {
+    background: rgba(255, 255, 255, 0.08);
+    color: #e5e7eb;
+    border: none;
+}
+
+/* Muted chip for counters in tree */
+.chip-unified-muted {
+    background: var(--bg-2);
+    color: var(--text-muted);
+    border: 1px solid var(--border-subtle);
+}
+
+.chip-unified-muted:hover {
+    background: var(--bg-3);
+    color: var(--text-secondary);
+}
+
+/* Badge */
+.badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold;
+}
+
+.badge-primary {
+    background: var(--accent-purple-bg);
+    color: white;
+    border: 1px solid var(--accent-purple-border);
+}
+
+.badge-success {
+    background: var(--color-success-soft);
+    color: var(--color-success);
+    border: 1px solid var(--color-success-border);
+}
+
+.badge-warning {
+    background: var(--color-warning-soft);
+    color: var(--color-warning);
+    border: 1px solid var(--color-warning-border);
+}
+
+.badge-danger {
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+    border: 1px solid var(--color-danger-border);
+}
+
+/* Chip / Filter Buttons */
+.chip {
+    @apply px-4 py-1.5 text-xs font-semibold rounded-full;
+    @apply flex items-center gap-2;
+    transition: all 150ms ease-out;
+    cursor: pointer;
+}
+
+.chip-default {
+    background: var(--bg-2);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-default);
+}
+
+.chip-default:hover {
+    background: var(--bg-3);
+    color: var(--text-primary);
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.chip-active {
+    background: var(--accent-indigo-bg);
+    color: white;
+    border: 1px solid var(--accent-indigo-border);
+    box-shadow: inset 0 0 0 1px var(--accent-indigo-border), 0 0 16px rgba(99, 102, 241, 0.35);
+}
+
+.chip-active:hover {
+    background: rgba(99, 102, 241, 0.40);
+    border-color: rgba(99, 102, 241, 0.70);
+}
+
+.chip-count {
+    @apply px-1.5 py-0.5 rounded-full text-[10px] font-bold;
+}
+
+.chip-count-default {
+    background: var(--bg-3);
+    color: var(--text-muted);
+}
+
+.chip-count-active {
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+}

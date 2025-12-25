@@ -1,0 +1,143 @@
+/**
+ * Layout System - единая система для full-height layouts
+ * 
+ * Проблема: В flexbox контейнерах дочерние элементы по умолчанию
+ * имеют min-height: auto, что не позволяет им сжиматься меньше контента.
+ * Это ломает overflow: auto на вложенных элементах.
+ * 
+ * Решение: Использовать эти классы для построения цепочки от корня до скролла.
+ * 
+ * Пример цепочки:
+ * .layout-root (100vh)
+ *   └── .layout-fill (flex: 1, занимает всё)
+ *       └── .layout-fill
+ *           └── .layout-scroll (overflow-y: auto)
+ */
+
+/* ============================================
+   ROOT CONTAINERS
+   ============================================ */
+
+/* Корневой контейнер приложения - занимает весь viewport */
+.layout-root {
+  height: 100vh;
+  height: 100dvh; /* fallback для мобильных */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Альтернатива: абсолютное позиционирование для гарантированной высоты */
+.layout-absolute-fill {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* ============================================
+   FLEX CONTAINERS
+   ============================================ */
+
+/* Flex column контейнер - базовый */
+.layout-column {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Flex row контейнер - базовый */
+.layout-row {
+  display: flex;
+  flex-direction: row;
+}
+
+/* ============================================
+   FLEX CHILDREN - заполнение пространства
+   ============================================ */
+
+/* 
+ * Заполняет всё доступное пространство
+ * КРИТИЧНО: flex-basis: 0 + min-height: 0 для корректного overflow
+ */
+.layout-fill {
+  flex: 1 1 0;
+  min-width: 0;  /* для row layouts */
+  min-height: 0; /* для column layouts */
+}
+
+/* Не растягивается, занимает только свой размер */
+.layout-fixed {
+  flex: 0 0 auto;
+}
+
+/* Растягивается, но не сжимается меньше контента */
+.layout-grow {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* ============================================
+   OVERFLOW CONTROL
+   ============================================ */
+
+/* Скрывает overflow - для промежуточных контейнеров */
+.layout-clip {
+  overflow: hidden;
+}
+
+/* Вертикальный скролл - для конечных контейнеров с контентом */
+.layout-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Скролл в обоих направлениях */
+.layout-scroll-both {
+  overflow: auto;
+}
+
+/* ============================================
+   GRID LAYOUTS
+   ============================================ */
+
+/* Grid с фиксированным footer/header */
+.layout-grid-main-footer {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.layout-grid-header-main {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.layout-grid-header-main-footer {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ============================================
+   SIZING
+   ============================================ */
+
+.layout-full {
+  width: 100%;
+  height: 100%;
+}
+
+.layout-full-width {
+  width: 100%;
+}
+
+.layout-full-height {
+  height: 100%;
+}

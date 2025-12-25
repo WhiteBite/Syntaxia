@@ -1,0 +1,353 @@
+/* Syntaxia Frontend - Consolidated Tailwind-First Approach */
+
+/* Import design tokens first */
+@import './design-tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+
+    /* Design Tokens - Only essential custom properties that extend Tailwind */
+    :root {
+        /* App-specific semantic tokens that map to Tailwind utilities */
+        --app-surface-primary: theme('colors.slate.900');
+        --app-surface-secondary: theme('colors.slate.800');
+        --app-text-primary: theme('colors.slate.100');
+        --app-text-secondary: theme('colors.slate.300');
+
+        /* Glass morphism effects */
+        --glass-bg: rgba(15, 23, 42, 0.85);
+        --glass-border: rgba(148, 163, 184, 0.1);
+        --glass-backdrop: blur(12px);
+
+        /* Focus ring using Tailwind colors */
+        --focus-ring: 0 0 0 2px theme('colors.blue.500');
+        --focus-ring-offset: 0 0 0 2px theme('colors.slate.900'), 0 0 0 4px theme('colors.blue.500');
+    }
+
+    /* Base styles */
+    * {
+        box-sizing: border-box;
+    }
+
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+    }
+
+    body {
+        @apply font-sans antialiased;
+        background: var(--bg-0);
+        color: var(--text-primary);
+        font-size: 14px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    #app {
+        @apply h-screen overflow-hidden;
+        background: var(--bg-0);
+    }
+
+    /* Focus styles using Tailwind */
+    *:focus {
+        outline: none;
+    }
+
+    *:focus-visible {
+        @apply outline-2 outline-blue-500 outline-offset-2;
+    }
+
+    /* Selection styles - Using accent color */
+    ::selection {
+        background: rgba(99, 102, 241, 0.35);
+        color: white;
+    }
+
+    ::-moz-selection {
+        background: rgba(99, 102, 241, 0.35);
+        color: white;
+    }
+
+    /* Scrollbar styling - Enhanced contrast */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--bg-1);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.35);
+        border-radius: 4px;
+        transition: background 150ms ease-out;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(148, 163, 184, 0.55);
+    }
+}
+
+@layer components {
+    /* 
+     * Component styles are now primarily defined in design-tokens.css
+     * This layer contains only Tailwind-specific utilities and glass effects
+     */
+
+    /* Glass morphism components */
+    .glass {
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        @apply border border-slate-700/50;
+    }
+
+    .glass-strong {
+        @apply bg-slate-800/95 backdrop-blur-md border border-slate-700/50;
+    }
+
+    /* Enhanced drawer/modal components with animations */
+    .drawer {
+        @apply fixed inset-y-0 right-0 w-full max-w-md bg-gradient-to-b from-slate-900 to-slate-800 border-l border-slate-700 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 flex flex-col;
+    }
+
+    .drawer-open {
+        @apply translate-x-0;
+    }
+
+    .drawer-closed {
+        @apply translate-x-full;
+    }
+
+    .modal-overlay {
+        @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300;
+    }
+
+    .modal-content {
+        @apply fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-slate-800 rounded-xl border border-slate-700 shadow-2xl max-w-lg w-full mx-4 z-50 transition-all duration-300;
+    }
+
+    /* Progress bar with shimmer animation */
+    .progress-bar {
+        @apply relative overflow-hidden transition-[width] duration-300 ease-out;
+    }
+
+    .progress-bar::after {
+        @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent;
+        content: '';
+        animation: shimmer 2s infinite;
+    }
+
+    /* File and context item animations */
+    .file-item-hover {
+        @apply transition-all duration-150 ease-out hover:translate-x-0.5 hover:shadow-md;
+    }
+
+    .context-item {
+        @apply transition-all duration-200;
+    }
+
+    /* Drag and drop states */
+    .drag-preview {
+        @apply transition-all duration-150 ease-out rotate-1 scale-105 shadow-2xl z-[1000];
+    }
+
+    .drop-zone-active {
+        animation: pulse-blue var(--duration-slow) ease-in-out infinite alternate;
+    }
+
+    /* Status indicators */
+    .status-indicator {
+        @apply transition-all duration-150 ease-out;
+    }
+
+    .status-healthy {
+        animation: pulse-green 2s ease-in-out infinite;
+    }
+}
+
+@layer utilities {
+    /* Custom utilities that extend Tailwind */
+
+    /* Panel header utility */
+    .panel-header {
+        @apply px-3 py-2 bg-gray-800/50 border-b border-gray-700 text-sm font-medium text-gray-300;
+    }
+
+    /* Action button utility */
+    .action-button {
+        @apply px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-white text-xs rounded transition-all duration-200 flex items-center gap-2;
+    }
+
+    /* Stat badge utility */
+    .stat-badge {
+        @apply inline-flex items-center px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full border border-blue-500/30;
+    }
+
+    .text-gradient {
+        @apply bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent;
+    }
+
+    .text-gradient-success {
+        @apply bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent;
+    }
+
+    .text-gradient-warning {
+        @apply bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent;
+    }
+
+    .text-gradient-error {
+        @apply bg-gradient-to-r from-red-400 to-rose-400 bg-clip-text text-transparent;
+    }
+
+    /* Memory-safe animations using Tailwind's animate utilities */
+    .animate-fade-in {
+        @apply animate-in fade-in duration-300;
+    }
+
+    .animate-slide-in-right {
+        @apply animate-in slide-in-from-right duration-300;
+    }
+
+    .animate-slide-in-left {
+        @apply animate-in slide-in-from-left duration-300;
+    }
+
+    .animate-scale-in {
+        @apply animate-in zoom-in-95 duration-200;
+    }
+
+    /* Vue transition utilities */
+    .vue-enter-active,
+    .vue-leave-active {
+        @apply transition-all duration-300 ease-out;
+    }
+
+    .vue-enter-from {
+        @apply opacity-0 translate-y-2 scale-95;
+    }
+
+    .vue-leave-to {
+        @apply opacity-0 -translate-y-2 scale-105;
+    }
+
+    /* 
+     * Vue transitions and animations are defined in animations.css
+     * Only keeping Tailwind-specific hover utilities here
+     */
+    .hover-glow {
+        @apply transition-shadow duration-300 hover:shadow-lg hover:shadow-blue-500/25;
+    }
+
+    /* Status indicator utilities */
+    .status-success {
+        @apply bg-green-500/20 text-green-400 border-green-500/30;
+    }
+
+    .status-warning {
+        @apply bg-yellow-500/20 text-yellow-400 border-yellow-500/30;
+    }
+
+    .status-error {
+        @apply bg-red-500/20 text-red-400 border-red-500/30;
+    }
+
+    .status-info {
+        @apply bg-blue-500/20 text-blue-400 border-blue-500/30;
+    }
+
+    /* Context display utilities */
+    .context-content {
+        user-select: text;
+        cursor: text;
+    }
+
+    .context-line {
+        transition: background-color 0.2s ease;
+    }
+
+    .context-fade-in {
+        animation: fadeIn 0.3s ease-in;
+    }
+
+    /* Memory usage indicator utilities */
+    .memory-safe {
+        @apply bg-green-500/10 border-green-500/20;
+    }
+
+    .memory-warning {
+        @apply bg-yellow-500/10 border-yellow-500/20;
+    }
+
+    .memory-critical {
+        @apply bg-red-500/10 border-red-500/20;
+    }
+
+    /* Animation control utilities */
+    .animate-none {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    .animate-fast {
+        transition-duration: var(--duration-fast) !important;
+    }
+
+    .animate-slow {
+        transition-duration: var(--duration-slow) !important;
+    }
+}
+
+/* 
+ * Animation keyframes and utilities are defined in animations.css
+ * Import order: design-tokens.css -> main.css (Tailwind) -> animations.css
+ */
+
+/* High contrast mode support */
+@media (prefers-contrast: more) {
+    .glass {
+        @apply bg-slate-900 border-slate-600;
+    }
+
+    .btn-primary {
+        @apply bg-blue-600 hover:bg-blue-500;
+        background-image: none;
+    }
+}
+
+/* File Explorer specific transitions are in animations.css */
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .hover-lift {
+        @apply transform-none;
+    }
+
+    .animate-fade-in,
+    .animate-slide-in-right,
+    .animate-slide-in-left,
+    .animate-scale-in {
+        animation: none;
+        @apply transition-none;
+    }
+
+    .settings-panel-enter-active,
+    .settings-panel-leave-active,
+    .context-menu-enter-active,
+    .context-menu-leave-active {
+        transition: none !important;
+    }
+
+    .selection-indicator {
+        animation: none;
+    }
+}
+
+/* Tooltip and hover animations are in animations.css */

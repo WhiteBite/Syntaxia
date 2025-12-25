@@ -1,0 +1,1031 @@
+# Syntaxia - План рефакторинга и улучшений
+# =============================================
+# Обновлён: 2024-12-12
+# Приоритеты: 🔴 Критический | 🟠 Высокий | 🟡 Средний | 🟢 Низкий
+
+# ═══════════════════════════════════════════════════════════════
+# 🔴 КРИТИЧЕСКИЙ - UI/UX БАГИ (FRONTEND)
+# ═══════════════════════════════════════════════════════════════
+
+## UI-1. [FRONTEND] Vue injection error в VirtualFileTree
+   ПРИОРИТЕТ: 🔴 КРИТИЧЕСКИЙ
+   СТАТУС: ✅ DONE (useHoveredFile.ts использует singleton pattern)
+   
+   ПРОБЛЕМА:
+   В консоли браузера массовые warnings при каждом рендере дерева файлов:
+   - "[Vue warn]: provide() can only be used inside setup()"
+   - "[Vue warn]: injection "Symbol(HoveredFile)" not found"
+   
+   Ошибка возникает в компоненте VirtualTreeRow при использовании
+   vue-virtual-scroller (RecycleScroller). provide() вызывается
+   вне setup() контекста.
+   
+   ФАЙЛЫ:
+   - frontend/src/features/files/ui/VirtualFileTree.vue
+   - frontend/src/features/files/ui/VirtualTreeRow.vue
+   - frontend/src/features/files/composables/useHoveredFile.ts (если есть)
+   
+   ПРИЧИНА:
+   Symbol(HoveredFile) provide/inject используется неправильно.
+   При виртуализации строк RecycleScroller переиспользует DOM-элементы,
+   и provide() вызывается повторно вне setup().
+   
+   РЕШЕНИЕ:
+   1. Перенести provide() в родительский компонент VirtualFileTree.vue
+   2. В VirtualTreeRow использовать только inject()
+   3. Или использовать composable с reactive state вместо provide/inject
+   
+   ПРИМЕР ИСПРАВЛЕНИЯ:
+   ```typescript
+   // VirtualFileTree.vue - в setup()
+   const hoveredFile = ref<string | null>(null)
+   provide('HoveredFile', hoveredFile)
+   
+   // VirtualTreeRow.vue - в setup()
+   const hoveredFile = inject<Ref<string | null>>('HoveredFile')
+   // НЕ вызывать provide() здесь!
+   ```
+
+---
+
+## UI-2. [FRONTEND] Дерево файлов сбрасывается при переключении вкладок
+   ПРИОРИТЕТ: 🟠 ВЫСОКИЙ
+   СТАТУС: ✅ DONE (LeftSidebar.vue использует v-show вместо v-if)
+   
+   ПРОБЛЕМА:
+   При переключении между вкладками "Файлы" → "Git" → "Файлы"
+   дерево файлов сворачивается в исходное состояние.
+   Пользователь теряет контекст навигации.
+   
+   ФАЙЛЫ:
+   - frontend/src/features/files/model/file.store.ts
+   - frontend/src/features/files/ui/FileExplorer.vue
+   - frontend/src/components/workspace/LeftSidebar.vue
+   
+   ПРИЧИНА:
+   Состояние expandedNodes не сохраняется при unmount компонента,
+   или компонент пересоздаётся вместо скрытия.
+   
+   РЕШЕНИЕ:
+   1. Использовать v-show вместо v-if для переключения вкладок
+   2. Или сохранять expandedNodes в store (Pinia) с persist
+   3. Добавить в file.store.ts:
+   ```typescript
+   // file.store.ts
+   export const useFileStore = defineStore('file', () => {
+     const expandedNodes = ref<Set<string>>(new Set())
+     
+     // Восстанавливать при mount
+     const savedExpanded = localStorage.getItem('expandedNodes')
+     if (savedExpanded) {
+       expandedNodes.value = new Set(JSON.parse(savedExpanded))
+     }
+     
+     // Сохранять при изменении
+     watch(expandedNodes, (val) => {
+       localStorage.setItem('expandedNodes', JSON.stringify([...val]))
+     }, { deep: true })
+   })
+   ```
+
+---
+
+## UI-3. [FRONTEND] Отсутствует favicon.ico
+   ПРИОРИТЕТ: 🟢 НИЗКИЙ
+   СТАТУС: ✅ DONE (favicon.svg существует в public/, подключен в index.html)
+   
+   ПРОБЛЕМА:
+   В консоли ошибка: "Failed to load resource: 404 (Not Found) @ /favicon.ico"
+   
+   ФАЙЛЫ:
+   - frontend/public/favicon.ico (отсутствует)
+   - frontend/index.html
+   
+   РЕШЕНИЕ:
+   1. Добавить favicon.ico в frontend/public/
+   2. Или добавить в index.html:
+   ```html
+   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+   ```
+
+---
+
+# ═══════════════════════════════════════════════════════════════
+# 🟠 ВЫСОКИЙ - UI ПРОБЛЕМЫ (ВИЗУАЛЬНЫЕ)
+# ═══════════════════════════════════════════════════════════════
+
+## UI-4. [FRONTEND] Welcome Screen - длинные пути обрезаются
+   ПРИОРИТЕТ: 🟡 СРЕДНИЙ
+   СТАТУС: ✅ DONE (shortenPath() + title tooltip в ProjectSelector.vue)
+   
+   ПРОБЛЕМА:
+   На экране приветствия в списке "Недавние проекты" длинные пути
+   обрезаются без возможности увидеть полный путь.
+   Пример: "C:\Users\Lord\AppData\Local\Programs\Kiro\resources\app\extensions\ki..."
+   
+   ФАЙЛЫ:
+   - frontend/src/components/WelcomeScreen.vue
+   
+   ГДЕ СМОТРЕТЬ:
+   Компонент списка недавних проектов, элемент с путём проекта.
+   
+   РЕШЕНИЕ:
+   1. Добавить title атрибут с полным путём для tooltip
+   2. Или показывать только имя папки + tooltip с полным путём
+   ```vue
+   <div class="project-path" :title="project.path">
+     {{ project.name }}
+     <span class="text-gray-500 text-xs">{{ shortenPath(project.path) }}</span>
+   </div>
+   ```
+
+---
+
+## UI-5. [FRONTEND] Счётчики файлов без tooltip
+   ПРИОРИТЕТ: 🟡 СРЕДНИЙ
+   СТАТУС: ✅ DONE (tooltip с i18n в VirtualTreeRow.vue)
+   
+   ПРОБЛЕМА:
+   В дереве файлов рядом с папками показываются числа (684, 307, 79),
+   но непонятно что они означают без tooltip.
+   
+   ФАЙЛЫ:
+   - frontend/src/features/files/ui/VirtualTreeRow.vue
+   
+   ГДЕ СМОТРЕТЬ:
+   Элемент справа от имени папки, показывающий число.
+   
+   РЕШЕНИЕ:
+   Добавить tooltip: "Файлов в папке: 684"
+   ```vue
+   <span class="file-count" :title="t('files.countTooltip', { count: node.fileCount })">
+     {{ node.fileCount }}
+   </span>
+   ```
+   
+   ЛОКАЛИЗАЦИЯ (добавить в i18n/files.ts):
+   ```typescript
+   files: {
+     countTooltip: {
+       ru: 'Файлов в папке: {count}',
+       en: 'Files in folder: {count}'
+     }
+   }
+   ```
+
+---
+
+## UI-6. [FRONTEND] Кнопка "Построить контекст" disabled без объяснения
+   ПРИОРИТЕТ: 🟡 СРЕДНИЙ
+   СТАТУС: ✅ DONE (tooltip + hint text в FileExplorer.vue)
+   
+   ПРОБЛЕМА:
+   Кнопка "Построить контекст" в левой панели disabled,
+   но пользователь не понимает почему и что нужно сделать.
+   
+   ФАЙЛЫ:
+   - frontend/src/features/files/ui/FileExplorer.vue
+   - frontend/src/features/files/ui/ActionButtons.vue (если есть)
+   
+   ГДЕ СМОТРЕТЬ:
+   Нижняя часть левой панели, кнопка "Построить контекст".
+   
+   РЕШЕНИЕ:
+   1. Добавить tooltip с объяснением: "Выберите файлы для построения контекста"
+   2. Или показать текст под кнопкой когда disabled
+   ```vue
+   <button 
+     :disabled="selectedCount === 0"
+     :title="selectedCount === 0 ? t('context.selectFilesFirst') : ''"
+   >
+     {{ t('context.build') }}
+   </button>
+   <p v-if="selectedCount === 0" class="text-xs text-gray-500 mt-1">
+     {{ t('context.selectFilesHint') }}
+   </p>
+   ```
+
+---
+
+## UI-7. [FRONTEND] Центральная панель - пустое состояние
+   ПРИОРИТЕТ: 🟡 СРЕДНИЙ
+   СТАТУС: ✅ DONE (центрирование + step-by-step инструкции в ContextPanel.vue)
+   
+   ПРОБЛЕМА:
+   Центральная панель "Превью контекста" показывает пустое состояние
+   с инструкциями, но они занимают мало места, а вокруг много пустоты.
+   Контент не центрирован вертикально.
+   
+   ФАЙЛЫ:
+   - frontend/src/features/context/ui/ContextPreview.vue
+   - frontend/src/features/context/ui/EmptyState.vue (если есть)
+   
+   ГДЕ СМОТРЕТЬ:
+   Центральная панель когда контекст не построен.
+   
+   РЕШЕНИЕ:
+   1. Центрировать контент вертикально: flex items-center justify-center h-full
+   2. Сделать инструкции более интерактивными (кликабельные ссылки)
+   3. Добавить иллюстрацию или анимацию
+   ```vue
+   <div class="flex flex-col items-center justify-center h-full">
+     <EmptyStateIcon class="w-16 h-16 text-gray-600 mb-4" />
+     <h3>{{ t('context.notBuilt') }}</h3>
+     <ol class="mt-4 space-y-2">
+       <li>
+         <button @click="focusFileTree" class="text-indigo-400 hover:underline">
+           {{ t('context.step1') }}
+         </button>
+       </li>
+       <li>{{ t('context.step2') }}</li>
+     </ol>
+   </div>
+   ```
+
+---
+
+## UI-8. [FRONTEND] AI Settings - маскировка API ключа не работает
+   ПРИОРИТЕТ: 🟡 СРЕДНИЙ
+   СТАТУС: ✅ DONE (type="password" + toggle в ApiKeyInput.vue)
+   
+   ПРОБЛЕМА:
+   В панели "AI Провайдер" поле API ключ показывает "••" но при этом
+   реальное значение "фф" видно (маскировка частичная или сломана).
+   
+   ФАЙЛЫ:
+   - frontend/src/features/ai-chat/ui/AISettingsPanel.vue
+   - frontend/src/components/workspace/RightSidebar.vue
+   
+   ГДЕ СМОТРЕТЬ:
+   Правая панель → иконка шестерёнки (Настройки AI) → поле "API Ключ".
+   
+   РЕШЕНИЕ:
+   1. Использовать input type="password" 
+   2. Добавить кнопку toggle для показа/скрытия
+   ```vue
+   <div class="relative">
+     <input 
+       :type="showApiKey ? 'text' : 'password'"
+       v-model="apiKey"
+       class="input pr-10"
+     />
+     <button @click="showApiKey = !showApiKey" class="absolute right-2 top-1/2 -translate-y-1/2">
+       <EyeIcon v-if="!showApiKey" />
+       <EyeOffIcon v-else />
+     </button>
+   </div>
+   ```
+
+---
+
+## UI-9. [FRONTEND] AI Chat - чекбокс disabled без объяснения
+   ПРИОРИТЕТ: 🟡 СРЕДНИЙ
+   СТАТУС: ✅ DONE (активный чекбокс при наличии контекста + hint в ChatInputArea.vue)
+   
+   ПРОБЛЕМА:
+   В панели AI Chat чекбокс "Использовать контекст" всегда disabled
+   и checked, но непонятно почему нельзя его изменить.
+   
+   ФАЙЛЫ:
+   - frontend/src/features/ai-chat/ui/ChatPanel.vue
+   - frontend/src/features/ai-chat/ui/ChatInput.vue
+   
+   ГДЕ СМОТРЕТЬ:
+   Правая панель → AI Чат → чекбокс над полем ввода.
+   
+   РЕШЕНИЕ:
+   1. Добавить tooltip: "Контекст будет использован автоматически если построен"
+   2. Или убрать чекбокс если он всегда включён
+   3. Или сделать его активным когда есть построенный контекст
+
+---
+
+## UI-10. [FRONTEND] Нижняя панель - кнопки disabled без объяснения
+   ПРИОРИТЕТ: 🟡 СРЕДНИЙ
+   СТАТУС: ✅ DONE (tooltips в ActionBar.vue)
+   
+   ПРОБЛЕМА:
+   Кнопки "Копировать" и "Экспорт" в нижней панели disabled,
+   но нет объяснения почему.
+   
+   ФАЙЛЫ:
+   - frontend/src/components/workspace/BottomBar.vue
+   - frontend/src/components/workspace/StatusBar.vue
+   
+   ГДЕ СМОТРЕТЬ:
+   Нижняя панель приложения, справа.
+   
+   РЕШЕНИЕ:
+   Добавить tooltip: "Сначала постройте контекст"
+   ```vue
+   <button 
+     :disabled="!hasContext"
+     :title="!hasContext ? t('export.buildContextFirst') : t('export.copy')"
+   >
+     {{ t('export.copy') }}
+   </button>
+   ```
+
+---
+
+## UI-11. [FRONTEND] Кнопка "vdev" в нижнем левом углу
+   ПРИОРИТЕТ: 🟢 НИЗКИЙ
+   СТАТУС: ✅ DONE (tooltip в VersionBadge.vue)
+   
+   ПРОБЛЕМА:
+   В нижнем левом углу есть кнопка "vdev" без tooltip.
+   Непонятно что она делает.
+   
+   ФАЙЛЫ:
+   - frontend/src/components/workspace/BottomBar.vue
+   - frontend/src/App.vue
+   
+   ГДЕ СМОТРЕТЬ:
+   Нижний левый угол приложения.
+   
+   РЕШЕНИЕ:
+   1. Добавить tooltip с описанием
+   2. Или скрыть в production build (если это dev-only функция)
+   ```vue
+   <button v-if="isDev" title="Developer tools">vdev</button>
+   ```
+
+---
+
+# ═══════════════════════════════════════════════════════════════
+# 🟡 СРЕДНИЙ - UX ПРОБЛЕМЫ (ПОВЕДЕНИЕ)
+# ═══════════════════════════════════════════════════════════════
+
+## UX-1. [FRONTEND] Нет onboarding для новых пользователей
+   ПРИОРИТЕТ: 🟡 СРЕДНИЙ
+   СТАТУС: ✅ DONE (useOnboarding.ts + интеграция в App.vue)
+   
+   ПРОБЛЕМА:
+   Новый пользователь не понимает flow приложения:
+   1. Что делать первым?
+   2. Как построить контекст?
+   3. Зачем нужны разные панели?
+   
+   ФАЙЛЫ:
+   - frontend/src/components/onboarding/ (создать)
+   - frontend/src/stores/ui.store.ts
+   
+   РЕШЕНИЕ:
+   1. Создать компонент OnboardingTour.vue
+   2. Показывать при первом запуске (флаг в localStorage)
+   3. Подсвечивать элементы по шагам:
+      - Шаг 1: "Выберите файлы в дереве слева"
+      - Шаг 2: "Нажмите 'Построить контекст'"
+      - Шаг 3: "Используйте AI чат справа"
+   
+   БИБЛИОТЕКА:
+   Использовать vue-tour или driver.js
+
+---
+
+## UX-2. [FRONTEND] Нет keyboard shortcuts
+   ПРИОРИТЕТ: 🟡 СРЕДНИЙ
+   СТАТУС: ✅ DONE (useMagicKeys в App.vue: Ctrl+B, Ctrl+E, Ctrl+Shift+C, Ctrl+K, Ctrl+/)
+   
+   ПРОБЛЕМА:
+   Единственный видимый shortcut - Ctrl+F в поиске.
+   Нет shortcuts для частых действий.
+   
+   ФАЙЛЫ:
+   - frontend/src/composables/useKeyboardShortcuts.ts (создать)
+   - frontend/src/App.vue
+   
+   РЕШЕНИЕ:
+   1. Создать composable useKeyboardShortcuts
+   2. Добавить shortcuts:
+      - Ctrl+B: Построить контекст
+      - Ctrl+Shift+C: Копировать контекст
+      - Ctrl+E: Экспорт
+      - Ctrl+1/2/3: Переключение вкладок
+      - Escape: Закрыть модалы
+   3. Показать список shortcuts в Help или tooltip
+   
+   ```typescript
+   // useKeyboardShortcuts.ts
+   export function useKeyboardShortcuts() {
+     const shortcuts = {
+       'ctrl+b': () => buildContext(),
+       'ctrl+shift+c': () => copyContext(),
+       'ctrl+e': () => exportContext(),
+     }
+     
+     onMounted(() => {
+       document.addEventListener('keydown', handleKeydown)
+     })
+     
+     onUnmounted(() => {
+       document.removeEventListener('keydown', handleKeydown)
+     })
+   }
+   ```
+
+---
+
+## UX-3. [FRONTEND] Нет undo/redo для выбора файлов
+   ПРИОРИТЕТ: 🟢 НИЗКИЙ
+   СТАТУС: ✅ DONE
+   
+   РЕАЛИЗОВАНО:
+   - useFileSelection.ts: добавлены undoSelection(), redoSelection(), canUndo, canRedo
+   - file.store.ts: экспортирует методы undo/redo
+   - FileExplorer.vue: кнопки undo/redo в footer + event listeners
+   - App.vue: глобальные shortcuts Ctrl+Z/Ctrl+Y (когда не в input)
+   - i18n/files.ts: ключи files.undoSelection, files.redoSelection
+
+---
+
+## UX-4. [FRONTEND] Нет confirmation при очистке выбора
+   ПРИОРИТЕТ: 🟢 НИЗКИЙ
+   СТАТУС: ✅ DONE (useConfirm в FileExplorer.vue при >5 файлах)
+   
+   ПРОБЛЕМА:
+   Кнопка "Очистить" сбрасывает весь выбор без подтверждения.
+   Можно случайно потерять большой выбор.
+   
+   ФАЙЛЫ:
+   - frontend/src/features/files/ui/ActionButtons.vue
+   
+   ГДЕ СМОТРЕТЬ:
+   Левая панель → кнопка "Очистить" внизу.
+   
+   РЕШЕНИЕ:
+   1. Показывать confirmation dialog если выбрано > 10 файлов
+   2. Или добавить undo (см. UX-3)
+   ```vue
+   async function handleClear() {
+     if (selectedCount.value > 10) {
+       const confirmed = await confirm(t('files.clearConfirm', { count: selectedCount.value }))
+       if (!confirmed) return
+     }
+     clearSelection()
+   }
+   ```
+
+---
+
+# ═══════════════════════════════════════════════════════════════
+# 🟢 НИЗКИЙ - ДИЗАЙН И ACCESSIBILITY
+# ═══════════════════════════════════════════════════════════════
+
+## DES-1. [FRONTEND] Иконки в header без подписей
+   ПРИОРИТЕТ: 🟢 НИЗКИЙ
+   СТАТУС: ✅ DONE (title + aria-label на всех кнопках в RightSidebar.vue)
+   
+   ПРОБЛЕМА:
+   В правом верхнем углу 6 иконок без подписей и tooltip.
+   Непонятно что они делают.
+   
+   ФАЙЛЫ:
+   - frontend/src/components/workspace/RightSidebar.vue
+   - frontend/src/components/workspace/ToolbarIcons.vue (если есть)
+   
+   ГДЕ СМОТРЕТЬ:
+   Правый верхний угол, ряд иконок.
+   
+   РЕШЕНИЕ:
+   Добавить title/tooltip на каждую иконку:
+   ```vue
+   <button :title="t('toolbar.statistics')"><ChartIcon /></button>
+   <button :title="t('toolbar.export')"><ExportIcon /></button>
+   <button :title="t('toolbar.prompts')"><PromptIcon /></button>
+   <button :title="t('toolbar.chat')"><ChatIcon /></button>
+   <button :title="t('toolbar.memory')"><MemoryIcon /></button>
+   <button :title="t('toolbar.settings')"><SettingsIcon /></button>
+   ```
+
+---
+
+## DES-2. [FRONTEND] Контраст текста на тёмном фоне
+   ПРИОРИТЕТ: 🟢 НИЗКИЙ
+   СТАТУС: ✅ DONE
+   
+   РЕАЛИЗОВАНО:
+   Массовая замена text-gray-500 на text-gray-400 во всех .vue файлах
+   для улучшения контраста текста на тёмном фоне (WCAG AA compliance).
+
+---
+
+## ACC-1. [FRONTEND] Нет ARIA labels
+   ПРИОРИТЕТ: 🟢 НИЗКИЙ
+   СТАТУС: ✅ DONE
+   
+   РЕАЛИЗОВАНО:
+   Добавлены aria-label и aria-hidden="true" для SVG иконок в:
+   - ContextPanel.vue (copy, export, clear buttons)
+   - ContextHistory.vue (favorite, delete buttons)
+   - PromptTemplates.vue (add, copy, delete buttons)
+   - ApiKeyInput.vue (toggle visibility, clear buttons)
+   - QuickLookModal.vue (close button)
+   - FilterSettingsModal.vue (close button)
+   - FileExplorer.vue (undo, redo, expand, collapse buttons)
+
+---
+
+## ACC-2. [FRONTEND] Нет focus indicators
+   ПРИОРИТЕТ: 🟢 НИЗКИЙ
+   СТАТУС: ✅ DONE (accessibility.css + App.vue :focus-visible стили)
+   
+   ПРОБЛЕМА:
+   При навигации клавиатурой не видно какой элемент в фокусе.
+   
+   ФАЙЛЫ:
+   - frontend/src/assets/styles/buttons.css
+   - frontend/src/assets/main.css
+   
+   РЕШЕНИЕ:
+   Добавить стили для :focus-visible:
+   ```css
+   button:focus-visible,
+   input:focus-visible {
+     outline: 2px solid var(--color-primary);
+     outline-offset: 2px;
+   }
+   ```
+
+---
+
+# ═══════════════════════════════════════════════════════════════
+# 🟠 ВЫСОКИЙ - АРХИТЕКТУРНЫЕ ПРОБЛЕМЫ (BACKEND) - ВЫПОЛНЕНО
+# ═══════════════════════════════════════════════════════════════
+
+## A1. [BACKEND] application/ слишком большой (50+ файлов в корне)
+   ПРИОРИТЕТ: 🟠 ВЫСОКИЙ
+   СТАТУС: ✅ DONE
+   
+   РЕЗУЛЬТАТ:
+   - Было: 50+ файлов в корне, 6 пакетов
+   - Стало: 20 файлов в корне, 21 пакет
+
+---
+
+## A2. [BACKEND] Удалить alias-файлы и обновить импорты
+   ПРИОРИТЕТ: 🟡 СРЕДНИЙ
+   СТАТУС: ✅ DONE
+
+---
+
+## IMP2. [FRONTEND] feature-files chunk оптимизация
+   ПРИОРИТЕТ: 🟡 СРЕДНИЙ
+   СТАТУС: ✅ DONE
+
+---
+
+## G1. [FRONTEND] api.service.ts → модульная структура (1221 строк)
+   ПРИОРИТЕТ: 🔴 КРИТИЧЕСКИЙ
+   СТАТУС: ✅ DONE
+
+---
+
+## G2. [BACKEND] context/service.go → модульная структура (1327 строк)
+   ПРИОРИТЕТ: 🔴 КРИТИЧЕСКИЙ
+   СТАТУС: ✅ DONE
+
+---
+
+# ═══════════════════════════════════════════════════════════════
+# 🟡 СРЕДНИЙ - ТЕСТИРОВАНИЕ
+# ═══════════════════════════════════════════════════════════════
+
+## TEST-1. [FRONTEND] Тесты для настроек File Explorer
+   ПРИОРИТЕТ: 🟡 СРЕДНИЙ
+   СТАТУС: ✅ DONE
+   
+   РЕАЛИЗОВАНО:
+   - frontend/tests/unit/stores/settings.store.spec.ts - 22 теста
+     - fileExplorer defaults (7 тестов)
+     - context defaults (3 теста)
+     - persistence (5 тестов)
+     - updateFileExplorerSettings (2 теста)
+     - resetToDefaults (1 тест)
+     - customIgnoreRules (2 теста)
+     - contextStorage settings (2 теста)
+   - frontend/tests/unit/features/files/compactFolders.spec.ts - 14 тестов
+   - frontend/tests/unit/features/files/fileFilter.spec.ts - 20 тестов
+     - exclude extensions, add/remove operations, gitignore patterns
+
+---
+
+## TEST-2. [FRONTEND] Тесты для keyboard shortcuts
+   ПРИОРИТЕТ: 🟢 НИЗКИЙ
+   СТАТУС: ✅ DONE
+   
+   РЕАЛИЗОВАНО:
+   - frontend/tests/unit/composables/useKeyboardShortcuts.spec.ts - 12 тестов
+     - Ctrl+B, Ctrl+Shift+C, Ctrl+E, Ctrl+K, Ctrl+/, Escape
+     - Проверка что shortcuts не срабатывают в input/textarea
+     - Cleanup listeners on unmount
+
+---
+
+## TEST-3. [BACKEND] Тесты для settings service
+   ПРИОРИТЕТ: 🟡 СРЕДНИЙ
+   СТАТУС: ✅ DONE
+   
+   РЕАЛИЗОВАНО:
+   - backend/application/settings/service_test.go - 18 тестов (все проходят)
+     - TestSettingsService_GetSettings (3 теста)
+     - TestSettingsService_SaveSettings (3 теста)
+     - TestSettingsService_APIKeyStorage (3 теста)
+     - TestSettingsService_GetDefaultSettings (1 тест)
+     - TestSettingsService_ValidateSettings (3 теста)
+     - TestSettingsService_MergeSettings (2 теста)
+     - TestSettingsService_ResetToDefaults (1 тест)
+     - TestSettingsService_ExportImport (2 теста)
+
+---
+
+# ═══════════════════════════════════════════════════════════════
+# 🔴 КРИТИЧЕСКИЙ - FRONTEND AUDIT (2024-12-12)
+# ═══════════════════════════════════════════════════════════════
+
+## AUDIT-1. [FRONTEND] Отсутствует импорт useOnboarding в App.vue
+   ПРИОРИТЕТ: 🔴 КРИТИЧЕСКИЙ
+   СТАТУС: ✅ DONE (импорт уже присутствует на строке 108)
+   
+   ПРОБЛЕМА:
+   При аудите показалось что импорт отсутствует из-за обрезки файла.
+   На самом деле импорт есть:
+   - Строка 108: import { useOnboarding } from '@/composables/useOnboarding'
+   - Строка 223: const onboarding = useOnboarding()
+
+---
+
+## AUDIT-2. [FRONTEND] Фиксированные пиксели в layout (нарушение responsive-design.md)
+   ПРИОРИТЕТ: 🟠 ВЫСОКИЙ
+   СТАТУС: ✅ DONE
+   
+   ПРОБЛЕМА:
+   Используются фиксированные пиксели для layout-критичных размеров,
+   что нарушает правила responsive-design.md.
+   
+   ФАЙЛЫ:
+   - frontend/src/features/files/ui/FilterDropdownMenu.vue (max-width: 320px)
+   - frontend/src/assets/styles/variables.css (--app-panel-max-width: 480px)
+   - frontend/src/assets/styles/sections.css (max-width: 320px)
+   
+   РЕШЕНИЕ:
+   Заменить фиксированные значения на viewport-relative:
+   ```css
+   /* ❌ Неправильно */
+   max-width: 320px;
+   
+   /* ✅ Правильно */
+   max-width: min(320px, 40vw);
+   ```
+   
+   Для CSS переменных:
+   ```css
+   /* variables.css */
+   --app-panel-max-width: min(480px, 40vw);
+   ```
+
+---
+
+## AUDIT-3. [FRONTEND] api.service.ts слишком большой (1378 строк)
+   ПРИОРИТЕТ: 🟠 ВЫСОКИЙ
+   СТАТУС: ✅ DONE
+   
+   РЕЗУЛЬТАТ:
+   - api.service.ts преобразован в фасад (~200 строк)
+   - Все методы делегируют в модульные API файлы:
+     - api/project.api.ts - управление проектами
+     - api/files.api.ts - файловые операции
+     - api/context.api.ts - контекст
+     - api/ai.api.ts - AI и генерация кода
+     - api/git.api.ts - локальный Git
+     - api/github.api.ts - GitHub API
+     - api/gitlab.api.ts - GitLab API
+     - api/settings.api.ts - настройки
+     - api/analysis.api.ts - анализ
+     - api/build.api.ts - сборка и тесты
+     - api/reports.api.ts - отчёты
+     - api/semantic.api.ts - семантический поиск
+     - api/memory.api.ts - память контекста
+     - api/taskflow.api.ts - task protocol
+   - Обратная совместимость сохранена (apiService объект)
+   - Типы вынесены в types.ts и реэкспортируются
+
+---
+
+## AUDIT-4. [FRONTEND] context.store.ts слишком большой (856 строк)
+   ПРИОРИТЕТ: 🟠 ВЫСОКИЙ
+   СТАТУС: ✅ DONE (367 строк после полного рефакторинга)
+   
+   РЕЗУЛЬТАТ:
+   - context.store.ts: 856 → 367 строк
+   - lib/context-naming.ts - generateSmartName()
+   - composables/useContextMetadata.ts - loadContextMetadata, saveContextMetadata
+   - composables/useContextCleanup.ts - performAutoCleanup
+   - composables/useContextContent.ts - loadFullContent, loadChunk, кэширование
+   - composables/useContextOperations.ts - duplicateContextContent, mergeContextsContent, reorderContextList
+
+---
+
+## AUDIT-5. [FRONTEND] Inconsistent error handling в api.service.ts
+   ПРИОРИТЕТ: 🟡 СРЕДНИЙ
+   СТАТУС: ✅ DONE (base.ts обновлён с ApiError, apiCall, apiCallSafe, apiCallNullable)
+   
+   ПРОБЛЕМА:
+   В api.service.ts используются разные паттерны обработки ошибок:
+   - Иногда console.error + throw
+   - Иногда только throw
+   - Иногда return default value
+   
+   ФАЙЛЫ:
+   - frontend/src/services/api.service.ts
+   - frontend/src/services/api/*.ts
+   
+   РЕШЕНИЕ:
+   1. Создать базовый класс/функцию для обработки ошибок:
+   ```typescript
+   // services/api/base.ts
+   export async function apiCall<T>(
+     fn: () => Promise<T>,
+     context: string,
+     defaultValue?: T
+   ): Promise<T> {
+     try {
+       return await fn()
+     } catch (error) {
+       const logger = useLogger('ApiService')
+       logger.error(`${context}:`, error)
+       
+       if (defaultValue !== undefined) {
+         return defaultValue
+       }
+       
+       throw new ApiError(context, error)
+     }
+   }
+   ```
+   
+   2. Использовать единообразно во всех методах:
+   ```typescript
+   async getSettings(): Promise<SettingsDTO> {
+     return apiCall(
+       () => wails.GetSettings(),
+       'Failed to load settings'
+     )
+   }
+   ```
+
+---
+
+## AUDIT-6. [FRONTEND] Magic strings в localStorage keys
+   ПРИОРИТЕТ: 🟡 СРЕДНИЙ
+   СТАТУС: ✅ DONE (STORAGE_KEYS добавлен в config/constants.ts)
+   
+   ПРОБЛЕМА:
+   localStorage keys разбросаны по коду как magic strings:
+   - 'Syntaxia_recent_projects'
+   - 'app-settings'
+   - 'context-metadata'
+   - 'left-sidebar-tab'
+   - 'right-sidebar-visible'
+   - 'task-panel-visible'
+   - 'chat-history-*'
+   - и другие
+   
+   ФАЙЛЫ:
+   - frontend/src/stores/project.store.ts
+   - frontend/src/stores/settings.store.ts
+   - frontend/src/features/context/model/context.store.ts
+   - frontend/src/features/ai-chat/model/chat.store.ts
+   - frontend/src/components/workspace/*.vue
+   
+   РЕШЕНИЕ:
+   1. Добавить в config/constants.ts:
+   ```typescript
+   export const STORAGE_KEYS = {
+     RECENT_PROJECTS: 'Syntaxia_recent_projects',
+     APP_SETTINGS: 'app-settings',
+     CONTEXT_METADATA: 'context-metadata',
+     LEFT_SIDEBAR_TAB: 'left-sidebar-tab',
+     RIGHT_SIDEBAR_VISIBLE: 'right-sidebar-visible',
+     TASK_PANEL_VISIBLE: 'task-panel-visible',
+     CHAT_HISTORY_PREFIX: 'chat-history',
+     EXPANDED_NODES: 'expanded-nodes',
+     SELECTED_FILES: 'selected-files',
+     ONBOARDING_COMPLETED: 'Syntaxia-onboarding-completed',
+     WORKSPACE_LEFT_WIDTH: 'workspace-left-width',
+     WORKSPACE_RIGHT_WIDTH: 'workspace-right-width',
+   } as const
+   ```
+   
+   2. Заменить все magic strings на константы
+
+---
+
+## AUDIT-7. [FRONTEND] Отсутствует типизация для CustomEvent handlers
+   ПРИОРИТЕТ: 🟢 НИЗКИЙ
+   СТАТУС: ✅ DONE (types/events.ts создан с AppCustomEvents, createAppEvent, dispatchAppEvent)
+   
+   ПРОБЛЕМА:
+   В App.vue и MainWorkspace.vue используются CustomEvent без типизации:
+   ```typescript
+   const handleGlobalBuildContext = () => handleBuildContext()
+   window.addEventListener('global-build-context', handleGlobalBuildContext)
+   ```
+   
+   ФАЙЛЫ:
+   - frontend/src/App.vue
+   - frontend/src/components/workspace/MainWorkspace.vue
+   - frontend/src/features/files/ui/FileExplorer.vue
+   
+   РЕШЕНИЕ:
+   1. Создать типы для custom events:
+   ```typescript
+   // types/events.ts
+   export interface AppCustomEvents {
+     'global-build-context': CustomEvent<void>
+     'global-open-export': CustomEvent<void>
+     'global-copy-context': CustomEvent<void>
+     'global-undo-selection': CustomEvent<void>
+     'global-redo-selection': CustomEvent<void>
+     'add-files-to-context': CustomEvent<{ paths: string[] }>
+     'ai:stream:chunk': CustomEvent<{ content?: string; done?: boolean; error?: string }>
+   }
+   
+   declare global {
+     interface WindowEventMap extends AppCustomEvents {}
+   }
+   ```
+   
+   2. Использовать типизированные handlers:
+   ```typescript
+   function handleAddFiles(event: AppCustomEvents['add-files-to-context']) {
+     const { paths } = event.detail
+     // ...
+   }
+   ```
+
+---
+
+# ═══════════════════════════════════════════════════════════════
+# 🔴 КРИТИЧЕСКИЙ - CLEAN ARCHITECTURE VIOLATIONS (2024-12-23)
+# ═══════════════════════════════════════════════════════════════
+
+## ARCH-1. [BACKEND] Application слой импортирует Infrastructure
+   ПРИОРИТЕТ: 🔴 КРИТИЧЕСКИЙ
+   СТАТУС: ✅ DONE
+   АГЕНТ: agent-1-clean-arch
+   
+   ВЫПОЛНЕНО:
+   - Созданы domain интерфейсы: GitContextBuilder, CallGraphBuilder, ProjectStructureDetector, ReferenceFinder, CodeChunker, ContextFormatter
+   - application/analysis/container.go: использует ContainerConfig с factory functions для DI
+   - application/tool_executor.go: использует domain интерфейсы
+   - application/tools/*: используют domain интерфейсы
+   - application/semantic/service.go, indexing.go: используют domain.CodeChunker
+   - application/rag/smart_context.go: использует domain.TruncateString
+   - application/export/service.go: использует domain.ContextFormatter
+   - application/project/structure_service.go: использует domain.ProjectStructureDetector
+   - cmd/app/container.go: содержит адаптеры для преобразования infrastructure → domain типов
+   - Backward compatibility через NewStructureServiceLazy() для analysis_api.go
+
+---
+
+## ARCH-2. [BACKEND] Дублирование internal vs application
+   ПРИОРИТЕТ: 🔴 КРИТИЧЕСКИЙ → 🟢 ЗАКРЫТО
+   СТАТУС: ✅ DONE (анализ показал — дублирования НЕТ)
+   АГЕНТ: agent-2-internal-cleanup
+   
+   РЕЗУЛЬТАТ АНАЛИЗА:
+   - internal/context/ = реализация ContextBuilder (построение контекста)
+   - application/analysis/ = реализация ContextAnalyzer (анализ релевантности)
+   - Это РАЗНЫЕ сервисы, не дублируют друг друга
+   
+   ВЫПОЛНЕНО:
+   - Удалены пустые папки: internal/config/, internal/routing/, internal/workflow/
+   - internal/context/, internal/project/, internal/executil/, internal/initmanager/ — оставлены
+
+---
+
+## ARCH-3. [BACKEND] SBOM модуль — заглушки без реализации
+   ПРИОРИТЕТ: 🟠 ВЫСОКИЙ → 🟢 ЗАКРЫТО
+   СТАТУС: ✅ DONE
+   АГЕНТ: agent-3-sbom
+   
+   ВЫПОЛНЕНО:
+   - grype.go: JSON парсинг уязвимостей (ID, Severity, CVSS, FixedIn)
+   - syft.go: парсинг JSON, SPDX, CycloneDX форматов
+   - license_scanner.go: парсеры licensecheck, licensee, go-licenses
+   - Добавлены helper функции: mapToSPDXID(), classifyLicenseType()
+   - 35+ unit тестов в parsers_test.go
+   - Все TODO удалены, тесты проходят
+
+---
+
+## ARCH-4. [BACKEND] Domain слой раздут (34 файла в корне)
+   ПРИОРИТЕТ: 🟠 ВЫСОКИЙ
+   СТАТУС: TODO
+   АГЕНТ: agent-4-domain-structure
+   
+   ПРОБЛЕМА:
+   34 файла в корне backend/domain/ без группировки.
+   Сложно навигировать и понимать структуру.
+   
+   ТЕКУЩАЯ СТРУКТУРА:
+   backend/domain/
+   ├── 34 файла в корне
+   └── analysis/  (единственная подпапка)
+   
+   РЕШЕНИЕ:
+   Реструктурировать в подпапки:
+   ```
+   backend/domain/
+   ├── ai/
+   │   ├── provider.go      (из ai_provider.go)
+   │   ├── provider_getter.go
+   │   ├── defaults.go      (из ai_defaults.go)
+   │   └── models.go        (из models_ai.go)
+   ├── task/
+   │   ├── types.go         (из task_types.go)
+   │   └── taskflow.go
+   ├── context/
+   │   └── pack.go          (из context_pack.go)
+   ├── build/
+   │   ├── pipeline.go      (из build_pipeline.go)
+   │   └── test_engine.go
+   ├── analysis/            (уже есть)
+   ├── models.go            (основные модели)
+   ├── interfaces.go        (основные интерфейсы)
+   ├── errors.go
+   └── config.go
+   ```
+
+---
+
+## ARCH-5. [BACKEND] Унифицировать Error Handling
+   ПРИОРИТЕТ: 🟡 СРЕДНИЙ → 🟢 ЗАКРЫТО
+   СТАТУС: ✅ DONE
+   АГЕНТ: agent-5-errors
+   
+   ВЫПОЛНЕНО в domain/errors.go:
+   - NewFieldValidationError(field, message) — валидация поля
+   - NewNotFoundError(resource, id) — ресурс не найден
+   - NewExternalError(service, cause) — ошибка внешнего сервиса (recoverable)
+   - NewTimeoutError(operation, duration) — таймаут (recoverable)
+   - NewPermissionError(resource, action) — отказ в доступе
+   - Добавлены ErrorCode: ErrCodeNotFound, ErrCodeExternalService, ErrCodeTimeout, ErrCodePermissionDenied
+
+---
+
+## ARCH-6. [BACKEND] Magic Numbers → Constants
+   ПРИОРИТЕТ: 🟡 СРЕДНИЙ → 🟢 ЗАКРЫТО
+   СТАТУС: ✅ DONE
+   АГЕНТ: agent-5-errors
+   
+   ВЫПОЛНЕНО в domain/config.go:
+   - Memory: DefaultMaxMemoryMB=30, DefaultMaxTokens=5000
+   - Workers: MaxWorkerCount=16, MinWorkerCount=2
+   - Timeouts: DefaultOperationTimeout=30s, DefaultAITimeout=60s, DefaultBuildTimeout=5m
+   - Files: MaxFileSizeBytes=10MB, MaxFilesPerBatch=100
+
+---
+
+# ═══════════════════════════════════════════════════════════════
+# СТАТИСТИКА (обновлено 2024-12-23)
+# ═══════════════════════════════════════════════════════════════
+
+ARCH КРИТИЧЕСКИЕ:  1 частично (ARCH-1 — интерфейсы созданы, нужен рефакторинг импортов)
+ARCH ЗАКРЫТО:      5 (ARCH-2, ARCH-3, ARCH-4, ARCH-5, ARCH-6)
+
+ВСЕГО АКТИВНЫХ:    1 задача (ARCH-1 — рефакторинг импортов application → domain)
+ВЫПОЛНЕНО:         34 задачи
+
+UI/UX КРИТИЧЕСКИЕ:  3 (все ✅ DONE: UI-1, UI-2, UI-3)
+UI/UX ВЫСОКИЕ:      0
+UI/UX СРЕДНИЕ:      8 (все ✅ DONE: UI-4 - UI-11)
+UX ПОВЕДЕНИЕ:       4 (все ✅ DONE: UX-1, UX-2, UX-3, UX-4)
+ДИЗАЙН/A11Y:        4 (все ✅ DONE: DES-1, DES-2, ACC-1, ACC-2)
+ТЕСТИРОВАНИЕ:       3 (все TODO: TEST-1, TEST-2, TEST-3)
+АРХИТЕКТУРНЫЕ:      5 (все ✅ DONE)
+AUDIT (2024-12-12): 7 (5 ✅ DONE: AUDIT-1,2,5,6,7; 2 TODO: AUDIT-3,4)
+
+ВСЕГО АКТИВНЫХ:     5 задач (3 TEST + 2 AUDIT)
+ВЫПОЛНЕНО:          29 задач
+
+# ═══════════════════════════════════════════════════════════════
+# ПОРЯДОК ИСПРАВЛЕНИЯ (РЕКОМЕНДУЕМЫЙ)
+# ═══════════════════════════════════════════════════════════════
+
+# ФАЗА 1 - AUDIT АРХИТЕКТУРНЫЕ (1-2 дня)
+1. AUDIT-3: Разбить api.service.ts на модули (1378 строк → ~100)
+2. AUDIT-4: Разбить context.store.ts (856 строк → ~400)
+
+# ФАЗА 2 - Тестирование (2-3 дня)
+3. TEST-1: Тесты для настроек File Explorer
+4. TEST-2: Тесты для keyboard shortcuts
+5. TEST-3: Тесты для settings service (backend)
+
+# ✅ ВЫПОЛНЕНО В ЭТОЙ СЕССИИ:
+- AUDIT-2: Исправлены фиксированные пиксели на viewport-relative
+- AUDIT-5: Унифицирован error handling в API (ApiError, apiCall, apiCallSafe)
+- AUDIT-6: localStorage keys вынесены в STORAGE_KEYS (config/constants.ts)
+- AUDIT-7: Типизация CustomEvent handlers (types/events.ts)
+

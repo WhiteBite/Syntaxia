@@ -1,0 +1,154 @@
+# golangci-lint configuration for Syntaxia
+# Run: golangci-lint run --config .golangci.yml
+
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  enable:
+    # Dead code detection
+    - unused # Finds unused code
+    - ineffassign # Detects ineffectual assignments
+
+    # Code quality
+    - gocritic # Comprehensive code critic
+    - staticcheck # Static analysis
+    - gosimple # Simplify code
+
+    # Error handling
+    - errcheck # Check error returns
+
+    # Performance
+    - unconvert # Unnecessary type conversions
+
+    # Style
+    - misspell # Spelling mistakes
+
+    # Security
+    - gosec # Security issues
+
+  disable:
+    # Too noisy for this project:
+    - dupl # Code duplication - many similar patterns are intentional
+    - goconst # Repeated strings - too strict
+    - gocyclo # Cyclomatic complexity - handled by gocognit
+    - gocognit # Cognitive complexity - too strict
+    - revive # Too many style warnings
+    - prealloc # Slice preallocation - premature optimization
+    - gofmt # Formatting - handled by IDE
+    - goimports # Import formatting - handled by IDE
+    - errorlint # Error wrapping - too strict
+
+linters-settings:
+  dupl:
+    threshold: 200 # Minimum tokens for duplication detection (increased to allow structural similarities)
+
+  gocyclo:
+    min-complexity: 20
+
+  gocognit:
+    min-complexity: 40
+
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - performance
+    disabled-checks:
+      - hugeParam # Allow large params (common in Go)
+      - rangeValCopy # Allow range value copies
+      - paramTypeCombine # Too noisy
+      - unnamedResult # Too noisy
+      - ifElseChain # Too noisy
+      - emptyStringTest # Style preference
+      - commentedOutCode # Allow commented code
+      - builtinShadow # Too strict
+      - preferFprint # Style preference
+      - elseif # Style preference
+      - appendCombine # Style preference
+      - filepathJoin # False positives with glob patterns
+      - unlambda # Style preference
+      - httpNoBody # Minor optimization
+      - sprintfQuotedString # Style preference
+      - typeUnparen # Style preference
+      - sloppyLen # False positives
+      - octalLiteral # Style preference
+      - singleCaseSwitch # Style preference
+      - dupBranchBody # Sometimes intentional
+      - typeAssertChain # Style preference
+      - nestingReduce # Style preference
+      - stringXbytes # Minor optimization
+
+  revive:
+    severity: warning
+    rules:
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: increment-decrement
+      - name: var-declaration
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: errorf
+      # Disabled - too noisy:
+      # - name: blank-imports
+      # - name: exported
+      # - name: var-naming
+      # - name: package-comments
+      # - name: indent-error-flow
+
+  gosec:
+    excludes:
+      - G104 # Audit errors not checked (too noisy)
+      - G304 # File path provided as taint input (common pattern)
+
+  staticcheck:
+    checks:
+      - all
+      - -SA1019 # Deprecated (handle separately)
+
+issues:
+  exclude-dirs:
+    - vendor
+    - frontend
+    - cmd
+  exclude-files:
+    - main.go
+    - app.go
+  exclude-rules:
+    # Exclude some linters from running on tests
+    - path: _test\.go
+      linters:
+        - dupl
+        - gosec
+        - errcheck
+
+    # Exclude known issues in generated files
+    - path: ".*_gen\\.go"
+      linters:
+        - unused
+        - revive
+        - gocritic
+        - staticcheck
+        - gosimple
+        - errcheck
+        - dupl
+        - goconst
+
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+output:
+  formats:
+    - format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true

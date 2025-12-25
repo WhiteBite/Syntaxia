@@ -1,0 +1,225 @@
+# Comprehensive Task Protocol Configuration
+# This configuration demonstrates all available options and features
+
+task_protocol:
+  # Global settings with maximum features enabled
+  max_retries: 5
+  fail_fast: false
+  timeout_seconds: 3600  # 1 hour for comprehensive validation
+  
+  # Advanced self-correction
+  self_correction:
+    enabled: true
+    max_attempts: 10
+    ai_assistance: true
+    feedback_learning: true
+    correction_history: true
+    
+  # All stages enabled with comprehensive settings
+  stages:
+    linting:
+      enabled: true
+      timeout_seconds: 600  # 10 minutes
+      tools: ["staticcheck", "eslint", "ruff", "golangci-lint", "tslint"]
+      fail_on_warning: false
+      severity_threshold: "info"
+      custom_rules_path: "./linting-rules"
+      
+    building:
+      enabled: true
+      timeout_seconds: 1200  # 20 minutes
+      strict_mode: true
+      parallel_builds: true
+      optimization_level: "high"
+      debug_symbols: true
+      
+    testing:
+      enabled: true
+      timeout_seconds: 1800  # 30 minutes
+      scope: "all"
+      parallel_tests: true
+      coverage_threshold: 90
+      mutation_testing: true
+      performance_tests: true
+      integration_tests: true
+      e2e_tests: true
+      
+    guardrails:
+      enabled: true
+      timeout_seconds: 300  # 5 minutes
+      enforce_policies: true
+      fail_on_violation: true
+      policy_engine: "opa"
+      custom_policies_path: "./policies"
+
+  # Comprehensive language-specific configurations
+  language_specific:
+    go:
+      linting:
+        tools: ["staticcheck", "go vet", "golangci-lint", "gosec", "govulncheck"]
+        rules: "comprehensive"
+        fail_on_warning: false
+        custom_config: ".golangci.yml"
+      
+      building:
+        race_detection: true
+        strict_mode: true
+        tags: ["integration", "unit", "e2e", "benchmark"]
+        go_version: "1.21"
+        cgo_enabled: true
+        cross_compilation: ["linux/amd64", "darwin/amd64", "windows/amd64"]
+        
+      testing:
+        parallel: true
+        race_detection: true
+        coverage_threshold: 90
+        test_timeout: "30m"
+        bench_tests: true
+        fuzz_tests: true
+        property_tests: true
+
+    typescript:
+      linting:
+        tools: ["eslint", "@typescript-eslint", "prettier", "tslint"]
+        extends: ["@typescript-eslint/recommended-requiring-type-checking"]
+        strict: true
+        type_aware_linting: true
+        
+      building:
+        strict_mode: true
+        no_implicit_any: true
+        type_checking: true
+        declaration_files: true
+        source_maps: true
+        bundling: true
+        minification: true
+        tree_shaking: true
+        
+      testing:
+        framework: "vitest"
+        coverage_threshold: 85
+        parallel: true
+        component_testing: true
+        visual_regression: true
+
+    python:
+      linting:
+        tools: ["ruff", "pylint", "mypy", "bandit"]
+        rules: "comprehensive"
+        type_checking: true
+        
+      building:
+        virtual_env: true
+        dependency_lock: true
+        wheel_building: true
+        
+      testing:
+        framework: "pytest"
+        coverage_threshold: 85
+        property_tests: true
+
+  # Comprehensive error correction rules
+  error_correction:
+    import_errors:
+      auto_fix: true
+      priority: 100
+      strategies: ["add_missing_import", "fix_import_path", "organize_imports", "update_dependencies"]
+      ai_suggestions: true
+      
+    syntax_errors:
+      auto_fix: true
+      priority: 95
+      strategies: ["fix_brackets", "fix_semicolons", "fix_quotes", "auto_format"]
+      pattern_learning: true
+      
+    type_errors:
+      auto_fix: true
+      priority: 80
+      strategies: ["add_type_annotation", "cast_type", "fix_interface", "generic_inference"]
+      type_inference: true
+      
+    linting_errors:
+      auto_fix: true
+      priority: 70
+      strategies: ["format_code", "fix_style", "remove_unused", "refactor_code"]
+      style_consistency: true
+      
+    test_errors:
+      auto_fix: true
+      priority: 60
+      strategies: ["update_assertion", "fix_mock", "update_test_data", "regenerate_snapshots"]
+      test_generation: true
+
+    logical_errors:
+      auto_fix: false
+      priority: 90
+      strategies: ["suggest_fix", "ai_analysis", "similar_code_patterns"]
+      human_review_required: true
+
+  # Advanced guardrail policies
+  guardrail_policies:
+    security:
+      enabled: true
+      scan_vulnerabilities: true
+      check_licenses: true
+      secrets_detection: true
+      dependency_analysis: true
+      static_analysis_security: true
+      penetration_testing: false
+      
+    resource_limits:
+      max_files_changed: 500
+      max_lines_changed: 5000
+      max_memory_usage: "4GB"
+      max_cpu_usage: "80%"
+      max_execution_time: "1h"
+      max_network_requests: 100
+      
+    quality:
+      min_code_coverage: 85
+      max_complexity: 12
+      require_documentation: true
+      code_duplication_threshold: 5
+      maintainability_index: 80
+      technical_debt_ratio: 5
+      
+    compliance:
+      gdpr_compliance: true
+      security_standards: ["OWASP", "NIST"]
+      coding_standards: ["clean_code", "solid_principles"]
+      accessibility_standards: ["WCAG2.1"]
+
+  # Advanced validation rules
+  validation_rules:
+    architecture_validation: true
+    dependency_validation: true
+    api_contract_validation: true
+    database_schema_validation: true
+    configuration_validation: true
+    deployment_validation: true
+
+  # CI/CD integration settings
+  ci_cd_integration:
+    github_actions: true
+    gitlab_ci: true
+    jenkins: true
+    pre_commit_hooks: true
+    post_commit_hooks: true
+    deployment_gates: true
+
+  # Monitoring and observability
+  monitoring:
+    performance_metrics: true
+    error_tracking: true
+    log_analysis: true
+    alerting: true
+    dashboard_generation: true
+
+  # Advanced features
+  advanced_features:
+    ai_code_review: true
+    automated_refactoring: true
+    code_generation_validation: true
+    regression_detection: true
+    performance_regression_detection: true
+    security_regression_detection: true

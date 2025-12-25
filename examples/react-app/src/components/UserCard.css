@@ -1,0 +1,39 @@
+.user-card {
+  background: #1a1a1a;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.user-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.user-card h3 {
+  margin: 0 0 10px 0;
+  color: #646cff;
+}
+
+.user-card p {
+  margin: 0 0 5px 0;
+  color: #888;
+}
+
+.user-card small {
+  color: #666;
+}
+
+.delete-btn {
+  margin-top: 15px;
+  background-color: #ff4444;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background-color: #cc0000;
+}

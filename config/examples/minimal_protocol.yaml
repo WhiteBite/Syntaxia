@@ -1,0 +1,44 @@
+# Minimal Task Protocol Configuration
+# This is the simplest possible configuration for quick setup
+
+task_protocol:
+  # Basic settings
+  max_retries: 1
+  fail_fast: true
+  timeout_seconds: 600  # 10 minutes
+  
+  # Minimal self-correction
+  self_correction:
+    enabled: false
+    max_attempts: 1
+    ai_assistance: false
+    
+  # Only essential stages
+  stages:
+    building:
+      enabled: true
+      timeout_seconds: 300
+      
+    testing:
+      enabled: true
+      timeout_seconds: 180
+      scope: "smoke"  # Only smoke tests
+
+  # Minimal error correction
+  error_correction:
+    import_errors:
+      auto_fix: false
+      priority: 100
+      
+    syntax_errors:
+      auto_fix: false
+      priority: 90
+
+  # Basic guardrails
+  guardrail_policies:
+    resource_limits:
+      max_files_changed: 50
+      max_lines_changed: 500
+      
+    quality:
+      min_code_coverage: 50

@@ -1,0 +1,66 @@
+/* ============================================
+   DRIVER.JS DARK THEME OVERRIDES
+   Custom styles for onboarding tour
+   ============================================ */
+
+.driver-popover {
+    background: var(--bg-1, #1f2937) !important;
+    border: 1px solid rgba(99, 102, 241, 0.3) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+    border-radius: var(--radius-xl, 14px) !important;
+}
+
+.driver-popover-title {
+    color: var(--text-primary, #f3f4f6) !important;
+    font-weight: 600 !important;
+}
+
+.driver-popover-description {
+    color: var(--text-muted, #9ca3af) !important;
+}
+
+.driver-popover-progress-text {
+    color: var(--text-subtle, #6b7280) !important;
+}
+
+.driver-popover-prev-btn,
+.driver-popover-next-btn {
+    background: var(--accent-indigo, #6366f1) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: var(--radius-md, 10px) !important;
+    font-weight: 500 !important;
+    padding: 0.5rem 1rem !important;
+    transition: background 150ms ease-out !important;
+}
+
+.driver-popover-prev-btn:hover,
+.driver-popover-next-btn:hover {
+    background: #818cf8 !important;
+}
+
+.driver-popover-close-btn {
+    color: var(--text-muted, #9ca3af) !important;
+}
+
+.driver-popover-close-btn:hover {
+    color: var(--text-primary, #f3f4f6) !important;
+}
+
+/* Arrow colors */
+.driver-popover-arrow-side-left.driver-popover-arrow,
+.driver-popover-arrow-side-right.driver-popover-arrow,
+.driver-popover-arrow-side-top.driver-popover-arrow,
+.driver-popover-arrow-side-bottom.driver-popover-arrow {
+    border-color: var(--bg-1, #1f2937) !important;
+}
+
+/* Overlay */
+.driver-overlay {
+    background: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* Highlighted element */
+.driver-active-element {
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.4) !important;
+}

@@ -1,0 +1,132 @@
+# Task Protocol Configuration
+# This file defines the configuration for the Task Protocol Verification System
+
+task_protocol:
+  # Global settings
+  max_retries: 3
+  fail_fast: false
+  timeout_seconds: 1800  # 30 minutes total timeout
+  
+  # Self-correction settings
+  self_correction:
+    enabled: true
+    max_attempts: 5
+    ai_assistance: true
+    
+  # Stage configuration
+  stages:
+    linting:
+      enabled: true
+      timeout_seconds: 300  # 5 minutes
+      tools: ["staticcheck", "eslint", "ruff"]
+      fail_on_warning: false
+      
+    building:
+      enabled: true
+      timeout_seconds: 600  # 10 minutes
+      strict_mode: true
+      parallel_builds: true
+      
+    testing:
+      enabled: true
+      timeout_seconds: 900  # 15 minutes
+      scope: "affected"  # "all", "affected", "smoke"
+      parallel_tests: true
+      coverage_threshold: 80
+      
+    guardrails:
+      enabled: true
+      timeout_seconds: 120  # 2 minutes
+      enforce_policies: true
+      fail_on_violation: true
+
+  # Language-specific configurations
+  language_specific:
+    go:
+      linting:
+        tools: ["staticcheck", "go vet", "golangci-lint"]
+        rules: "strict"
+        fail_on_warning: true
+      
+      building:
+        race_detection: true
+        strict_mode: true
+        tags: ["integration"]
+        
+      testing:
+        parallel: true
+        race_detection: true
+        coverage_threshold: 85
+        
+    typescript:
+      linting:
+        tools: ["eslint", "@typescript-eslint"]
+        extends: ["@typescript-eslint/recommended"]
+        strict: true
+        
+      building:
+        strict_mode: true
+        no_implicit_any: true
+        type_checking: true
+        
+      testing:
+        framework: "vitest"
+        coverage_threshold: 80
+        parallel: true
+        
+    javascript:
+      linting:
+        tools: ["eslint"]
+        extends: ["eslint:recommended"]
+        
+      building:
+        babel_transpile: true
+        minify: false
+        
+      testing:
+        framework: "jest"
+        coverage_threshold: 75
+
+  # Error correction rules
+  error_correction:
+    import_errors:
+      auto_fix: true
+      priority: 100
+      strategies: ["add_missing_import", "fix_import_path", "organize_imports"]
+      
+    syntax_errors:
+      auto_fix: true
+      priority: 90
+      strategies: ["fix_brackets", "fix_semicolons", "fix_quotes"]
+      
+    type_errors:
+      auto_fix: true
+      priority: 70
+      strategies: ["add_type_annotation", "cast_type", "fix_interface"]
+      
+    linting_errors:
+      auto_fix: true
+      priority: 60
+      strategies: ["format_code", "fix_style", "remove_unused"]
+      
+    test_errors:
+      auto_fix: false
+      priority: 50
+      strategies: ["update_assertion", "fix_mock", "update_test_data"]
+
+  # Guardrail policies
+  guardrail_policies:
+    security:
+      enabled: true
+      scan_vulnerabilities: true
+      check_licenses: true
+      
+    resource_limits:
+      max_files_changed: 150
+      max_lines_changed: 1500
+      max_memory_usage: "2GB"
+      
+    quality:
+      min_code_coverage: 70
+      max_complexity: 15
+      require_documentation: false

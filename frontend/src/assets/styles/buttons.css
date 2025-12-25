@@ -1,0 +1,394 @@
+/* ============================================
+   BUTTON COMPONENTS
+   ============================================ */
+
+/* Base Button */
+.btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2;
+    @apply text-sm font-medium rounded-xl;
+    @apply transition-all duration-200;
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none;
+}
+
+.btn:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+/* Primary Button */
+.btn-primary {
+    background: var(--gradient-primary);
+    @apply text-white font-semibold;
+    box-shadow: var(--shadow-glow-accent);
+    transition: all 150ms ease-out;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--gradient-primary-hover);
+    box-shadow: 0 6px 28px rgba(139, 92, 246, 0.5);
+    transform: translateY(-2px) scale(1.02);
+}
+
+.btn-primary:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+    transition-duration: 50ms;
+}
+
+/* Secondary Button */
+.btn-secondary {
+    background: var(--bg-2);
+    color: var(--text-primary);
+    border: 1px solid var(--border-default);
+    @apply font-medium;
+    transition: all 150ms ease-out;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: var(--bg-3);
+    border-color: var(--border-strong);
+    @apply text-white;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Ghost Button */
+.btn-ghost {
+    @apply bg-transparent font-medium;
+    color: var(--text-secondary);
+    border: 1px solid transparent;
+    transition: all 150ms ease-out;
+}
+
+.btn-ghost:hover:not(:disabled) {
+    background: var(--bg-2);
+    color: var(--text-primary);
+    border-color: var(--border-subtle);
+}
+
+/* Success Button */
+.btn-success {
+    @apply bg-emerald-500/20 text-emerald-300 border border-emerald-500/30;
+}
+
+.btn-success:hover:not(:disabled) {
+    @apply bg-emerald-500/30 border-emerald-400/50;
+    box-shadow: 0 4px 16px rgba(74, 222, 128, 0.2);
+}
+
+/* Danger Button */
+.btn-danger {
+    @apply bg-red-500/20 text-red-300 border border-red-500/30;
+}
+
+.btn-danger:hover:not(:disabled) {
+    @apply bg-red-500/30 border-red-400/50;
+    box-shadow: 0 4px 16px rgba(248, 113, 113, 0.2);
+}
+
+/* Button Sizes */
+.btn-sm { @apply px-3 py-1.5 text-xs; }
+.btn-lg { @apply px-6 py-3 text-base; }
+.btn-icon { @apply p-2; }
+
+/* Hero Button (CTA) */
+.btn-hero {
+    @apply px-6 py-3 text-base font-semibold rounded-xl;
+    @apply text-white;
+    background: var(--gradient-primary);
+    box-shadow: var(--shadow-glow-accent);
+    transition: all 0.2s ease-out;
+}
+
+.btn-hero:hover:not(:disabled) {
+    background: var(--gradient-primary-hover);
+    box-shadow: 0 8px 32px rgba(139, 92, 246, 0.5), 0 0 48px rgba(236, 72, 153, 0.2);
+    transform: translateY(-3px) scale(1.03);
+}
+
+.btn-hero:active:not(:disabled) {
+    transform: translateY(-1px) scale(1.01);
+}
+
+/* Action Buttons */
+.action-btn {
+    @apply px-4 py-2 text-sm font-medium rounded-xl;
+    @apply flex items-center gap-2 justify-center;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    transition: all 150ms ease-out;
+}
+
+.action-btn-primary {
+    background: var(--gradient-primary);
+    @apply text-white font-semibold;
+    box-shadow: 0 4px 14px rgba(139, 92, 246, 0.30);
+}
+
+.action-btn-primary:hover:not(:disabled) {
+    box-shadow: 0 6px 24px rgba(139, 92, 246, 0.45);
+    transform: translateY(-1px) scale(1.02);
+}
+
+.action-btn-primary:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+    transition-duration: 50ms;
+}
+
+.action-btn-hero {
+    @apply px-5 py-2.5 text-sm font-semibold rounded-xl;
+    @apply text-white;
+    background: var(--gradient-primary);
+    box-shadow: var(--shadow-glow-accent);
+}
+
+.action-btn-hero:hover:not(:disabled) {
+    background: var(--gradient-primary-hover);
+    box-shadow: 0 8px 32px rgba(139, 92, 246, 0.55);
+    transform: translateY(-2px) scale(1.02);
+}
+
+.action-btn-hero:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+    transition-duration: 50ms;
+}
+
+.action-btn-success {
+    background: var(--color-success-soft);
+    color: var(--color-success);
+    border: 1px solid var(--color-success-border);
+}
+
+.action-btn-danger {
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+    border: 1px solid var(--color-danger-border);
+}
+
+.action-btn-accent {
+    background: var(--accent-orange-bg);
+    color: var(--accent-orange);
+    border: 1px solid var(--accent-orange-border);
+}
+
+.action-btn-accent:hover:not(:disabled) {
+    background: rgba(249, 115, 22, 0.35);
+    box-shadow: var(--shadow-glow-orange);
+}
+
+/* Tool Buttons */
+.tool-btn {
+    @apply w-full px-4 py-3 text-sm font-medium rounded-xl;
+    @apply flex items-center gap-3 text-left;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    transition: all 150ms ease-out;
+}
+
+.tool-btn-default {
+    background: var(--bg-1);
+    border: 1px solid var(--border-default);
+    color: var(--text-primary);
+}
+
+.tool-btn-default:hover:not(:disabled) {
+    background: var(--bg-2);
+    border-color: var(--border-strong);
+    transform: translateX(2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.tool-btn-icon {
+    @apply w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0;
+}
+
+.tool-btn-icon svg {
+    @apply w-4 h-4;
+}
+
+.tool-btn-icon-indigo { background: var(--accent-indigo-bg); }
+.tool-btn-icon-indigo svg { color: #a5b4fc; }
+
+.tool-btn-icon-emerald { background: var(--accent-emerald-bg); }
+.tool-btn-icon-emerald svg { color: #6ee7b7; }
+
+.tool-btn-icon-red { background: var(--color-danger-soft); }
+.tool-btn-icon-red svg { color: var(--color-danger); }
+
+.tool-btn-icon-purple { background: var(--accent-purple-bg); }
+.tool-btn-icon-purple svg { color: #d8b4fe; }
+
+/* Icon Button */
+.icon-btn {
+    @apply p-1.5 rounded-lg;
+    color: var(--text-muted);
+    transition: all 150ms ease-out;
+}
+
+.icon-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-2);
+}
+
+.icon-btn-sm {
+    @apply p-1 rounded-md;
+    @apply flex items-center justify-center;
+    color: var(--text-muted);
+    transition: all 150ms ease-out;
+}
+
+.icon-btn-sm:hover {
+    color: var(--text-primary);
+    background: var(--bg-2);
+}
+
+.icon-btn-danger:hover {
+    color: var(--color-danger);
+    background: var(--color-danger-soft);
+}
+
+.icon-btn-success:hover {
+    color: var(--color-success);
+    background: var(--color-success-soft);
+}
+
+.icon-btn-primary:hover {
+    color: var(--accent-primary);
+    background: var(--accent-purple-bg);
+}
+
+/* Unified Button System */
+.btn-unified {
+    @apply inline-flex items-center justify-center gap-2;
+    @apply px-3 py-2 text-sm font-medium rounded-xl;
+    @apply transition-all duration-200;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-unified-primary {
+    background: #6366f1;
+    @apply text-white;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+}
+
+.btn-unified-primary:hover:not(:disabled) {
+    background: #818cf8;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    transform: translateY(-1px);
+}
+
+.btn-unified-secondary {
+    background: var(--bg-2);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-strong);
+}
+
+.btn-unified-secondary:hover:not(:disabled) {
+    background: var(--bg-3);
+    color: var(--text-primary);
+    border-color: var(--text-muted);
+}
+
+.btn-unified-ghost {
+    @apply bg-transparent;
+    color: var(--text-muted);
+    border: 1px solid transparent;
+}
+
+.btn-unified-ghost:hover:not(:disabled) {
+    background: var(--bg-2);
+    color: var(--text-primary);
+}
+
+.btn-unified-success {
+    background: var(--color-success-soft);
+    color: var(--color-success);
+    border: 1px solid var(--color-success-border);
+}
+
+.btn-unified-success:hover:not(:disabled) {
+    background: rgba(74, 222, 128, 0.25);
+    border-color: rgba(74, 222, 128, 0.55);
+}
+
+.btn-unified-warning {
+    background: var(--color-warning-soft);
+    color: var(--color-warning);
+    border: 1px solid var(--color-warning-border);
+}
+
+.btn-unified-warning:hover:not(:disabled) {
+    background: rgba(251, 191, 36, 0.25);
+    border-color: rgba(251, 191, 36, 0.55);
+}
+
+.btn-unified-danger {
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+    border: 1px solid var(--color-danger-border);
+}
+
+.btn-unified-danger:hover:not(:disabled) {
+    background: rgba(248, 113, 113, 0.25);
+    border-color: rgba(248, 113, 113, 0.55);
+}
+
+.btn-unified-icon {
+    @apply p-2;
+}
+
+/* Settings Button */
+.settings-btn {
+    @apply flex-1 px-3 py-1.5 text-xs rounded-lg;
+    @apply flex items-center justify-center gap-2;
+    background: var(--bg-2);
+    color: var(--text-primary);
+    border: 1px solid var(--border-default);
+    transition: all 150ms ease-out;
+}
+
+.settings-btn:hover {
+    background: var(--bg-3);
+    border-color: var(--border-strong);
+}
+
+/* CTA Button */
+.btn-cta {
+    @apply px-5 py-2.5 text-sm font-semibold rounded-xl;
+    @apply text-white;
+    background: var(--gradient-primary);
+    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.35);
+    transition: all 200ms ease-out;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-cta::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    transition: left 400ms ease-out;
+}
+
+.btn-cta:hover:not(:disabled) {
+    box-shadow: 0 6px 30px rgba(139, 92, 246, 0.5);
+    transform: translateY(-2px);
+}
+
+.btn-cta:hover:not(:disabled)::before {
+    left: 100%;
+}
+
+.btn-cta:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+    transition-duration: 50ms;
+}
+
+/* Unified Button Radius Fix */
+.btn, .btn-primary, .btn-secondary, .btn-ghost, .btn-sm,
+.action-btn, .action-btn-primary, .action-btn-success, .action-btn-danger,
+.tab-btn, .tab-btn-inactive,
+.git-filter-chip, button[class*="btn"] {
+    border-radius: var(--radius-xl) !important;
+}

@@ -1,0 +1,41 @@
+# I18N Refactoring Tasks
+# Миграция на классическую структуру locales/
+
+## Phase 1: Создание новой структуры ✅ DONE
+- [x] 1.1 Создать директорию locales/ru/ и locales/en/
+- [x] 1.2 Создать common.json (общие тексты)
+- [x] 1.3 Создать files.json (файловое дерево)
+- [x] 1.4 Создать context.json (контекст)
+- [x] 1.5 Создать chat.json (AI чат)
+- [x] 1.6 Создать git.json (Git интеграция)
+- [x] 1.7 Создать settings.json (настройки)
+- [x] 1.8 Создать errors.json (ошибки)
+- [x] 1.9 Создать templates.json (шаблоны)
+- [x] 1.10 Создать task.json (новый - TaskPanel)
+- [x] 1.11 Создать commands.json (новый - CommandPalette)
+- [x] 1.12 Создать export.json (новый - ExportModal)
+- [x] 1.13 Создать index.ts для каждой локали
+
+## Phase 2: Singleton i18n для stores ✅ DONE
+- [x] 2.1 Создать locales/i18n.ts singleton
+- [x] 2.2 Обновить useI18n.ts для использования новой структуры
+
+## Phase 3: Миграция захардкоженных текстов (частично)
+- [x] 3.1 App.vue - критические сообщения
+- [x] 3.2 TaskPanel.vue - весь UI
+- [x] 3.3 ChatPanel.vue - Coming Soon тексты
+- [x] 3.4 ContextBuilder.vue - tooltips
+- [ ] 3.5 ExportModal.vue - опции (требует больше работы)
+- [ ] 3.6 MemoryDashboard.vue - метрики
+- [x] 3.7 FileContextMenu.vue - aria-labels
+- [ ] 3.8 commands.service.ts - команды (требует рефакторинг)
+
+## Phase 4: Удаление старой структуры ✅ DONE
+- [x] 4.1 Удалить composables/i18n/*.ts после проверки
+- [x] 4.2 Сборка проходит успешно
+
+## Оставшиеся задачи (низкий приоритет):
+- [ ] ExportModal.vue - форматы экспорта
+- [ ] MemoryDashboard.vue - метрики памяти
+- [ ] commands.service.ts - использовать i18n singleton
+- [ ] Добавить недостающие ключи в common.json для prompts, limits, etc.

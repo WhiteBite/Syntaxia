@@ -1,0 +1,127 @@
+# Version Control
+.git
+.bundle
+.svn
+.hg
+
+# Images
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.webp
+*.svg
+*.ico
+*.icns
+*.psd
+*.ai
+*.sketch
+
+# Audio
+*.mp3
+*.wav
+*.ogg
+*.aac
+*.flac
+*.m4a
+*.wma
+
+# Video
+*.mp4
+*.avi
+*.mov
+*.wmv
+*.mkv
+*.webm
+*.flv
+*.m4v
+
+# Fonts
+*.ttf
+*.otf
+*.woff
+*.woff2
+*.eot
+
+# IDE/Editor
+node_modules/
+vendor/
+.idea/
+.vscode/
+.vs/
+__pycache__/
+*.pyc
+*.pyo
+
+# Temp/Cache
+tmp/
+cache/
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*.log
+*.lock
+
+# Archives
+*.zip
+*.rar
+*.7z
+*.tar
+*.gz
+*.tgz
+*.bz2
+*.xz
+
+# Databases
+*.sqlite
+*.sqlite3
+*.db
+*.mdb
+*.sql
+*.dump
+
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+*.bin
+*.iso
+*.dmg
+*.app
+*.msi
+*.deb
+*.rpm
+
+# Compiled/Minified
+*.min.js
+*.min.css
+*.map
+*.class
+*.jar
+*.war
+*.ear
+*.o
+*.a
+*.obj
+*.lib
+
+# Documents (binary)
+*.pdf
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+
+# Other binary
+*.dat
+*.pak
+*.cache
+*.DS_Store
+Thumbs.db

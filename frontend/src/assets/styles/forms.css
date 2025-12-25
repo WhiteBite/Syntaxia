@@ -1,0 +1,120 @@
+/* ============================================
+   FORM COMPONENTS - Inputs, Textareas, Toggles
+   ============================================ */
+
+/* Input */
+.input {
+    @apply w-full px-3 py-2.5 text-sm rounded-xl;
+    background: var(--bg-1);
+    border: 1px solid var(--border-default);
+    color: var(--text-primary);
+    transition: all 150ms ease-out;
+}
+
+.input::placeholder {
+    color: var(--text-subtle);
+}
+
+.input:hover:not(:focus) {
+    background: var(--bg-2);
+    border-color: var(--border-strong);
+}
+
+.input:focus {
+    @apply outline-none;
+    background: var(--bg-2);
+    border-color: var(--accent-indigo);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    transform: scale(1.01);
+}
+
+.input-with-icon {
+    @apply pl-10;
+}
+
+.input-xs { @apply py-1.5 text-xs; }
+.input-sm { @apply py-2 text-xs; }
+.input-md { @apply py-2.5 text-sm; }
+
+.input-icon {
+    @apply absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500;
+}
+
+/* Search Input */
+.search-input {
+    @apply w-full px-3 py-2.5 pl-10 text-sm rounded-xl;
+    background: var(--bg-2);
+    border: 1px solid var(--border-strong);
+    color: var(--text-primary);
+    transition: all 150ms ease-out;
+}
+
+.search-input::placeholder {
+    color: var(--text-muted);
+}
+
+.search-input:focus {
+    @apply outline-none;
+    background: var(--bg-2);
+    border-color: var(--accent-indigo);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.search-input-active {
+    background: var(--bg-2);
+    border-color: var(--accent-indigo);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+/* Search Clear Button */
+.search-clear-btn {
+    @apply absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded;
+    color: var(--text-muted);
+    transition: all 150ms ease-out;
+    opacity: 0.7;
+}
+
+.search-clear-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-3);
+    opacity: 1;
+}
+
+/* Textarea */
+.textarea {
+    @apply w-full px-4 py-3 text-sm font-mono;
+    @apply rounded-xl resize-none;
+    background: var(--bg-1);
+    border: 1px solid var(--border-default);
+    color: var(--text-primary);
+    transition: all 150ms ease-out;
+}
+
+.textarea::placeholder {
+    color: var(--text-subtle);
+}
+
+.textarea-sm { @apply py-2 text-xs; }
+
+.textarea:focus {
+    @apply outline-none;
+    background: var(--bg-2);
+    border-color: var(--accent-indigo);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* Chat Input */
+.input-chat {
+    @apply w-full px-3 py-2 text-sm rounded-xl resize-none;
+    background: var(--bg-1);
+    border: 1px solid var(--border-default);
+    color: var(--text-primary);
+    transition: all 200ms ease-out;
+}
+
+.input-chat:focus {
+    @apply outline-none;
+    background: var(--bg-2);
+    border-color: var(--accent-purple);
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15), 0 0 20px rgba(168, 85, 247, 0.1);
+}

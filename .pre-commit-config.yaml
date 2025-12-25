@@ -1,0 +1,37 @@
+# Pre-commit hooks configuration
+# Install: pip install pre-commit && pre-commit install
+
+repos:
+  - repo: local
+    hooks:
+      # Backend Go linting
+      - id: golangci-lint
+        name: golangci-lint
+        entry: bash -c 'cd backend && golangci-lint run --config .golangci.yml'
+        language: system
+        files: \.go$
+        pass_filenames: false
+
+      # Backend Go tests
+      - id: go-test
+        name: go-test
+        entry: bash -c 'cd backend && go test ./... -short -count=1'
+        language: system
+        files: \.go$
+        pass_filenames: false
+
+      # Frontend ESLint
+      - id: eslint
+        name: eslint
+        entry: bash -c 'cd frontend && npm run lint'
+        language: system
+        files: \.(vue|ts)$
+        pass_filenames: false
+
+      # Frontend unused imports check
+      - id: eslint-unused
+        name: eslint-unused-imports
+        entry: bash -c 'cd frontend && npm run lint:unused 2>/dev/null || true'
+        language: system
+        files: \.(vue|ts)$
+        pass_filenames: false

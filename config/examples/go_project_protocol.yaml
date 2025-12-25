@@ -1,0 +1,120 @@
+# Task Protocol Configuration Example for Go Projects
+# This file shows recommended settings for Go-based software projects
+
+task_protocol:
+  # Global settings optimized for Go projects
+  max_retries: 3
+  fail_fast: false
+  timeout_seconds: 1200  # 20 minutes for Go projects
+  
+  # Self-correction settings for Go
+  self_correction:
+    enabled: true
+    max_attempts: 3
+    ai_assistance: true
+    
+  # Stage configuration optimized for Go
+  stages:
+    linting:
+      enabled: true
+      timeout_seconds: 180  # 3 minutes for Go linting
+      tools: ["staticcheck", "go vet", "golangci-lint"]
+      fail_on_warning: true
+      
+    building:
+      enabled: true
+      timeout_seconds: 300  # 5 minutes for Go builds
+      strict_mode: true
+      race_detection: true
+      
+    testing:
+      enabled: true
+      timeout_seconds: 600  # 10 minutes for Go tests
+      scope: "affected"
+      parallel_tests: true
+      coverage_threshold: 85
+      race_detection: true
+      
+    guardrails:
+      enabled: true
+      timeout_seconds: 60  # 1 minute for guardrails
+      enforce_policies: true
+      fail_on_violation: true
+
+  # Go-specific configurations
+  language_specific:
+    go:
+      linting:
+        tools: ["staticcheck", "go vet", "golangci-lint"]
+        rules: "strict"
+        fail_on_warning: true
+        custom_rules:
+          - "goimports"
+          - "gofmt"
+          - "gomodtidy"
+      
+      building:
+        race_detection: true
+        strict_mode: true
+        tags: ["integration", "unit"]
+        go_version: "1.21"
+        cgo_enabled: false
+        
+      testing:
+        parallel: true
+        race_detection: true
+        coverage_threshold: 85
+        test_timeout: "10m"
+        bench_tests: false
+
+  # Error correction rules for Go
+  error_correction:
+    import_errors:
+      auto_fix: true
+      priority: 100
+      strategies: ["goimports", "go mod tidy", "fix_import_path"]
+      
+    syntax_errors:
+      auto_fix: true
+      priority: 90
+      strategies: ["gofmt", "fix_brackets", "fix_semicolons"]
+      
+    type_errors:
+      auto_fix: false  # Go type errors usually require manual intervention
+      priority: 70
+      strategies: ["add_type_annotation", "cast_type"]
+      
+    linting_errors:
+      auto_fix: true
+      priority: 60
+      strategies: ["gofmt", "goimports", "remove_unused"]
+
+  # Guardrail policies for Go projects
+  guardrail_policies:
+    security:
+      enabled: true
+      scan_vulnerabilities: true
+      check_licenses: true
+      go_sec_enabled: true
+      
+    resource_limits:
+      max_files_changed: 100
+      max_lines_changed: 1000
+      max_memory_usage: "1GB"
+      max_goroutines: 1000
+      
+    quality:
+      min_code_coverage: 80
+      max_complexity: 10
+      require_documentation: true
+      enforce_go_conventions: true
+
+  # Go-specific validation rules
+  validation_rules:
+    go_mod_validation: true
+    vendor_check: false
+    build_constraints: true
+    import_restrictions:
+      - "no_relative_imports"
+      - "no_dot_imports"
+      - "group_stdlib_first"

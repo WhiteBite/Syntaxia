@@ -1,0 +1,177 @@
+/* ============================================
+   CSS VARIABLES - Design System Tokens
+   ============================================ */
+
+:root {
+    /* === HIERARCHICAL BACKGROUND COLORS === */
+    --bg-0: #0a0e1a;
+    --bg-1: #111827;
+    --bg-2: #1e2842;
+    --bg-3: #2a3554;
+    
+    /* Panel backgrounds (unified) */
+    --bg-panel-sidebar: rgba(11, 16, 32, 0.6);
+    --bg-panel-center: rgba(8, 12, 26, 0.5);
+    
+    /* Legacy aliases */
+    --bg-app: var(--bg-0);
+    --bg-app-gradient: linear-gradient(135deg, #0a0e1a 0%, #0d1220 50%, #111827 100%);
+    --bg-surface: var(--bg-1);
+    --bg-surface-elevated: var(--bg-2);
+    --bg-surface-hover: var(--bg-2);
+    --bg-subtle: var(--bg-2);
+    --bg-card: var(--bg-1);
+    --bg-card-hover: var(--bg-2);
+    
+    /* === ACCENT GRADIENTS === */
+    --gradient-primary: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);
+    --gradient-primary-hover: linear-gradient(135deg, #A78BFA 0%, #F472B6 100%);
+    --gradient-primary-soft: linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(236, 72, 153, 0.25) 100%);
+    
+    /* === ACCENT COLORS === */
+    --accent-primary: #8B5CF6;
+    --accent-primary-hover: #A78BFA;
+    --accent-secondary: #7C3AED;
+    --accent-tertiary: #38BDF8;
+    --accent-pink: #EC4899;
+    --accent-pink-hover: #F472B6;
+    
+    /* Tab/Filter accent colors */
+    --accent-indigo: #6366f1;
+    --accent-purple: #a855f7;
+    --accent-orange: #f97316;
+    --accent-emerald: #10b981;
+    
+    /* Active state backgrounds */
+    --accent-indigo-bg: rgba(99, 102, 241, 0.30);
+    --accent-purple-bg: rgba(168, 85, 247, 0.30);
+    --accent-orange-bg: rgba(249, 115, 22, 0.30);
+    --accent-emerald-bg: rgba(16, 185, 129, 0.30);
+    
+    /* Active state borders */
+    --accent-indigo-border: rgba(99, 102, 241, 0.55);
+    --accent-purple-border: rgba(168, 85, 247, 0.55);
+    --accent-orange-border: rgba(249, 115, 22, 0.55);
+    --accent-emerald-border: rgba(16, 185, 129, 0.55);
+    
+    /* === TEXT COLORS === */
+    --text-primary: #f8fafc;
+    --text-secondary: #e2e8f0;
+    --text-muted: #a1afc4;
+    --text-subtle: #718096;
+    --text-disabled: #4a5568;
+    
+    /* === BORDER COLORS === */
+    --border-subtle: rgba(148, 163, 184, 0.15);
+    --border-default: rgba(148, 163, 184, 0.25);
+    --border-strong: rgba(148, 163, 184, 0.40);
+    --border-accent: rgba(139, 92, 246, 0.55);
+
+    /* === STATUS COLORS === */
+    --color-success: #4ADE80;
+    --color-success-soft: rgba(74, 222, 128, 0.18);
+    --color-success-border: rgba(74, 222, 128, 0.45);
+    --color-warning: #FBBF24;
+    --color-warning-soft: rgba(251, 191, 36, 0.18);
+    --color-warning-border: rgba(251, 191, 36, 0.45);
+    --color-danger: #F87171;
+    --color-danger-soft: rgba(248, 113, 113, 0.18);
+    --color-danger-border: rgba(248, 113, 113, 0.45);
+    --color-info: #38BDF8;
+    --color-info-soft: rgba(56, 189, 248, 0.18);
+    --color-info-border: rgba(56, 189, 248, 0.45);
+    
+    /* === SHADOWS === */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.30);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.45);
+    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.55);
+    --shadow-glow-primary: 0 0 24px rgba(139, 92, 246, 0.35);
+    --shadow-glow-pink: 0 0 24px rgba(236, 72, 153, 0.35);
+    --shadow-glow-accent: 0 4px 20px rgba(139, 92, 246, 0.30);
+    --shadow-glow-indigo: 0 4px 15px -3px rgba(99, 102, 241, 0.45);
+    --shadow-glow-emerald: 0 4px 15px -3px rgba(16, 185, 129, 0.45);
+    --shadow-glow-orange: 0 4px 15px -3px rgba(249, 115, 22, 0.45);
+    
+    /* === RADIUS === */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 12px;
+    --radius-xl: 14px;
+    --radius-2xl: 16px;
+    --radius-full: 9999px;
+    
+    /* === SPACING === */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    
+    /* === TYPOGRAPHY === */
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    --font-size-xs: 11px;
+    --font-size-sm: 13px;
+    --font-size-md: 14px;
+    --font-size-lg: 16px;
+    --font-size-xl: 18px;
+    --font-size-2xl: 20px;
+    --font-size-3xl: 24px;
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    
+    /* === TRANSITIONS === */
+    --transition-fast: 150ms ease-out;
+    --transition-normal: 200ms ease-out;
+    --transition-slow: 300ms ease-out;
+    --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    
+    /* === LAYOUT === */
+    /* Note: Use viewport-relative values for responsive design */
+    --app-header-height: 48px;
+    --app-sidebar-width: min(320px, 35vw);
+    --app-sidebar-min-width: min(280px, 30vw);
+    --app-panel-max-width: min(480px, 40vw);
+    
+    /* === Z-INDEX === */
+    --z-dropdown: 100;
+    --z-sticky: 200;
+    --z-modal-backdrop: 400;
+    --z-modal: 500;
+    --z-tooltip: 600;
+    --z-toast: 700;
+
+    /* === TREE VARIABLES === */
+    --tree-indent: 16px;
+    --tree-row-height: 32px;
+    --tree-row-gap: 1px;
+    --tree-line-width: 1.5px;
+    --tree-expand-size: 1.5rem;
+    --tree-checkbox-size: 1rem;
+    --tree-icon-size: 1.25rem;
+    
+    /* Tree guide line colors by depth - bright colors */
+    --tree-line-1: rgba(99, 102, 241, 0.5);   /* indigo */
+    --tree-line-2: rgba(168, 85, 247, 0.5);   /* purple */
+    --tree-line-3: rgba(236, 72, 153, 0.5);   /* pink */
+    --tree-line-4: rgba(56, 189, 248, 0.4);   /* cyan */
+    --tree-line-5: rgba(148, 163, 184, 0.3);  /* gray */
+    
+    /* Tree selection colors - like original */
+    --tree-selected-bg: rgba(99, 102, 241, 0.2);
+    --tree-selected-bg-hover: rgba(99, 102, 241, 0.28);
+    --tree-selected-border: rgba(99, 102, 241, 0.4);
+    --tree-hover-bg: rgba(99, 102, 241, 0.1);
+    --tree-has-selected-bg: rgba(99, 102, 241, 0.08);
+    --tree-has-selected-border: rgba(99, 102, 241, 0.4);
+    
+    /* Tree folder colors - bright blue like original */
+    --tree-folder-color: #93c5fd;
+    --tree-folder-open-color: #bfdbfe;
+}

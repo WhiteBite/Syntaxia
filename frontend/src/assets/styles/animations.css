@@ -1,0 +1,129 @@
+/* ============================================
+   ANIMATIONS & TRANSITIONS
+   ============================================ */
+
+/* Slide Fade Transition */
+.slide-fade-enter-active {
+    transition: all 0.25s ease-out;
+}
+
+.slide-fade-leave-active {
+    transition: all 0.2s ease-in;
+}
+
+.slide-fade-enter-from {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.slide-fade-leave-to {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+/* Tooltip Animation */
+.animate-tooltip-in {
+    animation: tooltip-fade-in 0.2s ease-out forwards;
+}
+
+@keyframes tooltip-fade-in {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* List Stagger Animation */
+.list-stagger > * {
+    animation: listItemFadeIn 300ms ease-out backwards;
+}
+
+.list-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.list-stagger > *:nth-child(2) { animation-delay: 30ms; }
+.list-stagger > *:nth-child(3) { animation-delay: 60ms; }
+.list-stagger > *:nth-child(4) { animation-delay: 90ms; }
+.list-stagger > *:nth-child(5) { animation-delay: 120ms; }
+.list-stagger > *:nth-child(6) { animation-delay: 150ms; }
+.list-stagger > *:nth-child(7) { animation-delay: 180ms; }
+.list-stagger > *:nth-child(8) { animation-delay: 210ms; }
+.list-stagger > *:nth-child(9) { animation-delay: 240ms; }
+.list-stagger > *:nth-child(10) { animation-delay: 270ms; }
+
+@keyframes listItemFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Tree Children Animation - defined in tree.css */
+
+/* Tree Stagger - defined in tree.css */
+
+/* Folder Expand Animation */
+.folder-expand-enter-active {
+    animation: folderExpand 200ms ease-out;
+}
+
+.folder-expand-leave-active {
+    animation: folderExpand 150ms ease-in reverse;
+}
+
+@keyframes folderExpand {
+    from {
+        opacity: 0;
+        max-height: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        max-height: 1000px;
+        transform: translateY(0);
+    }
+}
+
+/* Progress Shimmer */
+@keyframes progressShimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Empty State Glow */
+@keyframes emptyStateGlow {
+    0%, 100% {
+        box-shadow: 0 0 30px rgba(139, 92, 246, 0.15);
+    }
+    50% {
+        box-shadow: 0 0 40px rgba(139, 92, 246, 0.25);
+    }
+}
+
+/* Thinking Pulse */
+@keyframes thinkingPulse {
+    0%, 100% {
+        border-color: rgba(168, 85, 247, 0.25);
+    }
+    50% {
+        border-color: rgba(168, 85, 247, 0.45);
+    }
+}
+
+/* Drop Zone Pulse */
+@keyframes dropZonePulse {
+    0%, 100% {
+        border-color: var(--accent-indigo);
+        box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+    }
+    50% {
+        border-color: var(--accent-purple);
+        box-shadow: 0 0 30px rgba(168, 85, 247, 0.3);
+    }
+}

@@ -1,0 +1,21 @@
+{
+    "commands.openProject": "Open Project",
+    "commands.openProjectDesc": "Open a project folder",
+    "commands.changeProject": "Change Project",
+    "commands.changeProjectDesc": "Switch to a different project",
+    "commands.closeProject": "Close Project",
+    "commands.closeProjectDesc": "Close current project",
+    "commands.projectClosed": "Project closed",
+    "commands.searchFiles": "Search Files",
+    "commands.searchFilesDesc": "Search for files in current project",
+    "commands.analyzeCode": "Analyze Code",
+    "commands.analyzeCodeDesc": "Run code analysis on project",
+    "commands.generateCode": "Generate Code",
+    "commands.generateCodeDesc": "Generate code from task description",
+    "commands.reloadWindow": "Reload Window",
+    "commands.reloadWindowDesc": "Reload the application",
+    "commands.keyboardShortcuts": "Keyboard Shortcuts",
+    "commands.keyboardShortcutsDesc": "Show keyboard shortcuts guide",
+    "commands.newDocument": "New Document",
+    "commands.newDocumentDesc": "Create a new document"
+}

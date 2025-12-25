@@ -1,0 +1,200 @@
+name: Cross‑platform Build + Release — Syntaxia
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - "v*"
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  NODE_OPTIONS: "--max-old-space-size=4096"
+
+jobs:
+  # ───────────────────────── TEST ─────────────────────────
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: "frontend/package-lock.json"
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Run Frontend Tests
+        run: npm run test:run -- --coverage
+        working-directory: frontend
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache-dependency-path: backend/go.sum
+
+      - name: Run Backend Tests
+        run: go test ./application/... ./domain/... ./handlers/... ./infrastructure/... ./internal/... ./tests/... -short -count=1
+        working-directory: backend
+
+      - name: Create frontend dist placeholder
+        run: mkdir -p backend/frontend/dist && touch backend/frontend/dist/.gitkeep
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v4
+        with:
+          version: latest
+          working-directory: backend
+          args: --config .golangci.yml --timeout 5m
+
+  # ───────────────────── BUILD LINUX/WINDOWS ─────────────────────
+  build:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux/amd64
+            build_name: syntaxia-linux-amd64
+            artifact_name: syntaxia-linux-amd64
+            artifact_path: backend/build/bin/syntaxia-linux-amd64
+
+          - os: windows-latest
+            platform: windows/amd64
+            build_name: syntaxia-windows-amd64.exe
+            artifact_name: syntaxia-windows-amd64
+            artifact_path: backend/build/bin/syntaxia-windows-amd64.exe
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Build Wails app
+        uses: dAppServer/wails-build-action@main
+        with:
+          build-name: ${{ matrix.build_name }}
+          build-platform: ${{ matrix.platform }}
+          go-version: "1.24"
+          package: false
+          app-working-directory: backend
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_path }}
+          if-no-files-found: error
+
+  # ───────────────────── BUILD MACOS (manual) ─────────────────────
+  build-macos:
+    needs: test
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Build macOS app
+        run: wails build -platform darwin/arm64
+        working-directory: backend
+
+      - name: Package macOS app
+        run: |
+          cd backend/build/bin
+          zip -r Syntaxia.app.zip Syntaxia.app
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: syntaxia-darwin-arm64
+          path: backend/build/bin/Syntaxia.app.zip
+          if-no-files-found: error
+
+  # ─────────────────────── RELEASE ────────────────────────
+  release:
+    needs: [build, build-macos]
+    runs-on: ubuntu-latest
+    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: syntaxia-*
+          path: release-assets
+
+      - name: Prepare release metadata
+        id: prep
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            TAG="${{ github.ref_name }}"
+          else
+            TAG="v$(date -u '+%Y.%m.%d')-${GITHUB_SHA::7}"
+          fi
+          echo "tag_name=$TAG" >> $GITHUB_OUTPUT
+          echo "release_name=Syntaxia $TAG" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.prep.outputs.tag_name }}
+          name: ${{ steps.prep.outputs.release_name }}
+          body: |
+            📦 **Packages:** Linux (amd64), Windows (amd64), macOS (Apple Silicon)
+          draft: false
+          prerelease: false
+          files: release-assets/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

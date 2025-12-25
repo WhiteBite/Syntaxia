@@ -1,0 +1,104 @@
+/* ============================================
+   GIT COMPONENTS
+   ============================================ */
+
+.git-branch-item {
+    @apply w-full px-3 py-2 text-left text-sm rounded-lg;
+    @apply flex items-center gap-2;
+    color: var(--text-secondary);
+    transition: all 150ms ease-out;
+}
+
+.git-branch-item:hover {
+    background: var(--bg-2);
+    color: var(--text-primary);
+}
+
+.git-branch-item-selected {
+    background: var(--accent-purple-bg);
+    color: white;
+    border: 1px solid var(--accent-purple-border);
+}
+
+.git-branch-item-current {
+    background: var(--accent-emerald-bg);
+    color: white;
+    border: 1px solid var(--accent-emerald-border);
+}
+
+.git-commit-hash {
+    @apply text-xs text-amber-300 font-mono;
+}
+
+.git-diff-added { 
+    background: var(--color-success-soft); 
+    color: var(--color-success); 
+}
+
+.git-diff-deleted { 
+    background: var(--color-danger-soft); 
+    color: var(--color-danger); 
+}
+
+.git-diff-modified { 
+    background: var(--color-warning-soft); 
+    color: var(--color-warning); 
+}
+
+/* Git Filter Chips */
+.git-filter-chip {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl;
+    @apply cursor-pointer select-none;
+    background: var(--bg-2);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-default);
+    transition: all 150ms ease-out;
+}
+
+.git-filter-chip:hover {
+    background: var(--bg-3);
+    color: var(--text-primary);
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
+}
+
+.git-filter-chip-active {
+    background: var(--accent-indigo-bg);
+    color: white;
+    border-color: var(--accent-indigo-border);
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
+}
+
+.git-filter-chip-active:hover {
+    background: rgba(99, 102, 241, 0.35);
+}
+
+.git-filter-icon {
+    @apply text-sm;
+}
+
+.git-filter-count {
+    @apply px-1.5 py-0.5 rounded-full text-[10px] font-bold;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Branch Info Card */
+.branch-info {
+    @apply flex items-center gap-3 p-3 rounded-xl;
+    background: var(--bg-2);
+    border: 1px solid var(--border-default);
+}
+
+/* File List Container */
+.file-list-container {
+    @apply max-h-64 overflow-y-auto rounded-xl;
+    background: var(--bg-1);
+    border: 1px solid var(--border-subtle);
+}
+
+/* Tree Git Status */
+.tree-git { @apply w-2 h-2 rounded-full flex-shrink-0; }
+.tree-git-tracked { background: var(--color-success); box-shadow: 0 0 6px var(--color-success); }
+.tree-git-modified { background: var(--color-warning); box-shadow: 0 0 6px var(--color-warning); }
+.tree-git-untracked { background: var(--color-danger); box-shadow: 0 0 6px var(--color-danger); }
+.tree-git-ignored { background: var(--text-subtle); }

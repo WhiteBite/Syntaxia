@@ -1,0 +1,614 @@
+/* ============================================
+   TREE VIEW COMPONENTS
+   Uses CSS variables from variables.css
+   ============================================ */
+
+/* Tree Item */
+.tree-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0.375rem var(--space-2);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+}
+
+.tree-item:hover {
+    background: var(--bg-2);
+    color: var(--text-primary);
+    transform: translateX(2px);
+}
+
+.tree-item-selected {
+    background: var(--accent-indigo-bg);
+    color: white;
+    border-left: 2px solid var(--accent-indigo);
+    box-shadow: inset 0 0 0 1px var(--accent-indigo-border);
+}
+
+.tree-checkbox {
+    flex-shrink: 0;
+    width: var(--tree-checkbox-size);
+    height: var(--tree-checkbox-size);
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--border-strong);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.tree-checkbox:hover {
+    border-color: var(--text-muted);
+    background: var(--bg-2);
+}
+
+.tree-checkbox-checked {
+    background: var(--accent-indigo);
+    border-color: var(--accent-indigo);
+}
+
+.tree-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+}
+
+.tree-count {
+    font-size: var(--font-size-xs);
+    color: var(--text-subtle);
+}
+
+/* File Tree Container - removed, using inline Tailwind classes instead */
+
+/* Tree Scroller - ensure no gaps between items */
+.tree-scroller {
+    height: 100% !important;
+    max-height: 100% !important;
+}
+
+.tree-scroller .vue-recycle-scroller__item-view {
+    /* Remove any default spacing */
+    margin: 0 !important;
+    padding: 0 !important;
+    /* Allow SVG overflow for guide lines */
+    overflow: visible !important;
+}
+
+/* Tree Row */
+.tree-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0;
+    border-radius: 0;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    color: var(--text-secondary);
+    height: 26px;
+    min-height: 26px;
+    max-height: 26px;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+.tree-row:hover {
+    background: var(--tree-hover-bg);
+    color: var(--text-primary);
+}
+
+.tree-row-selected {
+    background: rgba(99, 102, 241, 0.18) !important;
+    color: white !important;
+}
+
+.tree-row-selected:hover {
+    background: rgba(99, 102, 241, 0.25) !important;
+}
+
+/* Tree Guide Lines */
+.tree-guides {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    overflow: visible;
+    z-index: 0;
+    /* Ensure SVG is not clipped and covers full row height */
+    height: 26px !important;
+    display: block;
+}
+
+.tree-guide-line {
+    fill: none;
+    stroke-width: 1px;
+    stroke-linecap: square;
+    stroke-linejoin: miter;
+    opacity: 0.5;
+    transition: opacity var(--transition-fast);
+}
+
+.tree-row:hover .tree-guide-line {
+    opacity: 0.8;
+}
+
+/* Guide colors by depth - subtle colors */
+.tree-guide-1 { stroke: #60a5fa; } /* blue */
+.tree-guide-2 { stroke: #a78bfa; } /* purple */
+.tree-guide-3 { stroke: #f472b6; } /* pink */
+.tree-guide-4 { stroke: #34d399; } /* green */
+.tree-guide-5 { stroke: #64748b; } /* slate */
+
+/* ============================================
+   TREE ROW COMPONENTS (VirtualTreeRow)
+   ============================================ */
+
+/* Expand/Collapse Button */
+.tree-expand {
+    flex-shrink: 0;
+    width: var(--tree-expand-size);
+    height: var(--tree-expand-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+    color: #94a3b8;
+}
+
+.tree-row:hover .tree-expand {
+    color: #cbd5e1;
+}
+
+.tree-expand:hover {
+    color: #f1f5f9;
+    background: rgba(148, 163, 184, 0.15);
+}
+
+.tree-expand-icon {
+    width: 1.125rem;
+    height: 1.125rem;
+    transition: transform var(--transition-fast);
+}
+
+.tree-expand-open .tree-expand-icon {
+    transform: rotate(90deg);
+}
+
+/* Checkbox - visible with better contrast */
+.tree-cb {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid #64748b;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background: transparent;
+}
+
+.tree-row:hover .tree-cb {
+    border-color: #818cf8;
+    background: rgba(99, 102, 241, 0.08);
+}
+
+.tree-cb:hover {
+    border-color: #818cf8;
+    background: rgba(99, 102, 241, 0.12);
+}
+
+.tree-cb-checked {
+    background: #6366f1;
+    border-color: #6366f1;
+    box-shadow: 0 0 4px rgba(99, 102, 241, 0.4);
+}
+
+.tree-cb-partial {
+    background: rgba(99, 102, 241, 0.35);
+    border-color: #818cf8;
+}
+
+.tree-cb-icon {
+    width: 0.75rem;
+    height: 0.75rem;
+    color: white;
+}
+
+.tree-cb-disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    border-color: #475569;
+    background: rgba(71, 85, 105, 0.2);
+}
+
+.tree-cb-disabled:hover {
+    border-color: #475569;
+    background: rgba(71, 85, 105, 0.2);
+}
+
+.tree-row:hover .tree-cb-disabled {
+    border-color: #475569;
+    background: rgba(71, 85, 105, 0.25);
+}
+
+/* File/Folder Icon */
+.tree-icon {
+    flex-shrink: 0;
+    width: var(--tree-icon-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tree-folder-icon {
+    width: 18px;
+    height: 18px;
+    color: var(--tree-folder-color);
+    transition: all var(--transition-fast);
+}
+
+.tree-folder-open {
+    color: var(--tree-folder-open-color);
+}
+
+.tree-row:hover .tree-folder-icon {
+    color: var(--tree-folder-open-color);
+}
+
+.tree-file-icon {
+    font-size: var(--font-size-sm);
+}
+
+/* File Count (folders) - visible with subtle background */
+.tree-count {
+    font-size: 10px;
+    margin-left: auto;
+    margin-right: var(--space-2);
+    padding: 2px 6px;
+    border-radius: var(--radius-md);
+    color: #94a3b8;
+    background: rgba(100, 116, 139, 0.25);
+    font-weight: var(--font-weight-medium);
+    min-width: 1.25rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    transition: all var(--transition-fast);
+}
+
+.tree-row:hover .tree-count {
+    color: #cbd5e1;
+    background: rgba(100, 116, 139, 0.35);
+}
+
+.tree-row-selected .tree-count {
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.tree-count-bounce {
+    animation: count-bounce 300ms var(--ease-out);
+}
+
+@keyframes count-bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+/* File Size */
+.tree-size {
+    font-size: 11px;
+    margin-left: auto;
+    margin-right: var(--space-2);
+    color: #94a3b8;
+    font-weight: var(--font-weight-medium);
+    font-variant-numeric: tabular-nums;
+    transition: color var(--transition-fast);
+}
+
+.tree-row:hover .tree-size {
+    color: #cbd5e1;
+}
+
+/* Folder Weight Indicator (bubble-up) */
+.tree-weight {
+    font-size: 10px;
+    margin-right: var(--space-2);
+    padding: 2px 6px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, monospace;
+}
+
+.tree-weight--medium {
+    color: #fcd34d;
+    background: rgba(252, 211, 77, 0.15);
+    border: 1px solid rgba(252, 211, 77, 0.25);
+}
+
+.tree-weight--heavy {
+    color: #fb923c;
+    background: rgba(251, 146, 60, 0.15);
+    border: 1px solid rgba(251, 146, 60, 0.25);
+}
+
+.tree-weight--critical {
+    color: #f87171;
+    background: rgba(248, 113, 113, 0.15);
+    border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+/* File Token Badge (for heavy files) */
+.tree-token-badge {
+    font-size: 10px;
+    margin-left: auto;
+    margin-right: var(--space-2);
+    padding: 2px 6px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, monospace;
+    transition: opacity var(--transition-fast);
+}
+
+/* Medium/Heavy badges: hidden by default, show on hover */
+.tree-token-badge--medium,
+.tree-token-badge--heavy {
+    opacity: 0;
+}
+
+.tree-row:hover .tree-token-badge--medium,
+.tree-row:hover .tree-token-badge--heavy {
+    opacity: 1;
+}
+
+.tree-token-badge--medium {
+    color: #fcd34d;
+    background: rgba(252, 211, 77, 0.1);
+    border: 1px solid rgba(252, 211, 77, 0.2);
+}
+
+.tree-token-badge--heavy {
+    color: #fb923c;
+    background: rgba(251, 146, 60, 0.1);
+    border: 1px solid rgba(251, 146, 60, 0.2);
+}
+
+/* Critical badges: always visible */
+.tree-token-badge--critical {
+    color: #f87171;
+    background: rgba(248, 113, 113, 0.15);
+    border: 1px solid rgba(248, 113, 113, 0.25);
+}
+
+/* QuickLook Preview Button */
+.tree-preview {
+    opacity: 0;
+    margin-left: auto;
+    margin-right: var(--space-1);
+    padding: var(--space-1);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    transition: all var(--transition-fast);
+}
+
+.tree-preview:hover {
+    color: white;
+    background: var(--bg-2);
+}
+
+.tree-row:hover .tree-preview,
+.group:hover .tree-preview {
+    opacity: 1;
+}
+
+/* Parent folder of selected files - subtle highlight */
+.tree-row-has-selected {
+    background: var(--tree-has-selected-bg);
+    /* Use pseudo-element for left border to avoid layout shift */
+    position: relative;
+}
+
+.tree-row-has-selected::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 2px;
+    bottom: 2px;
+    width: 2px;
+    background: var(--tree-has-selected-border);
+    border-radius: 1px;
+    opacity: 0.6;
+}
+
+.tree-row-has-selected:hover {
+    background: var(--tree-hover-bg);
+}
+
+/* Checkbox ripple animation */
+.tree-cb-ripple {
+    animation: cb-ripple 400ms var(--ease-out);
+}
+
+@keyframes cb-ripple {
+    0% { box-shadow: 0 0 0 0 var(--accent-indigo-bg); }
+    100% { box-shadow: 0 0 0 8px transparent; }
+}
+
+/* Tree children animation */
+.tree-children-enter-active {
+    animation: tree-expand 200ms var(--ease-out);
+}
+
+.tree-children-leave-active {
+    animation: tree-collapse 150ms var(--ease-out);
+}
+
+@keyframes tree-expand {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes tree-collapse {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+}
+
+/* Stagger animation for tree items */
+.tree-stagger {
+    animation: tree-stagger 300ms var(--ease-out);
+}
+
+@keyframes tree-stagger {
+    from {
+        opacity: 0;
+        transform: translateX(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Tooltip for ignored files */
+.tree-tooltip {
+    position: absolute;
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-xs);
+    background: var(--bg-3);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+    z-index: var(--z-tooltip);
+}
+
+/* Tree hint when collapsed */
+.tree-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+    margin-top: var(--space-2);
+}
+
+.tree-hint-text {
+    font-size: var(--font-size-xs);
+    color: var(--text-subtle);
+    text-align: center;
+}
+
+/* ============================================
+   DEPTH BACKGROUNDS - subtle color by level
+   ============================================ */
+.tree-depth-1 { background: rgba(99, 102, 241, 0.02); }
+.tree-depth-2 { background: rgba(168, 85, 247, 0.02); }
+.tree-depth-3 { background: rgba(236, 72, 153, 0.02); }
+.tree-depth-4 { background: rgba(56, 189, 248, 0.02); }
+
+/* ============================================
+   GIT STATUS INDICATORS
+   ============================================ */
+.tree-git {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.tree-git-tracked {
+    background: var(--color-success);
+    box-shadow: 0 0 6px var(--color-success);
+}
+
+.tree-git-modified {
+    background: var(--color-warning);
+    box-shadow: 0 0 6px var(--color-warning);
+}
+
+.tree-git-untracked {
+    background: var(--color-danger);
+    box-shadow: 0 0 6px var(--color-danger);
+}
+
+.tree-git-ignored {
+    background: var(--text-subtle);
+}
+
+/* ============================================
+   SEARCH HIGHLIGHT
+   ============================================ */
+.tree-highlight {
+    background: rgba(251, 191, 36, 0.3);
+    color: white;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+/* ============================================
+   KEYBOARD FOCUS
+   ============================================ */
+.tree-row:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accent-indigo), 0 0 0 4px rgba(99, 102, 241, 0.2);
+}
+
+/* ============================================
+   EXPAND PULSE ANIMATION
+   ============================================ */
+.tree-expand-pulse {
+    animation: tree-expand-pulse 300ms ease-out;
+}
+
+@keyframes tree-expand-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* ============================================
+   BINARY FILE INDICATOR
+   ============================================ */
+.tree-binary-badge {
+    font-size: 9px;
+    margin-left: auto;
+    margin-right: var(--space-2);
+    padding: 1px 4px;
+    border-radius: var(--radius-sm);
+    color: #f97316;
+    background: rgba(249, 115, 22, 0.15);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all var(--transition-fast);
+}
+
+.tree-row:hover .tree-binary-badge {
+    color: #fb923c;
+    background: rgba(249, 115, 22, 0.25);
+}
+
+.tree-row-selected .tree-binary-badge {
+    color: #fdba74;
+    background: rgba(249, 115, 22, 0.3);
+}

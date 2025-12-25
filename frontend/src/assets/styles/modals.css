@@ -1,0 +1,206 @@
+/* ============================================
+   MODAL COMPONENTS
+   ============================================ */
+
+.modal-overlay {
+    @apply fixed inset-0 bg-black/60 backdrop-blur-sm;
+    z-index: var(--z-modal-backdrop);
+}
+
+.modal-container {
+    @apply fixed inset-0 flex items-center justify-center p-4;
+    z-index: var(--z-modal);
+}
+
+.modal-content {
+    @apply w-full max-w-lg p-6 rounded-2xl;
+    background: var(--bg-1);
+    border: 1px solid var(--border-default);
+    box-shadow: var(--shadow-xl);
+}
+
+.modal-title {
+    @apply text-lg font-semibold mb-2;
+    color: var(--text-primary);
+}
+
+.modal-text {
+    @apply text-sm mb-4;
+    color: var(--text-muted);
+}
+
+/* Modal Enhanced */
+.modal-backdrop-enhanced {
+    @apply fixed inset-0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    z-index: var(--z-modal-backdrop);
+    animation: modalBackdropIn 200ms ease-out;
+}
+
+@keyframes modalBackdropIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content-enhanced {
+    @apply w-full max-w-lg p-6 rounded-2xl;
+    background: var(--bg-1);
+    border: 1px solid var(--border-default);
+    box-shadow: var(--shadow-xl);
+    animation: modalContentIn 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalContentIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* QuickLook Modal */
+.quicklook-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.quicklook-modal {
+    width: 100%;
+    max-width: 56rem;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    border-radius: 1rem;
+    overflow: hidden;
+    background: var(--bg-1);
+    border: 1px solid var(--border-default);
+    box-shadow: var(--shadow-xl);
+}
+
+.quicklook-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: var(--bg-2);
+    border-bottom: 1px solid var(--border-default);
+}
+
+.quicklook-filename {
+    font-weight: 600;
+    color: white;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.quicklook-path {
+    font-size: 0.75rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-muted);
+}
+
+.quicklook-content {
+    flex: 1;
+    overflow: auto;
+    min-height: 200px;
+    max-height: 60vh;
+}
+
+.quicklook-loading,
+.quicklook-error,
+.quicklook-binary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 3rem 0;
+    color: var(--text-secondary);
+}
+
+.quicklook-code {
+    padding: 1rem;
+    margin: 0;
+    font-size: 0.875rem;
+    font-family: ui-monospace, monospace;
+    background: var(--bg-0);
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.quicklook-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--bg-2);
+    border-top: 1px solid var(--border-default);
+}
+
+
+/* Standard Modal Layout */
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    background: var(--bg-2);
+    border-bottom: 1px solid var(--border-default);
+}
+
+.modal-body {
+    padding: 1.25rem;
+    overflow-y: auto;
+    max-height: calc(80vh - 120px);
+}
+
+.modal-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    background: transparent;
+    border: none;
+    border-radius: 0.375rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.modal-close:hover {
+    background: var(--bg-3);
+    color: var(--text-primary);
+}
+
+/* Modal Animation */
+.modal-enter-active,
+.modal-leave-active {
+    transition: all 0.2s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+    opacity: 0;
+}
+
+.modal-enter-from .modal-container,
+.modal-leave-to .modal-container {
+    transform: scale(0.95);
+}

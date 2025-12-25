@@ -1,0 +1,47 @@
+.user-form {
+  background: #1a1a1a;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 400px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: #888;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #333;
+  border-radius: 4px;
+  background: #242424;
+  color: white;
+  font-size: 1em;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #646cff;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.form-actions button[type="submit"] {
+  background-color: #646cff;
+  color: white;
+}
+
+.form-actions button[type="button"] {
+  background-color: #333;
+  color: white;
+}

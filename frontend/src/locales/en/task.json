@@ -1,0 +1,9 @@
+{
+    "task.title": "Task Description",
+    "task.placeholder": "Describe what you want to accomplish...\n\nExamples:\n• Refactor authentication service\n• Add dark mode support\n• Implement file upload feature",
+    "task.quickSuggestions": "Quick suggestions:",
+    "task.analysisResult": "Analysis Result:",
+    "task.complexity": "Complexity",
+    "task.estimatedFiles": "Estimated files",
+    "task.suggestedApproach": "Suggested approach"
+}

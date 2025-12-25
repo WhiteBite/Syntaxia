@@ -1,0 +1,156 @@
+# Task Protocol Configuration Example for TypeScript/Node.js Projects
+# This file shows recommended settings for TypeScript-based web applications
+
+task_protocol:
+  # Global settings optimized for TypeScript projects
+  max_retries: 4
+  fail_fast: false
+  timeout_seconds: 1800  # 30 minutes for TypeScript projects (longer builds)
+  
+  # Self-correction settings for TypeScript
+  self_correction:
+    enabled: true
+    max_attempts: 5
+    ai_assistance: true
+    
+  # Stage configuration optimized for TypeScript
+  stages:
+    linting:
+      enabled: true
+      timeout_seconds: 240  # 4 minutes for TypeScript linting
+      tools: ["eslint", "@typescript-eslint", "prettier"]
+      fail_on_warning: false  # TypeScript projects often have many warnings
+      
+    building:
+      enabled: true
+      timeout_seconds: 600  # 10 minutes for TypeScript builds
+      strict_mode: true
+      type_checking: true
+      
+    testing:
+      enabled: true
+      timeout_seconds: 900  # 15 minutes for TypeScript tests
+      scope: "affected"
+      parallel_tests: true
+      coverage_threshold: 75
+      
+    guardrails:
+      enabled: true
+      timeout_seconds: 120  # 2 minutes for guardrails
+      enforce_policies: true
+      fail_on_violation: true
+
+  # TypeScript-specific configurations
+  language_specific:
+    typescript:
+      linting:
+        tools: ["eslint", "@typescript-eslint/eslint-plugin"]
+        extends: ["@typescript-eslint/recommended", "prettier"]
+        strict: true
+        rules:
+          - "no-any"
+          - "explicit-function-return-type"
+          - "no-unused-vars"
+        
+      building:
+        strict_mode: true
+        no_implicit_any: true
+        type_checking: true
+        source_maps: true
+        declaration_files: true
+        target: "ES2020"
+        module: "ESNext"
+        
+      testing:
+        framework: "vitest"
+        coverage_threshold: 75
+        parallel: true
+        test_environment: "jsdom"
+        setup_files: ["./src/test/setup.ts"]
+
+    javascript:
+      linting:
+        tools: ["eslint", "prettier"]
+        extends: ["eslint:recommended", "prettier"]
+        
+      building:
+        babel_transpile: true
+        minify: true
+        source_maps: true
+        
+      testing:
+        framework: "jest"
+        coverage_threshold: 70
+
+  # Error correction rules for TypeScript
+  error_correction:
+    import_errors:
+      auto_fix: true
+      priority: 100
+      strategies: ["organize_imports", "fix_import_path", "add_missing_import"]
+      
+    syntax_errors:
+      auto_fix: true
+      priority: 90
+      strategies: ["prettier", "fix_brackets", "fix_semicolons", "fix_quotes"]
+      
+    type_errors:
+      auto_fix: true
+      priority: 80
+      strategies: ["add_type_annotation", "fix_interface", "add_as_cast"]
+      
+    linting_errors:
+      auto_fix: true
+      priority: 60
+      strategies: ["eslint_fix", "prettier", "remove_unused"]
+
+  # Guardrail policies for TypeScript projects
+  guardrail_policies:
+    security:
+      enabled: true
+      scan_vulnerabilities: true
+      check_licenses: true
+      audit_packages: true
+      
+    resource_limits:
+      max_files_changed: 200
+      max_lines_changed: 2000
+      max_memory_usage: "2GB"
+      max_bundle_size: "5MB"
+      
+    quality:
+      min_code_coverage: 75
+      max_complexity: 15
+      require_documentation: false
+      enforce_prettier: true
+
+  # TypeScript-specific validation rules
+  validation_rules:
+    package_json_validation: true
+    tsconfig_validation: true
+    dependency_check: true
+    build_output_validation: true
+    type_declaration_check: true
+
+  # Framework-specific settings
+  framework_settings:
+    react:
+      jsx_runtime: "automatic"
+      strict_mode: true
+      hooks_rules: true
+      
+    vue:
+      version: 3
+      composition_api: true
+      
+    node:
+      version: "18.x"
+      esm_modules: true
+
+  # Build and deployment settings
+  build_settings:
+    bundler: "vite"  # or "webpack", "rollup", "esbuild"
+    output_dir: "dist"
+    public_dir: "public"
+    env_validation: true
+    tree_shaking: true

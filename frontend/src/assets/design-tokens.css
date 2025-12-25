@@ -1,0 +1,25 @@
+/* ============================================
+   SYNTAXIA - DESIGN SYSTEM v2.1
+   Enhanced Dark Theme with Improved Contrast
+   
+   This file imports all style modules.
+   Individual styles are in ./styles/ directory.
+   ============================================ */
+
+@import './styles/variables.css';
+@import './styles/layout.css';
+@import './styles/buttons.css';
+@import './styles/cards.css';
+@import './styles/forms.css';
+@import './styles/tabs.css';
+@import './styles/badges.css';
+@import './styles/toasts.css';
+@import './styles/modals.css';
+@import './styles/tree.css';
+@import './styles/loading.css';
+@import './styles/utilities.css';
+@import './styles/sections.css';
+@import './styles/toggles.css';
+@import './styles/git.css';
+@import './styles/animations.css';
+@import './styles/accessibility.css';

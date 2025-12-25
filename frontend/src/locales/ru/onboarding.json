@@ -1,0 +1,15 @@
+{
+    "onboarding.step1Title": "Выберите файлы",
+    "onboarding.step1Desc": "Отметьте файлы и папки которые хотите включить в контекст для AI",
+    "onboarding.step2Title": "Постройте контекст",
+    "onboarding.step2Desc": "Нажмите эту кнопку чтобы собрать контекст из выбранных файлов",
+    "onboarding.step3Title": "Просмотрите результат",
+    "onboarding.step3Desc": "Здесь отображается собранный контекст. Можно копировать или экспортировать",
+    "onboarding.step4Title": "Используйте AI",
+    "onboarding.step4Desc": "Задавайте вопросы AI с учётом контекста вашего проекта",
+    "onboarding.next": "Далее",
+    "onboarding.prev": "Назад",
+    "onboarding.done": "Готово",
+    "onboarding.startTour": "Показать обучение",
+    "onboarding.skip": "Пропустить"
+}

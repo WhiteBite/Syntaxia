@@ -1,0 +1,21 @@
+{
+    "commands.openProject": "Открыть проект",
+    "commands.openProjectDesc": "Открыть папку проекта",
+    "commands.changeProject": "Сменить проект",
+    "commands.changeProjectDesc": "Переключиться на другой проект",
+    "commands.closeProject": "Закрыть проект",
+    "commands.closeProjectDesc": "Закрыть текущий проект",
+    "commands.projectClosed": "Проект закрыт",
+    "commands.searchFiles": "Поиск файлов",
+    "commands.searchFilesDesc": "Поиск файлов в текущем проекте",
+    "commands.analyzeCode": "Анализ кода",
+    "commands.analyzeCodeDesc": "Запустить анализ кода проекта",
+    "commands.generateCode": "Генерация кода",
+    "commands.generateCodeDesc": "Сгенерировать код по описанию задачи",
+    "commands.reloadWindow": "Перезагрузить окно",
+    "commands.reloadWindowDesc": "Перезагрузить приложение",
+    "commands.keyboardShortcuts": "Горячие клавиши",
+    "commands.keyboardShortcutsDesc": "Показать справку по горячим клавишам",
+    "commands.newDocument": "Новый документ",
+    "commands.newDocumentDesc": "Создать новый документ"
+}

@@ -1,0 +1,82 @@
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+/* Scrollbar Styling */
+.scrollable-y {
+    @apply overflow-y-auto overflow-x-hidden;
+}
+
+.scrollable-x {
+    @apply overflow-x-auto overflow-y-hidden;
+}
+
+.scrollable-y::-webkit-scrollbar,
+.scrollable-x::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.scrollable-y::-webkit-scrollbar-track,
+.scrollable-x::-webkit-scrollbar-track {
+    background: var(--bg-1);
+    border-radius: 3px;
+}
+
+.scrollable-y::-webkit-scrollbar-thumb,
+.scrollable-x::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.35);
+    border-radius: 3px;
+    transition: background 150ms ease-out;
+}
+
+.scrollable-y::-webkit-scrollbar-thumb:hover,
+.scrollable-x::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.55);
+}
+
+/* Dividers */
+.divider {
+    @apply w-px h-4 bg-gray-700;
+}
+
+.divider-horizontal {
+    @apply h-px w-full bg-gray-700/50;
+}
+
+/* Text Size Utilities */
+.text-2xs {
+    font-size: 10px;
+    line-height: 14px;
+}
+
+/* Border Accent Utilities */
+.border-l-accent-indigo {
+    border-left: 2px solid var(--accent-indigo-border);
+}
+
+.border-l-accent-purple {
+    border-left: 2px solid var(--accent-purple-border);
+}
+
+/* Ignored File Styling */
+.ignored-file {
+    opacity: 0.5;
+    transition: opacity 150ms ease-out;
+}
+
+.ignored-file:hover {
+    opacity: 0.7;
+}
+
+/* Empty State Enhanced */
+.empty-state-enhanced {
+    @apply flex flex-col items-center justify-center text-center p-8;
+}
+
+.empty-state-icon-glow {
+    @apply w-16 h-16 rounded-2xl flex items-center justify-center;
+    background: var(--accent-indigo-bg);
+    border: 1px solid var(--accent-indigo-border);
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+}

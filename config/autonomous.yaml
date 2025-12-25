@@ -1,0 +1,128 @@
+# Конфигурация автономного режима
+autonomous:
+  enabled: true
+  check_interval: 30  # секунды
+  max_concurrent_tasks: 1
+  max_retries: 3
+  timeout_per_task: 1800  # 30 минут
+  pause_on_error: 300  # 5 минут
+  
+  notifications:
+    enabled: true
+    critical_errors: true
+    daily_reports: true
+    weekly_summaries: true
+    monthly_analytics: true
+
+# Конфигурация качества
+quality:
+  enabled: true
+  strict_mode: true
+  
+  checks:
+    formatting: true
+    linting: true
+    static_analysis: true
+    testing: true
+    coverage: true
+    security: true
+    licensing: true
+    
+  thresholds:
+    code_coverage: 80
+    test_pass_rate: 100
+    static_errors: 0
+    security_issues: 0
+    
+  auto_fix:
+    enabled: true
+    max_attempts: 3
+    safe_only: true
+
+# Конфигурация UX метрик
+ux_metrics:
+  enabled: true
+  auto_collect: true
+  reports_dir: "reports/ux"
+  retention_days: 30
+  
+  why_view:
+    enabled: true
+    auto_generate: true
+    confidence_threshold: 0.7
+    
+  time_to_green:
+    enabled: true
+    track_attempts: true
+    bottleneck_analysis: true
+    
+  performance:
+    enabled: true
+    sampling_interval: 5s
+    alert_thresholds:
+      cpu: 80
+      memory: 85
+      disk: 90
+      
+  derived_diff:
+    enabled: true
+    risk_assessment: true
+    security_scan: true
+
+# Конфигурация безопасности
+security:
+  enabled: true
+  
+  forbidden_paths:
+    - "go.mod"
+    - "go.sum"
+    - "package.json"
+    - "package-lock.json"
+    - ".env"
+    - ".env.local"
+    - "secrets/"
+    - "keys/"
+    - "dist/"
+    - "node_modules/"
+    - ".cursor/rules/cutc.mdc"
+    
+  allowed_operations:
+    - "read_config"
+    - "modify_source_code"
+    - "create_tests"
+    - "update_documentation"
+    - "generate_reports"
+    
+  restrictions:
+    - "no_absolute_paths"
+    - "no_parent_directory_access"
+    - "workspace_only"
+    - "permission_check"
+
+# Конфигурация MCP инструментов
+mcp:
+  enabled: true
+  
+  required_tools:
+    - "filesystem"
+    - "git"
+    - "process"
+    - "search"
+    - "memory"
+    - "browsermcp"
+    
+  allowed_commands:
+    - "go"
+    - "git"
+    - "npm"
+    - "node"
+    - "tsc"
+    - "eslint"
+    - "prettier"
+    - "rg"
+    - "grep"
+    
+  external_calls:
+    requires_escalation: true
+    context_pack: true
+    provenance_logging: true
