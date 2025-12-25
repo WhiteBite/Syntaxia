@@ -40,6 +40,7 @@ func (s *Service) registerOS(exePath string) error {
 "%s" "$NAUTILUS_SCRIPT_CURRENT_URI"
 `, exePath)
 
+	// #nosec G306 -- nautilus script needs execute permission
 	if err := os.WriteFile(s.getDesktopFilePath(), []byte(nautilusScript), 0700); err != nil {
 		return fmt.Errorf("failed to write nautilus script: %w", err)
 	}
