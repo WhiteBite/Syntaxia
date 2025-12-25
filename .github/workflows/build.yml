@@ -197,20 +197,62 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get commits since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$LAST_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"• %s" $LAST_TAG..HEAD --no-merges | head -20)
+          else
+            COMMITS=$(git log --pretty=format:"• %s" -20 --no-merges)
+          fi
+          # Escape for GitHub Actions
+          COMMITS="${COMMITS//'%'/'%25'}"
+          COMMITS="${COMMITS//$'\n'/'%0A'}"
+          COMMITS="${COMMITS//$'\r'/'%0D'}"
+          echo "commits=$COMMITS" >> $GITHUB_OUTPUT
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.prep.outputs.tag_name }}
           name: ${{ steps.prep.outputs.release_name }}
           body: |
-            🚀 **Syntaxia ${{ steps.prep.outputs.tag_name }}**
+            <div align="center">
             
-            📦 **Downloads:**
-            - 🐧 Linux (amd64)
-            - 🪟 Windows (amd64)  
-            - 🍎 macOS (Apple Silicon)
+            ![Syntaxia](https://raw.githubusercontent.com/WhiteBite/Syntaxia/main/syntaxia-icon.png)
             
-            📝 [Changelog](https://github.com/WhiteBite/Syntaxia/commits/main)
+            # 🚀 Syntaxia ${{ steps.prep.outputs.tag_name }}
+            
+            **AI-Powered Code Context Builder**
+            
+            </div>
+            
+            ---
+            
+            ## 📦 Downloads
+            
+            | Platform | File | Architecture |
+            |----------|------|--------------|
+            | 🪟 Windows | `SyntaxiaWB.exe` | x64 |
+            | 🐧 Linux | `SyntaxiaWB` | x64 |
+            | 🍎 macOS | `SyntaxiaWB.app.zip` | Apple Silicon |
+            
+            ---
+            
+            ## 📝 What's Changed
+            
+            ${{ steps.changelog.outputs.commits }}
+            
+            ---
+            
+            ## 🔗 Links
+            
+            - 📖 [Documentation](https://github.com/WhiteBite/Syntaxia#readme)
+            - 💬 [Telegram](https://t.me/whitebite_devsoft)
+            - 🐛 [Report Issue](https://github.com/WhiteBite/Syntaxia/issues)
+            
           draft: false
           prerelease: ${{ steps.prep.outputs.is_tag == 'false' }}
           files: release-assets/**/*
@@ -224,10 +266,16 @@ jobs:
             -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
             -d message_thread_id="96" \
             -d parse_mode="HTML" \
+            -d disable_web_page_preview="false" \
             -d text="🚀 <b>Syntaxia ${{ steps.prep.outputs.tag_name }}</b>
 
-          New release is available!
+<i>AI-Powered Code Context Builder</i>
 
-          📦 <a href=\"https://github.com/WhiteBite/Syntaxia/releases/tag/${{ steps.prep.outputs.tag_name }}\">Download</a>
+📦 <b>Downloads:</b>
+• Windows (x64)
+• Linux (x64)
+• macOS (Apple Silicon)
 
-          #syntaxia #release"
+🔗 <a href=\"https://github.com/WhiteBite/Syntaxia/releases/tag/${{ steps.prep.outputs.tag_name }}\">GitHub Release</a>
+
+#syntaxia #release #opensource"
