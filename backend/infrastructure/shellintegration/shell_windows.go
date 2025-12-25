@@ -70,6 +70,7 @@ func (s *Service) registerOS(exePath string) error {
 	}
 
 	for _, args := range commands {
+		// #nosec G204 -- args are constructed from trusted constants, not user input
 		cmd := exec.Command(args[0], args[1:]...)
 		if output, err := cmd.CombinedOutput(); err != nil {
 			return fmt.Errorf("failed to execute %s: %w, output: %s", strings.Join(args, " "), err, string(output))
@@ -87,6 +88,7 @@ func (s *Service) unregisterOS() error {
 
 	var lastErr error
 	for _, args := range commands {
+		// #nosec G204 -- args are constructed from trusted constants, not user input
 		cmd := exec.Command(args[0], args[1:]...)
 		if err := cmd.Run(); err != nil {
 			lastErr = err

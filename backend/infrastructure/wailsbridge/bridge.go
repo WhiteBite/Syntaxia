@@ -88,7 +88,7 @@ type WindowState struct {
 func (b *Bridge) GetWindowState() WindowState {
 	// Use recover to handle panic from Wails when window is already closed
 	defer func() {
-		recover()
+		_ = recover()
 	}()
 
 	w, h := runtime.WindowGetSize(b.ctx)
