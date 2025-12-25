@@ -121,6 +121,8 @@ issues:
     - vendor
     - frontend
     - cmd
+    - examples
+    - testutils
   exclude-files:
     - main.go
     - app.go
