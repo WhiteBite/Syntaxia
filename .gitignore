@@ -308,8 +308,9 @@ fabric.properties
 # Example projects for testing (node_modules inside them)
 examples/*/node_modules/
 
-# Kiro IDE
-.kiro/
+# Kiro IDE (keep steering rules in repo)
+.kiro/settings/
+.kiro/specs/
 
 # Roo
 .roo/

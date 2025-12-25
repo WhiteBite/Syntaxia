@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="shotgun-icon.png" alt="Syntaxia Logo" width="128" height="128">
+  <img src="syntaxia-icon.png" alt="Syntaxia Logo" width="128" height="128">
 </p>
 
 <h1 align="center">Syntaxia</h1>
