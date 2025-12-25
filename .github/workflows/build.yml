@@ -69,15 +69,15 @@ jobs:
         include:
           - os: ubuntu-latest
             platform: linux/amd64
-            build_name: syntaxia-linux-amd64
+            build_name: SyntaxiaWB
             artifact_name: syntaxia-linux-amd64
-            artifact_path: backend/build/bin/syntaxia-linux-amd64
+            artifact_path: backend/build/bin/SyntaxiaWB
 
           - os: windows-latest
             platform: windows/amd64
-            build_name: syntaxia-windows-amd64.exe
+            build_name: SyntaxiaWB.exe
             artifact_name: syntaxia-windows-amd64
-            artifact_path: backend/build/bin/syntaxia-windows-amd64.exe
+            artifact_path: backend/build/bin/SyntaxiaWB.exe
 
     runs-on: ${{ matrix.os }}
 
@@ -148,13 +148,13 @@ jobs:
       - name: Package macOS app
         run: |
           cd backend/build/bin
-          zip -r Syntaxia.app.zip Syntaxia.app
+          zip -r SyntaxiaWB.app.zip SyntaxiaWB.app
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: syntaxia-darwin-arm64
-          path: backend/build/bin/Syntaxia.app.zip
+          path: backend/build/bin/SyntaxiaWB.app.zip
           if-no-files-found: error
 
   # ─────────────────────── RELEASE ────────────────────────
