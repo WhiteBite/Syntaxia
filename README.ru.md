@@ -99,6 +99,11 @@ Syntaxia помогает подготовить контекст кода дл�
   <img src="docs/screenshots/ai-chat.png" alt="AI Chat" width="800">
 </p>
 
+### Превью контекста
+<p align="center">
+  <img src="docs/screenshots/context-built.png" alt="Context Preview" width="800">
+</p>
+
 ### Git интеграция
 <p align="center">
   <img src="docs/screenshots/git-panel.png" alt="Git Panel" width="800">

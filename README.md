@@ -100,6 +100,11 @@ Syntaxia helps you prepare code context for AI assistants like ChatGPT, Claude, 
   <img src="docs/screenshots/ai-chat.png" alt="AI Chat" width="800">
 </p>
 
+### Context Preview
+<p align="center">
+  <img src="docs/screenshots/context-built.png" alt="Context Preview" width="800">
+</p>
+
 ### Git Integration
 <p align="center">
   <img src="docs/screenshots/git-panel.png" alt="Git Panel" width="800">
