@@ -17,7 +17,10 @@
     <img src="https://img.shields.io/github/v/release/WhiteBite/Syntaxia?color=blue" alt="Release">
   </a>
   <a href="https://github.com/WhiteBite/Syntaxia/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/WhiteBite/Syntaxia" alt="License">
+    <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
+  </a>
+  <a href="https://t.me/whitebite_devsoft">
+    <img src="https://img.shields.io/badge/Telegram-Channel-blue?logo=telegram" alt="Telegram">
   </a>
   <img src="https://img.shields.io/github/stars/WhiteBite/Syntaxia?style=social" alt="Stars">
 </p>
@@ -237,6 +240,12 @@ cd frontend && npm run build && npm run test:run
 
 ---
 
+## 🙏 Credits
+
+Inspired by [Shotgun Code](https://github.com/glebkudr/shotgun_code) by [@glebkudr](https://github.com/glebkudr).
+
+---
+
 ## 📄 License
 
 [MIT License](LICENSE) — free for personal and commercial use.
@@ -248,5 +257,6 @@ cd frontend && npm run build && npm run test:run
 </p>
 
 <p align="center">
-  <a href="https://github.com/WhiteBite/Syntaxia/stargazers">⭐ Star this repo</a> if you find it useful!
+  <a href="https://t.me/whitebite_devsoft">💬 Telegram</a> •
+  <a href="https://github.com/WhiteBite/Syntaxia/stargazers">⭐ Star this repo</a>
 </p>
