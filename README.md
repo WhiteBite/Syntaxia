@@ -10,127 +10,169 @@
 </p>
 
 <p align="center">
-  <a href="#features">Features</a> •
-  <a href="#screenshots">Screenshots</a> •
-  <a href="#installation">Installation</a> •
-  <a href="#usage">Usage</a> •
-  <a href="#supported-ai">AI Providers</a> •
-  <a href="#tech-stack">Tech Stack</a>
+  <a href="https://github.com/WhiteBite/Syntaxia/actions/workflows/build.yml">
+    <img src="https://github.com/WhiteBite/Syntaxia/actions/workflows/build.yml/badge.svg" alt="Build Status">
+  </a>
+  <a href="https://github.com/WhiteBite/Syntaxia/releases/latest">
+    <img src="https://img.shields.io/github/v/release/WhiteBite/Syntaxia?color=blue" alt="Release">
+  </a>
+  <a href="https://github.com/WhiteBite/Syntaxia/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/WhiteBite/Syntaxia" alt="License">
+  </a>
+  <img src="https://img.shields.io/github/stars/WhiteBite/Syntaxia?style=social" alt="Stars">
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Go-1.24+-00ADD8?logo=go" alt="Go">
-  <img src="https://img.shields.io/badge/Vue-3-4FC08D?logo=vue.js" alt="Vue 3">
-  <img src="https://img.shields.io/badge/Wails-v2-red" alt="Wails">
+  <img src="https://img.shields.io/badge/Go-1.24+-00ADD8?logo=go&logoColor=white" alt="Go">
+  <img src="https://img.shields.io/badge/Vue-3-4FC08D?logo=vue.js&logoColor=white" alt="Vue 3">
+  <img src="https://img.shields.io/badge/Wails-v2-EB4034?logo=wails&logoColor=white" alt="Wails">
   <img src="https://img.shields.io/badge/Platform-Windows%20|%20macOS%20|%20Linux-blue" alt="Platform">
 </p>
 
----
-
-## What is Syntaxia?
-
-Syntaxia helps you prepare code context for AI assistants like ChatGPT, Claude, or Gemini. Instead of manually copying files, Syntaxia:
-
-- 📁 **Scans your project** with smart filtering (respects .gitignore)
-- 🎯 **Selects relevant files** manually or with AI suggestions
-- ⚡ **Optimizes output** by removing comments, licenses, empty lines
-- 📋 **Exports context** ready to paste into any AI chat
-- 💬 **Built-in AI Chat** for direct interaction with your codebase
+<p align="center">
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-features">Features</a> •
+  <a href="#-screenshots">Screenshots</a> •
+  <a href="#-installation">Installation</a> •
+  <a href="#-ai-providers">AI Providers</a> •
+  <a href="README.ru.md">Русский</a>
+</p>
 
 ---
 
-## Features
+## 🎯 What is Syntaxia?
+
+Syntaxia helps you prepare code context for AI assistants like ChatGPT, Claude, or Gemini. Instead of manually copying files:
+
+| Without Syntaxia | With Syntaxia |
+|------------------|---------------|
+| ❌ Manually copy each file | ✅ Select files in tree view |
+| ❌ Exceed token limits | ✅ Auto token counting & limits |
+| ❌ Include irrelevant code | ✅ AI suggests relevant files |
+| ❌ Paste comments & licenses | ✅ Smart optimization removes noise |
+| ❌ Switch between apps | ✅ Built-in AI chat |
+
+---
+
+## ⚡ Quick Start
+
+```bash
+# 1. Download latest release for your platform
+# https://github.com/WhiteBite/Syntaxia/releases
+
+# 2. Open your project folder
+
+# 3. Select files → Build → Copy to AI chat
+```
+
+**That's it!** Your optimized context is ready for any AI assistant.
+
+---
+
+## ✨ Features
+
+<table>
+<tr>
+<td width="50%">
 
 ### 🗂️ Smart File Browser
-- Tree view with file type icons and sizes
-- Filter by file type (Go, TypeScript, Vue, etc.)
+- Tree view with file type icons
+- Filter by type (Go, TS, Vue, etc.)
 - Search across all files
-- Respects `.gitignore` and custom ignore rules
-- File count badges for folders
+- Respects `.gitignore`
+- Token count per file/folder
+
+</td>
+<td width="50%">
 
 ### 🔀 Git Integration
 - Browse local repositories
-- Switch between branches
+- Switch branches
 - View commit history
-- Clone remote repositories (GitHub, GitLab)
-- Select files from any branch/commit
+- Clone from GitHub/GitLab
+- Select files from any commit
 
-### 🤖 AI-Powered Features
-- **Context Suggestions**: AI recommends relevant files for your task
-- **Built-in Chat**: Ask questions about your code directly
-- **Multiple Providers**: OpenAI, Gemini, Qwen, OpenRouter, LocalAI
+</td>
+</tr>
+<tr>
+<td width="50%">
 
-### ⚡ Context Optimization
-- Remove comments and license headers
+### 🤖 AI-Powered
+- Context suggestions
+- Built-in AI chat
+- Multiple providers support
+- Streaming responses
+- 1M+ token context (Qwen)
+
+</td>
+<td width="50%">
+
+### ⚡ Optimization
+- Remove comments & licenses
 - Collapse empty lines
-- Compact JSON/YAML files
+- Compact JSON/YAML
 - Exclude test files
-- Token counting with limits
+- Split large contexts
 
-### 📤 Export Options
-- Copy to clipboard
-- Export to file (TXT, MD, JSON)
-- Split large contexts into chunks
-- Apply custom templates
-- Include file metadata
-
-### 🎨 Modern UI
-- Dark theme with glow effects
-- Resizable panels
-- Keyboard shortcuts
-- Multi-language (English, Russian)
-- OS context menu integration
+</td>
+</tr>
+</table>
 
 ---
 
-## Screenshots
+## 📸 Screenshots
 
-### Welcome Screen
-<p align="center">
-  <img src="docs/screenshots/welcome-screen.png" alt="Welcome Screen" width="800">
-</p>
-
-### Main Interface
+<details>
+<summary><b>🖥️ Main Interface</b> — File browser with token counting</summary>
 <p align="center">
   <img src="docs/screenshots/main-interface.png" alt="Main Interface" width="800">
 </p>
+</details>
 
-### AI Chat
-<p align="center">
-  <img src="docs/screenshots/ai-chat.png" alt="AI Chat" width="800">
-</p>
-
-### Context Preview
+<details>
+<summary><b>📝 Context Preview</b> — Built context ready to copy</summary>
 <p align="center">
   <img src="docs/screenshots/context-built.png" alt="Context Preview" width="800">
 </p>
+</details>
 
-### Git Integration
+<details>
+<summary><b>💬 AI Chat</b> — Ask questions about your code</summary>
+<p align="center">
+  <img src="docs/screenshots/ai-chat.png" alt="AI Chat" width="800">
+</p>
+</details>
+
+<details>
+<summary><b>🔀 Git Panel</b> — Branch switching and history</summary>
 <p align="center">
   <img src="docs/screenshots/git-panel.png" alt="Git Panel" width="800">
 </p>
+</details>
 
-### Settings
+<details>
+<summary><b>⚙️ Settings</b> — AI provider configuration</summary>
 <p align="center">
-  <img src="docs/screenshots/settings-ai.png" alt="AI Settings" width="600">
+  <img src="docs/screenshots/settings-ai.png" alt="Settings" width="600">
 </p>
+</details>
 
 ---
 
-## Installation
+## 📦 Installation
 
 ### Download
-Get the latest release for your platform:
-- **Windows**: `SyntaxiaWB.exe`
-- **macOS**: `SyntaxiaWB.app.zip`
-- **Linux**: `SyntaxiaWB`
+
+| Platform | Download | Requirements |
+|----------|----------|--------------|
+| **Windows** | [`SyntaxiaWB.exe`](https://github.com/WhiteBite/Syntaxia/releases/latest) | Windows 10+ |
+| **macOS** | [`SyntaxiaWB.app.zip`](https://github.com/WhiteBite/Syntaxia/releases/latest) | macOS 11+ |
+| **Linux** | [`SyntaxiaWB`](https://github.com/WhiteBite/Syntaxia/releases/latest) | GTK3, WebKit2GTK |
 
 ### Build from Source
 
 ```bash
 # Prerequisites: Go 1.24+, Node.js 20+, Wails CLI
-
-# Clone
 git clone https://github.com/WhiteBite/Syntaxia.git
 cd Syntaxia
 
@@ -138,7 +180,7 @@ cd Syntaxia
 ./dev.ps1          # Windows
 make dev           # Linux/macOS
 
-# Build
+# Production build
 ./build-windows.ps1
 ./build-macos.sh
 ./build-linux.sh
@@ -146,68 +188,65 @@ make dev           # Linux/macOS
 
 ---
 
-## Usage
+## 🤖 AI Providers
 
-1. **Open Project**: Click "Open Project" or drag a folder
-2. **Select Files**: Check files in the tree or use AI suggestions
-3. **Configure**: Set token limit, enable optimizations
-4. **Build Context**: Click "Build" to generate optimized context
-5. **Export**: Copy to clipboard or save to file
+| Provider | Models | Max Context | Setup |
+|----------|--------|-------------|-------|
+| **OpenAI** | GPT-4o, GPT-4, GPT-3.5 | 128K | [Get API Key](https://platform.openai.com/api-keys) |
+| **Google Gemini** | Gemini Pro, Flash | 1M | [Get API Key](https://aistudio.google.com/apikey) |
+| **Qwen** | Coder Plus | 1M | [Get API Key](https://dashscope.console.aliyun.com/) |
+| **OpenRouter** | 100+ models | Varies | [Get API Key](https://openrouter.ai/keys) |
+| **LocalAI** | Llama, Mistral, etc. | Unlimited | Self-hosted |
 
-### Keyboard Shortcuts
+---
+
+## ⌨️ Keyboard Shortcuts
+
 | Key | Action |
 |-----|--------|
 | `Ctrl+O` | Open project |
 | `Ctrl+F` | Search files |
 | `Ctrl+,` | Settings |
 | `Ctrl+C` | Copy context |
+| `Ctrl+B` | Build context |
 
 ---
 
-<h2 id="supported-ai">Supported AI Providers</h2>
-
-| Provider | Models | Features |
-|----------|--------|----------|
-| **OpenAI** | GPT-4o, GPT-4, GPT-3.5 | Chat, Streaming |
-| **Google Gemini** | Gemini Pro, Flash | Chat, Large context |
-| **Qwen** | Coder Plus (1M tokens) | Huge context window |
-| **OpenRouter** | 100+ models | Model aggregator |
-| **LocalAI** | Llama, Mistral, etc. | Self-hosted, Private |
-
----
-
-<h2 id="tech-stack">Tech Stack</h2>
+## 🛠️ Tech Stack
 
 | Layer | Technology |
 |-------|------------|
 | **Backend** | Go 1.24, Clean Architecture |
 | **Frontend** | Vue 3, TypeScript, Pinia, Tailwind CSS |
 | **Desktop** | Wails v2 (Go ↔ JS bridge) |
-| **Build** | GitHub Actions, Cross-platform |
+| **CI/CD** | GitHub Actions |
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
-Contributions are welcome! Please read the development guide:
+Contributions welcome! Please check:
 
+1. Run tests before PR:
 ```bash
-# Run tests
-cd backend && go test ./...
-cd frontend && npm run test:run
-
-# Lint
-cd backend && golangci-lint run --config .golangci.yml
+cd backend && go test ./... && golangci-lint run
+cd frontend && npm run build && npm run test:run
 ```
 
+2. Follow [commit conventions](https://www.conventionalcommits.org/)
+
 ---
 
-## License
+## 📄 License
 
-MIT License - see [LICENSE](LICENSE) for details.
+[MIT License](LICENSE) — free for personal and commercial use.
 
 ---
 
 <p align="center">
   Made with ❤️ by <a href="https://github.com/WhiteBite">WhiteBite</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/WhiteBite/Syntaxia/stargazers">⭐ Star this repo</a> if you find it useful!
 </p>
