@@ -161,7 +161,7 @@ jobs:
   release:
     needs: [build, build-macos]
     runs-on: ubuntu-latest
-    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
 
     steps:
       - name: Checkout
@@ -180,11 +180,22 @@ jobs:
         run: |
           if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             TAG="${{ github.ref_name }}"
+            IS_TAG="true"
           else
             TAG="v$(date -u '+%Y.%m.%d')-${GITHUB_SHA::7}"
+            IS_TAG="false"
           fi
           echo "tag_name=$TAG" >> $GITHUB_OUTPUT
           echo "release_name=Syntaxia $TAG" >> $GITHUB_OUTPUT
+          echo "is_tag=$IS_TAG" >> $GITHUB_OUTPUT
+
+      - name: Delete existing release (for auto-releases)
+        if: steps.prep.outputs.is_tag == 'false'
+        run: |
+          gh release delete "${{ steps.prep.outputs.tag_name }}" --yes || true
+          git push origin --delete "${{ steps.prep.outputs.tag_name }}" || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -192,9 +203,31 @@ jobs:
           tag_name: ${{ steps.prep.outputs.tag_name }}
           name: ${{ steps.prep.outputs.release_name }}
           body: |
-            📦 **Packages:** Linux (amd64), Windows (amd64), macOS (Apple Silicon)
+            🚀 **Syntaxia ${{ steps.prep.outputs.tag_name }}**
+            
+            📦 **Downloads:**
+            - 🐧 Linux (amd64)
+            - 🪟 Windows (amd64)  
+            - 🍎 macOS (Apple Silicon)
+            
+            📝 [Changelog](https://github.com/WhiteBite/Syntaxia/commits/main)
           draft: false
-          prerelease: false
+          prerelease: ${{ steps.prep.outputs.is_tag == 'false' }}
           files: release-assets/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Send Telegram notification
+        if: steps.prep.outputs.is_tag == 'true'
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d message_thread_id="96" \
+            -d parse_mode="HTML" \
+            -d text="🚀 <b>Syntaxia ${{ steps.prep.outputs.tag_name }}</b>
+
+          New release is available!
+
+          📦 <a href=\"https://github.com/WhiteBite/Syntaxia/releases/tag/${{ steps.prep.outputs.tag_name }}\">Download</a>
+
+          #syntaxia #release"
