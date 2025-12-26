@@ -214,7 +214,8 @@ function formatDuration(ms: number): string {
 }
 
 .tool-call-brief {
-    @apply text-xs text-gray-400 truncate max-w-32;
+    @apply text-xs text-gray-400 truncate;
+    max-width: min(8rem, 40%);
 }
 
 .tool-call-meta {

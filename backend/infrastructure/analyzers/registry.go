@@ -37,6 +37,12 @@ func NewAnalyzerRegistry() *AnalyzerRegistryImpl {
 	registry.Register(NewRustAnalyzer())
 	registry.Register(NewCSharpAnalyzer())
 
+	// Phase 3: Additional language analyzers
+	registry.Register(NewCppAnalyzer())
+	registry.Register(NewPHPAnalyzer())
+	registry.Register(NewRubyAnalyzer())
+	registry.Register(NewSwiftAnalyzer())
+
 	return registry
 }
 

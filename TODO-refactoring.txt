@@ -364,30 +364,30 @@ UI: SmartContextPreviewPanel.vue - "Suggested Files" с relevance score.
 ## 8. ОСТАВШИЕСЯ ЗАДАЧИ (Phase 6)
 ================================================================================
 
-### 8.1 Frontend Fixes (HIGH PRIORITY)
-- [ ] Исправить responsive design в AI Chat (w-64 → flex) — 1 ч
-- [ ] Убрать console.error, заменить на logger — 30 мин
-- [ ] Разбить ContextPanel.vue на подкомпоненты (1030 строк → <300) — 3 ч
-- [ ] Разбить GitSourceSelector.vue (339 строк → <300) — 2 ч
+### 8.1 Frontend Fixes (HIGH PRIORITY) — ✅ ЗАВЕРШЕНО
+- [x] Исправить responsive design в AI Chat (w-64 → flex) — ✅ DONE
+- [x] Убрать console.error, заменить на logger — ✅ DONE (уже было чисто)
+- [x] Разбить ContextPanel.vue на подкомпоненты (1030 строк → <300) — ✅ DONE (~220 строк)
+- [x] Разбить GitSourceSelector.vue (339 строк → <300) — ✅ DONE (~200 строк)
 
-### 8.2 Build Pipeline (MEDIUM PRIORITY)
-Добавить build runners для оставшихся языков:
-- [ ] Python: pip/poetry/pyproject.toml
-- [ ] Rust: cargo build
-- [ ] C#: dotnet build
-- [ ] Kotlin: gradle/kotlinc
-- [ ] Dart: dart compile/flutter build
-- [ ] C/C++: cmake/make/g++
-- [ ] PHP: composer
-- [ ] Ruby: bundler/rake
-- [ ] Swift: swift build/xcodebuild
+### 8.2 Build Pipeline (MEDIUM PRIORITY) — ✅ ЗАВЕРШЕНО
+Build runners для всех языков уже реализованы:
+- [x] Python: pip/poetry/pyproject.toml ✅
+- [x] Rust: cargo build ✅
+- [x] C#: dotnet build ✅
+- [x] Kotlin: gradle/kotlinc ✅
+- [x] Dart: dart compile/flutter build ✅
+- [x] C/C++: cmake/make/g++ ✅
+- [x] PHP: composer ✅
+- [x] Ruby: bundler/rake ✅
+- [x] Swift: swift build/xcodebuild ✅
 
-### 8.3 Symbol Analysis (MEDIUM PRIORITY)
-Добавить symbol analyzers для:
-- [ ] C/C++ — tree-sitter-c, tree-sitter-cpp
-- [ ] PHP — tree-sitter-php
-- [ ] Ruby — tree-sitter-ruby
-- [ ] Swift — tree-sitter-swift
+### 8.3 Symbol Analysis (MEDIUM PRIORITY) — ✅ ЗАВЕРШЕНО
+Symbol analyzers добавлены для всех языков:
+- [x] C/C++ — cpp_analyzer.go ✅
+- [x] PHP — php_analyzer.go ✅
+- [x] Ruby — ruby_analyzer.go ✅
+- [x] Swift — swift_analyzer.go ✅
 
 ### 8.4 Performance Optimization (LOW PRIORITY)
 - [ ] Кэширование результатов анализа (LRU cache)
@@ -396,7 +396,7 @@ UI: SmartContextPreviewPanel.vue - "Suggested Files" с relevance score.
 - [ ] Кэширование symbol graph
 
 ### 8.5 Test Coverage Improvements
-- [ ] infrastructure/staticanalyzer: 63.4% → 70%
-- [ ] infrastructure/testengine: 55.3% → 70%
+- [x] infrastructure/staticanalyzer: 71.9% ✅
+- [x] infrastructure/testengine: 73.0% ✅
 - [ ] Frontend unit tests для Files Module
 
