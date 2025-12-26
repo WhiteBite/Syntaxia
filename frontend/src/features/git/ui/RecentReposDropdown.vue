@@ -48,10 +48,12 @@
 </template>
 
 <script setup lang="ts">
-import type { RecentRepo } from '@/composables/useGitSource';
-import { useI18n } from '@/composables/useI18n';
-import { ref } from 'vue';
+import type { RecentRepo } from '@/composables/useGitSource'
+import { useI18n } from '@/composables/useI18n'
+import { useLogger } from '@/composables/useLogger'
+import { ref } from 'vue'
 
+const logger = useLogger('RecentReposDropdown')
 const { t } = useI18n()
 
 defineProps<{
@@ -74,4 +76,7 @@ function handleClear() {
   emit('clear')
   isOpen.value = false
 }
+
+// Logger available for future debugging
+void logger
 </script>

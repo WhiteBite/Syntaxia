@@ -3,6 +3,7 @@
  * Provides context-aware commands with real actions
  */
 
+import { useLogger } from '@/composables/useLogger'
 import { useFileStore } from '@/features/files/model/file.store'
 import { useProjectStore } from '@/stores/project.store'
 import { useUIStore } from '@/stores/ui.store'
@@ -18,6 +19,8 @@ import {
   Squares2X2Icon
 } from '@heroicons/vue/24/outline'
 import type { Component } from 'vue'
+
+const logger = useLogger('CommandService')
 
 export interface Command {
   id: string
@@ -218,7 +221,7 @@ export class CommandService {
     const command = commands.find(cmd => cmd.id === commandId)
 
     if (!command) {
-      console.warn(`Command not found: ${commandId}`)
+      logger.warn(`Command not found: ${commandId}`)
       return false
     }
 
@@ -226,7 +229,7 @@ export class CommandService {
       await command.action()
       return true
     } catch (err) {
-      console.error(`Failed to execute command ${commandId}:`, err)
+      logger.error(`Failed to execute command ${commandId}:`, err)
       return false
     }
   }

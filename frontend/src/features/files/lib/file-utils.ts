@@ -1,4 +1,7 @@
+import { useLogger } from '@/composables/useLogger'
 import type { FileNode } from '../model/file.store'
+
+const logger = useLogger('FileUtils')
 
 /**
  * Get compact path for nested folders (e.g., "src/main/java")
@@ -70,7 +73,7 @@ export async function copyToClipboard(text: string): Promise<void> {
             document.body.removeChild(textArea)
         }
     } catch (err) {
-        console.error('Failed to copy to clipboard:', err)
+        logger.error('Failed to copy to clipboard:', err)
         throw err
     }
 }

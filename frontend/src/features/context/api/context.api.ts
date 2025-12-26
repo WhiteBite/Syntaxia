@@ -1,5 +1,8 @@
 import type { domain } from '#wailsjs/go/models'
+import { useLogger } from '@/composables/useLogger'
 import { apiService } from '@/services/api.service'
+
+const logger = useLogger('ContextApi')
 
 export interface ProjectContext {
     id: string
@@ -27,7 +30,7 @@ export class ContextApi {
         try {
             return await apiService.buildContextFromRequest(projectPath, files, options)
         } catch (error) {
-            console.error('[ContextApi] Failed to build context:', error)
+            logger.error('Failed to build context:', error)
 
             // Re-throw token limit errors with info preserved
             if (error instanceof Error && error.message === 'TOKEN_LIMIT_EXCEEDED') {
@@ -42,7 +45,7 @@ export class ContextApi {
         try {
             return await apiService.getFullContextContent(contextId)
         } catch (error) {
-            console.error('[ContextApi] Failed to get context content:', error)
+            logger.error('Failed to get context content:', error)
             throw new Error('Failed to load context content.')
         }
     }
@@ -51,7 +54,7 @@ export class ContextApi {
         try {
             await apiService.deleteContext(contextId)
         } catch (error) {
-            console.error('[ContextApi] Failed to delete context:', error)
+            logger.error('Failed to delete context:', error)
             throw new Error('Failed to delete context.')
         }
     }
@@ -60,7 +63,7 @@ export class ContextApi {
         try {
             return await apiService.exportContext(exportSettings)
         } catch (error) {
-            console.error('[ContextApi] Failed to export context:', error)
+            logger.error('Failed to export context:', error)
             throw new Error('Failed to export context.')
         }
     }
@@ -77,7 +80,7 @@ export class ContextApi {
                 files: ctx.metadata?.selectedFiles || ctx.files || []
             }))
         } catch (error) {
-            console.error('[ContextApi] Failed to get project contexts:', error)
+            logger.error('Failed to get project contexts:', error)
             throw new Error('Failed to load project contexts.')
         }
     }

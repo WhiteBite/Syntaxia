@@ -6,11 +6,18 @@ import "context"
 type StaticAnalyzerType string
 
 const (
-	StaticAnalyzerTypeStaticcheck StaticAnalyzerType = "staticcheck" // Go
-	StaticAnalyzerTypeESLint      StaticAnalyzerType = "eslint"      // TypeScript/JavaScript
-	StaticAnalyzerTypeErrorProne  StaticAnalyzerType = "errorprone"  // Java
-	StaticAnalyzerTypeRuff        StaticAnalyzerType = "ruff"        // Python
-	StaticAnalyzerTypeClangTidy   StaticAnalyzerType = "clang-tidy"  // C/C++
+	StaticAnalyzerTypeStaticcheck   StaticAnalyzerType = "staticcheck"   // Go
+	StaticAnalyzerTypeESLint        StaticAnalyzerType = "eslint"        // TypeScript/JavaScript
+	StaticAnalyzerTypeErrorProne    StaticAnalyzerType = "errorprone"    // Java
+	StaticAnalyzerTypeRuff          StaticAnalyzerType = "ruff"          // Python
+	StaticAnalyzerTypeClangTidy     StaticAnalyzerType = "clang-tidy"    // C/C++
+	StaticAnalyzerTypeClippy        StaticAnalyzerType = "clippy"        // Rust
+	StaticAnalyzerTypeKtlint        StaticAnalyzerType = "ktlint"        // Kotlin
+	StaticAnalyzerTypeDartAnalyze   StaticAnalyzerType = "dart-analyze"  // Dart
+	StaticAnalyzerTypeDotnetFormat  StaticAnalyzerType = "dotnet-format" // C#
+	StaticAnalyzerTypeRuboCop       StaticAnalyzerType = "rubocop"       // Ruby
+	StaticAnalyzerTypePHPCS         StaticAnalyzerType = "phpcs"         // PHP
+	StaticAnalyzerTypeSwiftLint     StaticAnalyzerType = "swiftlint"     // Swift
 )
 
 // StaticIssue представляет проблему, найденную статическим анализатором

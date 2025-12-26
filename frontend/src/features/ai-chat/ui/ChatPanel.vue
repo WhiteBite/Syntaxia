@@ -9,16 +9,27 @@
           </svg>
         </div>
         <span class="section-title-text">{{ t('chat.title') }}</span>
-        <span class="badge badge-primary">{{ t('chat.comingSoon') }}</span>
+        <span v-if="sandboxStore.hasChanges" class="badge badge-warning">
+          {{ sandboxStore.changeCount }} {{ t('chat.pendingChanges') }}
+        </span>
       </div>
       
-      <button
-        @click="chatStore.clearChat"
-        :disabled="!chatStore.hasMessages"
-        class="btn btn-secondary btn-xs"
-      >
-        {{ t('chat.clear') }}
-      </button>
+      <div class="flex items-center gap-2">
+        <button
+          v-if="sandboxStore.hasChanges"
+          @click="showChangesPanel = true"
+          class="btn btn-primary btn-xs"
+        >
+          {{ t('chat.reviewChanges') }}
+        </button>
+        <button
+          @click="chatStore.clearChat"
+          :disabled="!chatStore.hasMessages"
+          class="btn btn-secondary btn-xs"
+        >
+          {{ t('chat.clear') }}
+        </button>
+      </div>
     </div>
 
     <!-- Messages -->
@@ -67,9 +78,8 @@
       <div class="flex gap-2">
         <textarea
           v-model="inputMessage"
-          :placeholder="`${t('chat.placeholder')} (${t('chat.comingSoon')})`"
-          disabled
-          class="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+          :placeholder="t('chat.placeholder')"
+          class="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 resize-none"
           rows="3"
           @keydown.ctrl.enter="handleSend"
         ></textarea>
@@ -83,8 +93,15 @@
           </svg>
         </button>
       </div>
-      <p class="text-xs text-gray-400 mt-2">Ctrl+Enter to send</p>
+      <p class="text-xs text-gray-400 mt-2">Ctrl+Enter {{ t('chat.toSend') }}</p>
     </div>
+
+    <!-- Change Preview Modal -->
+    <ChangePreviewModal
+      v-if="showChangesPanel"
+      @close="showChangesPanel = false"
+      @applied="onChangesApplied"
+    />
   </div>
 </template>
 
@@ -92,12 +109,16 @@
 import { useI18n } from '@/composables/useI18n'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useChatStore } from '../model/chat.store'
+import { useSandboxStore } from '@/stores/sandbox.store'
 import MessageItem from './MessageItem.vue'
+import ChangePreviewModal from './ChangePreviewModal.vue'
 
 const { t } = useI18n()
 const chatStore = useChatStore()
+const sandboxStore = useSandboxStore()
 const inputMessage = ref('')
 const messagesContainer = ref<HTMLElement>()
+const showChangesPanel = ref(false)
 
 const canSend = computed(() => {
   return inputMessage.value.trim().length > 0 && !chatStore.isStreaming
@@ -111,6 +132,9 @@ async function handleSend() {
   
   await chatStore.sendMessage(message)
   scrollToBottom()
+  
+  // Refresh sandbox state after AI response
+  await sandboxStore.refresh()
 }
 
 function scrollToBottom() {
@@ -119,6 +143,10 @@ function scrollToBottom() {
       messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
     }
   })
+}
+
+function onChangesApplied() {
+  showChangesPanel.value = false
 }
 
 watch(() => chatStore.messages.length, () => {

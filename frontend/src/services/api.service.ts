@@ -21,6 +21,7 @@ import { gitlabApi } from './api/gitlab.api'
 import { memoryApi } from './api/memory.api'
 import { projectApi } from './api/project.api'
 import { reportsApi } from './api/reports.api'
+import { sandboxApi } from './api/sandbox.api'
 import { semanticApi } from './api/semantic.api'
 import { settingsApi } from './api/settings.api'
 import { taskflowApi } from './api/taskflow.api'
@@ -64,6 +65,7 @@ export const apiService = {
   getImpactPreview: contextApi.getImpactPreview,
   analyzeTaskAndCollectContext: contextApi.analyzeTaskAndCollectContext,
   agenticChat: contextApi.agenticChat,
+  collectSmartContext: contextApi.collectSmartContext,
 
   // ============================================
   // AI and Code Generation
@@ -185,6 +187,18 @@ export const apiService = {
   getRecentContexts: memoryApi.getRecentContexts,
   findContextByTopic: memoryApi.findContextByTopic,
   saveContextMemory: memoryApi.saveContextMemory,
+
+  // ============================================
+  // Sandbox (AI File Changes)
+  // ============================================
+  getSandboxChanges: sandboxApi.getChanges,
+  getSandboxDiff: sandboxApi.getDiff,
+  getSandboxAllDiffs: sandboxApi.getAllDiffs,
+  applySandboxChanges: sandboxApi.applyChanges,
+  discardSandboxChanges: sandboxApi.discardChanges,
+  discardSandboxFile: sandboxApi.discardFile,
+  hasSandboxChanges: sandboxApi.hasChanges,
+  getSandboxChangeCount: sandboxApi.getChangeCount,
 }
 
 // Re-export all types for backward compatibility
@@ -203,6 +217,7 @@ export {
   memoryApi,
   projectApi,
   reportsApi,
+  sandboxApi,
   semanticApi,
   settingsApi,
   taskflowApi

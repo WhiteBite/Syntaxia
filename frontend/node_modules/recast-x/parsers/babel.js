@@ -1,0 +1,28 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.parser = void 0;
+exports.parse = parse;
+var tslib_1 = require("tslib");
+var _babel_options_1 = tslib_1.__importDefault(require("./_babel_options"));
+// Prefer the new @babel/parser package, but fall back to babylon if
+// that's what's available.
+exports.parser = (function () {
+    try {
+        return require("@babel/parser");
+    }
+    catch (_a) {
+        throw new Error("Install @babel/parser to use the `typescript`, `flow`, or `babel` parsers");
+    }
+})();
+// This module is suitable for passing as options.parser when calling
+// recast.parse to process JavaScript code with Babel:
+//
+//   const ast = recast.parse(source, {
+//     parser: require("recast/parsers/babel")
+//   });
+//
+function parse(source, options) {
+    var babelOptions = (0, _babel_options_1.default)(options);
+    babelOptions.plugins.push("jsx", "flow", "decoratorAutoAccessors");
+    return exports.parser.parse(source, babelOptions);
+}

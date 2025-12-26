@@ -29,9 +29,11 @@ func NewAgenticChatService(logger domain.Logger, aiService *Service, toolExecuto
 
 // AgenticChatRequest represents a request for agentic chat
 type AgenticChatRequest struct {
-	Task        string `json:"task"`
-	ProjectRoot string `json:"projectRoot"`
-	MaxTokens   int    `json:"maxTokens,omitempty"`
+	Task         string                    `json:"task"`
+	ProjectRoot  string                    `json:"projectRoot"`
+	Context      []string                  `json:"context,omitempty"`      // Selected file paths to include as context
+	SmartContext *domain.SmartContextResult `json:"smartContext,omitempty"` // Pre-collected smart context
+	MaxTokens    int                       `json:"maxTokens,omitempty"`
 }
 
 // AgenticChatResponse represents the response from agentic chat
@@ -56,6 +58,16 @@ func (s *AgenticChatService) Chat(ctx context.Context, req AgenticChatRequest) (
 	tools := s.toolExecutor.GetAvailableTools()
 	toolsJSON := s.formatToolsForPrompt(tools)
 
+	// Build context section from SmartContext or legacy Context
+	contextSection := ""
+	if req.SmartContext != nil {
+		contextSection = s.formatSmartContext(req.SmartContext)
+		s.logger.Info(fmt.Sprintf("Using smart context: %d files, %d tokens",
+			len(req.SmartContext.RelevantFiles), req.SmartContext.TotalTokens))
+	} else if len(req.Context) > 0 {
+		contextSection = s.readContextFiles(req.Context, req.ProjectRoot)
+	}
+
 	systemPrompt := fmt.Sprintf(`You are an expert code assistant. You have access to tools to explore and analyze the codebase.
 
 AVAILABLE TOOLS:
@@ -75,7 +87,9 @@ INSTRUCTIONS:
 
 5. Be thorough but efficient - don't read files unnecessarily.
 
-IMPORTANT: Always respond in the user's language (Russian if they write in Russian).`, toolsJSON)
+6. Use write_file tool to create or modify files. Changes go to sandbox for user review.
+
+IMPORTANT: Always respond in the user's language (Russian if they write in Russian).%s`, toolsJSON, contextSection)
 
 	messages := []domain.ChatMessage{
 		{Role: domain.RoleSystem, Content: systemPrompt},
@@ -192,4 +206,40 @@ func (s *AgenticChatService) parseToolCalls(response string) []domain.ToolCall {
 		calls = append(calls, domain.ToolCall{ID: fmt.Sprintf("call_%d", i), Name: tc.Name, Arguments: tc.Arguments})
 	}
 	return calls
+}
+
+func (s *AgenticChatService) formatSmartContext(sc *domain.SmartContextResult) string {
+	var sb strings.Builder
+
+	if sc.ProjectStructure != "" {
+		sb.WriteString("\n\n")
+		sb.WriteString(sc.ProjectStructure)
+	}
+
+	if len(sc.RelevantFiles) > 0 {
+		sb.WriteString("\n\nRELEVANT FILES:\n")
+		for _, f := range sc.RelevantFiles {
+			sb.WriteString(fmt.Sprintf("\n=== %s ===\n%s\n", f.Path, f.Content))
+		}
+	}
+
+	return sb.String()
+}
+
+func (s *AgenticChatService) readContextFiles(files []string, projectRoot string) string {
+	var contextParts []string
+	for _, filePath := range files {
+		result := s.toolExecutor.ExecuteTool(domain.ToolCall{
+			ID:        "context_read",
+			Name:      "read_file",
+			Arguments: map[string]any{"path": filePath},
+		}, projectRoot)
+		if result.Error == "" {
+			contextParts = append(contextParts, fmt.Sprintf("=== %s ===\n%s", filePath, result.Content))
+		}
+	}
+	if len(contextParts) > 0 {
+		return fmt.Sprintf("\n\nSELECTED FILES CONTEXT:\n%s\n", strings.Join(contextParts, "\n\n"))
+	}
+	return ""
 }

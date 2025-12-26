@@ -90,8 +90,11 @@
 
 <script setup lang="ts">
 import { useI18n } from '@/composables/useI18n'
+import { useLogger } from '@/composables/useLogger'
 import { ref, watch } from 'vue'
 import GitFileList from './GitFileList.vue'
+
+const logger = useLogger('GitRemotePanel')
 
 interface RemoteBranch {
   name: string
@@ -132,4 +135,7 @@ const selectedBranchLocal = ref(props.selectedBranch)
 
 watch(() => props.remoteUrl, (val) => { urlInput.value = val })
 watch(() => props.selectedBranch, (val) => { selectedBranchLocal.value = val })
+
+// Logger available for future debugging
+void logger
 </script>

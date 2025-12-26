@@ -294,7 +294,7 @@ interface FallbackComponent {
 export function asyncComponent(loader: () => Promise<unknown>): () => Promise<unknown | FallbackComponent> {
   return () => {
     return loader().catch(error => {
-      console.error('Failed to load component:', error)
+      logger.error('Failed to load component:', error)
       // Return fallback component
       return {
         template: '<div class="error-loading">Failed to load component</div>'

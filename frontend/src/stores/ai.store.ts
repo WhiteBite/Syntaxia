@@ -111,7 +111,7 @@ export const useAIStore = defineStore('ai', () => {
             logger.debug('Provider info loaded:', providerInfo.value)
         } catch (e) {
             const errorMsg = e instanceof Error ? e.message : 'Unknown error'
-            console.error('[AIStore] Failed to load provider info:', errorMsg)
+            logger.error('Failed to load provider info:', errorMsg)
             lastError.value = errorMsg
 
             providerInfo.value = {

@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
+
 	"syntaxia/domain"
 	"syntaxia/infrastructure/version"
 )
@@ -143,7 +146,22 @@ func (a *App) GetReleases() (*version.ReleasesResponse, error) {
 }
 
 // GetFileStats returns file statistics
+// Note: This method requires a project root context for security validation
 func (a *App) GetFileStats(filePath string) (string, error) {
+	if filePath == "" {
+		return "", fmt.Errorf("filePath is required")
+	}
+
+	// Security: Reject absolute paths to prevent arbitrary file access
+	if filepath.IsAbs(filePath) {
+		return "", fmt.Errorf("absolute paths are not allowed, use relative path within project")
+	}
+
+	// Security: Check for path traversal attempts
+	if strings.Contains(filePath, "..") {
+		return "", fmt.Errorf("path traversal not allowed")
+	}
+
 	fileInfo, err := os.Stat(filePath)
 	if err != nil {
 		return "", fmt.Errorf("failed to get file stats: %w", err)

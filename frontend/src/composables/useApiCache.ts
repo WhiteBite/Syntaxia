@@ -186,7 +186,7 @@ export function useApiCache<T>(
       return result
     } catch (e) {
       error.value = e as Error
-      console.error(`API cache error for key "${key}":`, e)
+      logger.error(`API cache error for key "${key}":`, e)
       throw e
     } finally {
       isLoading.value = false

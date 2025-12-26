@@ -109,10 +109,13 @@
 </template>
 
 <script setup lang="ts">
-import { useI18n } from '@/composables/useI18n';
-import type { CommitInfo } from '@/services/api.service';
-import { ref } from 'vue';
-import GitFileList from './GitFileList.vue';
+import { useI18n } from '@/composables/useI18n'
+import { useLogger } from '@/composables/useLogger'
+import type { CommitInfo } from '@/services/api.service'
+import { ref } from 'vue'
+import GitFileList from './GitFileList.vue'
+
+const logger = useLogger('GitLocalPanel')
 
 defineProps<{
   isGitRepo: boolean
@@ -152,6 +155,9 @@ function formatDate(dateStr: string): string {
     return dateStr
   }
 }
+
+// Logger available for future debugging
+void logger
 </script>
 
 <style scoped>

@@ -1,5 +1,8 @@
 import type { domain } from '#wailsjs/go/models';
+import { useLogger } from '@/composables/useLogger';
 import { apiService } from '@/services/api.service';
+
+const logger = useLogger('FilesApi');
 
 export interface FileStats {
     size: number
@@ -37,7 +40,7 @@ class FilesApi {
             this.fileTreeCache.set(cacheKey, { data: files, timestamp: Date.now() })
             return files
         } catch (error) {
-            console.error('[FilesApi] Failed to list files:', error)
+            logger.error('Failed to list files:', error)
             throw new Error('Failed to load file tree.')
         }
     }
@@ -46,7 +49,7 @@ class FilesApi {
         try {
             return await apiService.readFileContent(projectPath, filePath)
         } catch (error) {
-            console.error('[FilesApi] Failed to read file:', error)
+            logger.error('Failed to read file:', error)
             throw new Error('Failed to read file content.')
         }
     }
@@ -56,7 +59,7 @@ class FilesApi {
             const stats = await apiService.getFileStats(path)
             return JSON.parse(stats) as FileStats
         } catch (error) {
-            console.error('[FilesApi] Failed to get file stats:', error)
+            logger.error('Failed to get file stats:', error)
             throw new Error('Failed to get file statistics.')
         }
     }

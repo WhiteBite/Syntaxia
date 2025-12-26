@@ -104,9 +104,12 @@
 
 <script setup lang="ts">
 import { useI18n } from '@/composables/useI18n'
+import { useLogger } from '@/composables/useLogger'
 import { useFileStore } from '@/features/files'
 import { useSettingsStore } from '@/stores/settings.store'
 import { computed, onMounted, ref } from 'vue'
+
+const logger = useLogger('ContextBuilder')
 
 const fileStore = useFileStore()
 const settingsStore = useSettingsStore()
@@ -150,7 +153,7 @@ function updateStoreOptions() {
       outputFormat: localOptions.value.outputFormat || settingsStore.settings.context.outputFormat
     })
   } catch (err) {
-    console.warn('Failed to save build options:', err)
+    logger.warn('Failed to save build options:', err)
   }
 }
 
@@ -169,7 +172,7 @@ onMounted(() => {
       }
     }
   } catch (err) {
-    console.warn('Failed to load build options:', err)
+    logger.warn('Failed to load build options:', err)
     // Fallback to settings store
     localOptions.value = {
       maxTokens: settingsStore.settings.context.maxTokens,

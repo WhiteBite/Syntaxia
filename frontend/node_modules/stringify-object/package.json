@@ -1,0 +1,50 @@
+{
+	"name": "stringify-object",
+	"version": "6.0.0",
+	"description": "Stringify an object/array like JSON.stringify just without all the double-quotes",
+	"license": "BSD-2-Clause",
+	"repository": "sindresorhus/stringify-object",
+	"funding": "https://github.com/sponsors/sindresorhus",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "https://sindresorhus.com"
+	},
+	"type": "module",
+	"exports": "./index.js",
+	"sideEffects": false,
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"test": "xo && ava"
+	},
+	"files": [
+		"index.js"
+	],
+	"keywords": [
+		"object",
+		"stringify",
+		"pretty",
+		"print",
+		"dump",
+		"format",
+		"type",
+		"json"
+	],
+	"dependencies": {
+		"get-own-enumerable-keys": "^1.0.0",
+		"is-identifier": "^1.0.1",
+		"is-obj": "^3.0.0",
+		"is-regexp": "^3.1.0"
+	},
+	"devDependencies": {
+		"ava": "^6.4.1",
+		"xo": "^1.2.2"
+	},
+	"xo": {
+		"ignores": [
+			"test/fixtures/*.js"
+		]
+	}
+}

@@ -1,41 +1,13 @@
 <template>
   <div class="h-full flex flex-col bg-transparent">
     <!-- Header with tabs -->
-    <div class="border-b border-gray-700/30">
-      <div class="flex items-center justify-between p-3">
-        <div class="section-title">
-          <div class="section-icon section-icon-orange">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-            </svg>
-          </div>
-          <h2 class="section-title-text">{{ t('git.title') }}</h2>
-        </div>
-        <!-- Recent repos dropdown -->
-        <RecentReposDropdown 
-          v-if="recentRepos.length > 0"
-          :repos="recentRepos"
-          @select="handleSelectRecentRepo"
-          @clear="clearRecentRepos"
-        />
-      </div>
-
-      <!-- Source Type Tabs -->
-      <div class="flex gap-1 px-2 pb-2">
-        <button @click="sourceType = 'local'" :class="['tab-btn', sourceType === 'local' ? 'tab-btn-active tab-btn-active-indigo' : 'tab-btn-inactive']">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-          </svg>
-          {{ t('git.localGit') }}
-        </button>
-        <button @click="sourceType = 'remote'" :class="['tab-btn', sourceType === 'remote' ? 'tab-btn-active tab-btn-active-purple' : 'tab-btn-inactive']">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-          </svg>
-          {{ t('git.remoteUrl') }}
-        </button>
-      </div>
-    </div>
+    <GitSourceHeader
+      :source-type="sourceType"
+      :recent-repos="recentRepos"
+      @change-source="sourceType = $event"
+      @select-recent="handleSelectRecentRepo"
+      @clear-recent="clearRecentRepos"
+    />
 
     <!-- Local Git Panel -->
     <GitLocalPanel 
@@ -150,6 +122,7 @@ import BranchDiffModal from '@/components/BranchDiffModal.vue'
 import FilePreviewModal from '@/components/FilePreviewModal.vue'
 import { useGitSource, type RecentRepo } from '@/composables/useGitSource'
 import { useI18n } from '@/composables/useI18n'
+import { useLogger } from '@/composables/useLogger'
 import { useContextStore } from '@/features/context'
 import { apiService } from '@/services/api.service'
 import { useProjectStore } from '@/stores/project.store'
@@ -157,14 +130,16 @@ import { useUIStore } from '@/stores/ui.store'
 import { onMounted, ref, watch } from 'vue'
 import GitLocalPanel from './GitLocalPanel.vue'
 import GitRemotePanel from './GitRemotePanel.vue'
-import RecentReposDropdown from './RecentReposDropdown.vue'
+import GitSourceHeader from './GitSourceHeader.vue'
+import type { SourceType } from './GitSourceTabs.vue'
 
+const logger = useLogger('GitSourceSelector')
 const { t } = useI18n()
 const projectStore = useProjectStore()
 const uiStore = useUIStore()
 const contextStore = useContextStore()
 
-const sourceType = ref<'local' | 'remote'>('local')
+const sourceType = ref<SourceType>('local')
 
 // Use composable for git logic
 const git = useGitSource()
@@ -184,25 +159,6 @@ const {
   loadRecentReposFromStorage, clearRecentRepos,
 } = git
 
-// Handle folder selection - receives array of files from SimpleFileTree
-function handleSelectFolder(files: string[]) {
-  files.forEach(f => {
-    if (!selectedFiles.value.has(f)) {
-      selectedFiles.value.add(f)
-    }
-  })
-  selectedFiles.value = new Set(selectedFiles.value)
-}
-
-function handleSelectRemoteFolder(files: string[]) {
-  files.forEach(f => {
-    if (!remoteSelectedFiles.value.has(f)) {
-      remoteSelectedFiles.value.add(f)
-    }
-  })
-  remoteSelectedFiles.value = new Set(remoteSelectedFiles.value)
-}
-
 // Additional local state
 const diffModalOpen = ref(false)
 const previewOpen = ref(false)
@@ -211,10 +167,20 @@ const previewContent = ref('')
 const previewLoading = ref(false)
 const previewError = ref('')
 
+// Handle folder selection
+function handleSelectFolder(files: string[]) {
+  files.forEach(f => { if (!selectedFiles.value.has(f)) selectedFiles.value.add(f) })
+  selectedFiles.value = new Set(selectedFiles.value)
+}
+
+function handleSelectRemoteFolder(files: string[]) {
+  files.forEach(f => { if (!remoteSelectedFiles.value.has(f)) remoteSelectedFiles.value.add(f) })
+  remoteSelectedFiles.value = new Set(remoteSelectedFiles.value)
+}
+
 // Check git repo on project change
 async function checkGitRepo() {
   if (!projectPath.value) return
-  
   isLoading.value = true
   loadingMessage.value = 'Checking repository...'
   commitsLoaded.value = false
@@ -228,59 +194,52 @@ async function checkGitRepo() {
       const result = await apiService.getBranches(projectPath.value)
       branches.value = JSON.parse(result)
     }
-  } catch {
+  } catch (err) {
+    logger.error('Failed to check git repo', err)
     isGitRepo.value = false
   } finally {
     isLoading.value = false
   }
 }
 
-// Load remote repo with URL
 async function loadRemoteRepo(url: string) {
   remoteUrl.value = url
   await loadRemoteRepoBase()
 }
 
-// Handle branch change
 async function handleChangeBranch(branch: string) {
   remoteSelectedBranch.value = branch
   await loadRemoteFiles()
 }
 
-// Handle recent repo selection
 function handleSelectRecentRepo(repo: RecentRepo) {
   remoteUrl.value = repo.url
   sourceType.value = 'remote'
   loadRemoteRepoBase()
 }
 
-// Build context from local ref
 async function buildContextFromRef() {
   if (!selectedRef.value || selectedFiles.value.size === 0) return
-  
   isBuilding.value = true
   try {
     const files = Array.from(selectedFiles.value)
     const content = await apiService.buildContextAtRef(projectPath.value, files, selectedRef.value)
     contextStore.setRawContext(content, files.length)
     uiStore.addToast(`Context built from ${selectedRef.value.slice(0, 7)}: ${files.length} files`, 'success')
-  } catch {
+  } catch (err) {
+    logger.error('Failed to build context from ref', err)
     uiStore.addToast('Failed to build context from ref', 'error')
   } finally {
     isBuilding.value = false
   }
 }
 
-// Build context from remote
 async function buildContextFromRemote() {
   if (!remoteUrl.value || remoteSelectedFiles.value.size === 0) return
-  
   isBuilding.value = true
   try {
     const files = Array.from(remoteSelectedFiles.value)
-    let content = ''
-    let source = ''
-
+    let content = '', source = ''
     if (isGitHubRepo.value) {
       content = await apiService.gitHubBuildContext(remoteUrl.value, files, remoteSelectedBranch.value)
       source = 'GitHub'
@@ -288,28 +247,26 @@ async function buildContextFromRemote() {
       content = await apiService.gitLabBuildContext(remoteUrl.value, files, remoteSelectedBranch.value)
       source = 'GitLab'
     }
-
     contextStore.setRawContext(content, files.length)
     uiStore.addToast(`Context built from ${source}: ${files.length} files`, 'success')
-  } catch {
+  } catch (err) {
+    logger.error('Failed to build context from remote', err)
     uiStore.addToast('Failed to build context', 'error')
   } finally {
     isBuilding.value = false
   }
 }
 
-// Clone remote repo
 async function cloneRemote() {
   if (!remoteUrl.value) return
-  
   isCloning.value = true
   isLoading.value = true
   loadingMessage.value = 'Cloning repository...'
-
   try {
     clonedPath.value = await apiService.cloneRepository(remoteUrl.value)
     uiStore.addToast('Repository cloned successfully', 'success')
-  } catch {
+  } catch (err) {
+    logger.error('Failed to clone repository', err)
     uiStore.addToast('Failed to clone repository', 'error')
   } finally {
     isCloning.value = false
@@ -317,33 +274,29 @@ async function cloneRemote() {
   }
 }
 
-// Open cloned repo
 async function openClonedRepo() {
   if (!clonedPath.value) return
   await projectStore.openProjectByPath(clonedPath.value)
   sourceType.value = 'local'
 }
 
-// Cleanup cloned repo
 async function cleanupClonedRepo() {
   if (!clonedPath.value) return
   try {
     await apiService.cleanupTempRepository(clonedPath.value)
     clonedPath.value = null
     uiStore.addToast('Temporary repository removed', 'success')
-  } catch {
-    // Ignore
+  } catch (err) {
+    logger.warn('Failed to cleanup cloned repo', err)
   }
 }
 
-// File preview
 async function handlePreviewFile(filePath: string) {
   previewPath.value = filePath
   previewContent.value = ''
   previewError.value = ''
   previewLoading.value = true
   previewOpen.value = true
-
   try {
     let content = ''
     if (sourceType.value === 'local' && selectedRef.value) {
@@ -356,7 +309,8 @@ async function handlePreviewFile(filePath: string) {
       }
     }
     previewContent.value = content
-  } catch {
+  } catch (err) {
+    logger.error('Failed to preview file', err)
     previewError.value = t('error.loadFailed')
   } finally {
     previewLoading.value = false
@@ -364,9 +318,5 @@ async function handlePreviewFile(filePath: string) {
 }
 
 watch(() => projectStore.currentPath, checkGitRepo, { immediate: true })
-
-onMounted(() => {
-  checkGitRepo()
-  loadRecentReposFromStorage()
-})
+onMounted(() => { checkGitRepo(); loadRecentReposFromStorage() })
 </script>

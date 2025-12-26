@@ -1,0 +1,14 @@
+
+/* Modal transition - styles are in design-tokens.css */
+.modal-enter-active[data-v-9bbf12d1],
+.modal-leave-active[data-v-9bbf12d1] {
+  transition: all 200ms ease-out;
+}
+.modal-enter-from[data-v-9bbf12d1],
+.modal-leave-to[data-v-9bbf12d1] {
+  opacity: 0;
+}
+.modal-enter-from .quicklook-modal[data-v-9bbf12d1],
+.modal-leave-to .quicklook-modal[data-v-9bbf12d1] {
+  transform: scale(0.95) translateY(-10px);
+}

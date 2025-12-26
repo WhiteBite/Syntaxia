@@ -1,26 +1,40 @@
 package tools
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
-	"syntaxia/domain"
 	"strings"
+	"time"
+
+	"syntaxia/domain"
+)
+
+const (
+	// MaxFileSize is the maximum allowed file size (10MB)
+	MaxFileSize = 10 * 1024 * 1024
+	// MaxReadTimeout is the maximum timeout for file operations
+	MaxReadTimeout = 30 * time.Second
+	// BinaryCheckBytes is the number of bytes to check for binary detection
+	BinaryCheckBytes = 512
 )
 
 // FileToolsHandler handles file-related tools
 type FileToolsHandler struct {
 	BaseHandler
 	FileReader domain.FileContentReader
+	SandboxFS  domain.SandboxFS
 }
 
 // NewFileToolsHandler creates a new file tools handler
-func NewFileToolsHandler(logger domain.Logger, fileReader domain.FileContentReader) *FileToolsHandler {
+func NewFileToolsHandler(logger domain.Logger, fileReader domain.FileContentReader, sandboxFS domain.SandboxFS) *FileToolsHandler {
 	return &FileToolsHandler{
 		BaseHandler: NewBaseHandler(logger),
 		FileReader:  fileReader,
+		SandboxFS:   sandboxFS,
 	}
 }
 
@@ -28,6 +42,7 @@ var fileToolNames = map[string]bool{
 	"search_files":   true,
 	"search_content": true,
 	"read_file":      true,
+	"write_file":     true,
 	"list_directory": true,
 	"get_file_info":  true,
 	"list_functions": true,
@@ -80,6 +95,18 @@ func (h *FileToolsHandler) GetTools() []domain.Tool {
 			},
 		},
 		{
+			Name:        "write_file",
+			Description: "Write content to a file. Changes are saved to sandbox for preview before applying.",
+			Parameters: domain.ToolParameters{
+				Type: "object",
+				Properties: map[string]domain.ToolProperty{
+					"path":    {Type: "string", Description: "Path to the file (relative to project root)"},
+					"content": {Type: "string", Description: "Content to write to the file"},
+				},
+				Required: []string{"path", "content"},
+			},
+		},
+		{
 			Name:        "list_directory",
 			Description: "List files and directories in a path. Use to explore project structure.",
 			Parameters: domain.ToolParameters{
@@ -125,6 +152,8 @@ func (h *FileToolsHandler) Execute(toolName string, args map[string]any, project
 		return h.searchContent(args, projectRoot)
 	case "read_file":
 		return h.readFile(args, projectRoot)
+	case "write_file":
+		return h.writeFile(args, projectRoot)
 	case "list_directory":
 		return h.listDirectory(args, projectRoot)
 	case "get_file_info":
@@ -207,10 +236,21 @@ func (h *FileToolsHandler) searchContent(args map[string]any, projectRoot string
 		regex = regexp.MustCompile(regexp.QuoteMeta(pattern))
 	}
 
+	// Create timeout context for entire search operation
+	ctx, cancel := context.WithTimeout(context.Background(), MaxReadTimeout)
+	defer cancel()
+
 	var results []string
 	count := 0
 
 	_ = filepath.Walk(projectRoot, func(path string, info os.FileInfo, walkErr error) error {
+		// Check for timeout
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("search operation timed out")
+		default:
+		}
+
 		if walkErr != nil || info.IsDir() {
 			return nil
 		}
@@ -221,6 +261,11 @@ func (h *FileToolsHandler) searchContent(args map[string]any, projectRoot string
 			if matched, _ := filepath.Match(filePattern, info.Name()); !matched {
 				return nil
 			}
+		}
+
+		// Skip binary files
+		if isBinaryFile(path) {
+			return nil
 		}
 
 		content, err := os.ReadFile(path)
@@ -271,9 +316,44 @@ func (h *FileToolsHandler) readFile(args map[string]any, projectRoot string) (st
 		return "", fmt.Errorf("path traversal not allowed")
 	}
 
-	content, err := os.ReadFile(fullPath)
+	// Check file size before reading
+	fileInfo, err := os.Stat(fullPath)
 	if err != nil {
+		return "", fmt.Errorf("failed to stat file: %w", err)
+	}
+	if fileInfo.Size() > MaxFileSize {
+		return "", fmt.Errorf("file size %d bytes exceeds maximum allowed size %d bytes (10MB)", fileInfo.Size(), MaxFileSize)
+	}
+
+	// Check for binary file
+	if isBinaryFile(fullPath) {
+		return fmt.Sprintf("Warning: '%s' appears to be a binary file. Binary content cannot be displayed.", path), nil
+	}
+
+	// Create timeout context for file operation
+	ctx, cancel := context.WithTimeout(context.Background(), MaxReadTimeout)
+	defer cancel()
+
+	// Read file with timeout
+	contentChan := make(chan []byte, 1)
+	errChan := make(chan error, 1)
+
+	go func() {
+		content, err := os.ReadFile(fullPath)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		contentChan <- content
+	}()
+
+	var content []byte
+	select {
+	case <-ctx.Done():
+		return "", fmt.Errorf("file read operation timed out after %v", MaxReadTimeout)
+	case err := <-errChan:
 		return "", fmt.Errorf("failed to read file: %w", err)
+	case content = <-contentChan:
 	}
 
 	lines := strings.Split(string(content), "\n")
@@ -301,6 +381,67 @@ func (h *FileToolsHandler) readFile(args map[string]any, projectRoot string) (st
 
 	header := fmt.Sprintf("=== %s (lines %d-%d of %d) ===\n", path, startLine, endLine, len(lines))
 	return header + strings.Join(result, "\n"), nil
+}
+
+func (h *FileToolsHandler) writeFile(args map[string]any, projectRoot string) (string, error) {
+	path, _ := args["path"].(string)
+	content, _ := args["content"].(string)
+
+	if path == "" {
+		return "", fmt.Errorf("path is required")
+	}
+	if content == "" {
+		return "", fmt.Errorf("content is required")
+	}
+
+	// Check content size before writing
+	if len(content) > MaxFileSize {
+		return "", fmt.Errorf("content size %d bytes exceeds maximum allowed size %d bytes (10MB)", len(content), MaxFileSize)
+	}
+
+	// Security check - prevent path traversal
+	fullPath := filepath.Join(projectRoot, path)
+	absProjectRoot, err := filepath.Abs(projectRoot)
+	if err != nil {
+		return "", fmt.Errorf("failed to resolve project root: %w", err)
+	}
+	absFullPath, err := filepath.Abs(fullPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to resolve file path: %w", err)
+	}
+	absProjectRoot = filepath.Clean(absProjectRoot)
+	absFullPath = filepath.Clean(absFullPath)
+
+	if !strings.HasPrefix(absFullPath, absProjectRoot+string(filepath.Separator)) && absFullPath != absProjectRoot {
+		return "", fmt.Errorf("path traversal not allowed")
+	}
+
+	// Check if sandbox is available
+	if h.SandboxFS == nil {
+		return "", fmt.Errorf("sandbox not initialized - cannot write files")
+	}
+
+	// Create timeout context for write operation
+	ctx, cancel := context.WithTimeout(context.Background(), MaxReadTimeout)
+	defer cancel()
+
+	// Write to sandbox with timeout
+	errChan := make(chan error, 1)
+
+	go func() {
+		errChan <- h.SandboxFS.WriteFile(absFullPath, []byte(content), 0644)
+	}()
+
+	select {
+	case <-ctx.Done():
+		return "", fmt.Errorf("file write operation timed out after %v", MaxReadTimeout)
+	case err := <-errChan:
+		if err != nil {
+			return "", fmt.Errorf("failed to write to sandbox: %w", err)
+		}
+	}
+
+	return fmt.Sprintf("File '%s' written to sandbox. Use 'Review Changes' to preview and apply.", path), nil
 }
 
 func (h *FileToolsHandler) listDirectory(args map[string]any, projectRoot string) (string, error) {
@@ -446,4 +587,29 @@ func (h *FileToolsHandler) listFunctions(args map[string]any, projectRoot string
 	}
 
 	return fmt.Sprintf("Functions in %s:\n- %s", path, strings.Join(unique, "\n- ")), nil
+}
+
+// isBinaryFile checks if a file is binary by reading the first BinaryCheckBytes bytes
+// and looking for null bytes which typically indicate binary content
+func isBinaryFile(path string) bool {
+	file, err := os.Open(path)
+	if err != nil {
+		return false
+	}
+	defer file.Close()
+
+	buf := make([]byte, BinaryCheckBytes)
+	n, err := file.Read(buf)
+	if err != nil {
+		return false
+	}
+
+	// Check for null bytes in the read content
+	for i := 0; i < n; i++ {
+		if buf[i] == 0 {
+			return true
+		}
+	}
+
+	return false
 }

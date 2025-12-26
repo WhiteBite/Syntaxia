@@ -215,3 +215,236 @@ func TestContextMemory_Close(t *testing.T) {
 		t.Errorf("Close failed: %v", err)
 	}
 }
+
+func TestContextMemory_DeleteContext(t *testing.T) {
+	tmpDir := t.TempDir()
+	cm, err := NewContextMemory(tmpDir)
+	if err != nil {
+		t.Fatalf("NewContextMemory failed: %v", err)
+	}
+	defer cm.Close()
+
+	// Save a context
+	ctx := &domain.ConversationContext{
+		ID:           "ctx-to-delete",
+		ProjectRoot:  "/project",
+		Topic:        "test topic",
+		LastAccessed: time.Now(),
+		CreatedAt:    time.Now(),
+	}
+	cm.SaveContext(ctx)
+
+	// Verify it exists
+	retrieved, err := cm.GetContext("ctx-to-delete")
+	if err != nil {
+		t.Fatalf("GetContext failed: %v", err)
+	}
+	if retrieved == nil {
+		t.Fatal("Context should exist before deletion")
+	}
+}
+
+func TestContextMemory_UpdateContext(t *testing.T) {
+	tmpDir := t.TempDir()
+	cm, err := NewContextMemory(tmpDir)
+	if err != nil {
+		t.Fatalf("NewContextMemory failed: %v", err)
+	}
+	defer cm.Close()
+
+	// Save initial context
+	ctx := &domain.ConversationContext{
+		ID:           "ctx-update",
+		ProjectRoot:  "/project",
+		Topic:        "initial topic",
+		MessageCount: 1,
+		LastAccessed: time.Now(),
+		CreatedAt:    time.Now(),
+	}
+	cm.SaveContext(ctx)
+
+	// Update context
+	ctx.Topic = "updated topic"
+	ctx.MessageCount = 5
+	cm.SaveContext(ctx)
+
+	// Retrieve and verify
+	retrieved, err := cm.GetContext("ctx-update")
+	if err != nil {
+		t.Fatalf("GetContext failed: %v", err)
+	}
+
+	if retrieved.Topic != "updated topic" {
+		t.Errorf("expected topic 'updated topic', got %q", retrieved.Topic)
+	}
+	if retrieved.MessageCount != 5 {
+		t.Errorf("expected message count 5, got %d", retrieved.MessageCount)
+	}
+}
+
+func TestContextMemory_ContextWithSymbols(t *testing.T) {
+	tmpDir := t.TempDir()
+	cm, err := NewContextMemory(tmpDir)
+	if err != nil {
+		t.Fatalf("NewContextMemory failed: %v", err)
+	}
+	defer cm.Close()
+
+	ctx := &domain.ConversationContext{
+		ID:           "ctx-symbols",
+		ProjectRoot:  "/project",
+		Topic:        "symbols test",
+		Files:        []string{"main.go", "utils.go"},
+		Symbols:      []string{"main", "helper", "Config"},
+		LastAccessed: time.Now(),
+		CreatedAt:    time.Now(),
+	}
+
+	err = cm.SaveContext(ctx)
+	if err != nil {
+		t.Fatalf("SaveContext failed: %v", err)
+	}
+
+	retrieved, err := cm.GetContext("ctx-symbols")
+	if err != nil {
+		t.Fatalf("GetContext failed: %v", err)
+	}
+
+	if len(retrieved.Symbols) != 3 {
+		t.Errorf("expected 3 symbols, got %d", len(retrieved.Symbols))
+	}
+	if len(retrieved.Files) != 2 {
+		t.Errorf("expected 2 files, got %d", len(retrieved.Files))
+	}
+}
+
+func TestContextMemory_GetNonExistentContext(t *testing.T) {
+	tmpDir := t.TempDir()
+	cm, err := NewContextMemory(tmpDir)
+	if err != nil {
+		t.Fatalf("NewContextMemory failed: %v", err)
+	}
+	defer cm.Close()
+
+	_, err = cm.GetContext("non-existent-id")
+	if err == nil {
+		t.Error("expected error for non-existent context")
+	}
+}
+
+func TestContextMemory_GetNonExistentPreference(t *testing.T) {
+	tmpDir := t.TempDir()
+	cm, err := NewContextMemory(tmpDir)
+	if err != nil {
+		t.Fatalf("NewContextMemory failed: %v", err)
+	}
+	defer cm.Close()
+
+	val, err := cm.GetPreference("non-existent-key")
+	if err == nil && val != "" {
+		t.Error("expected empty value or error for non-existent preference")
+	}
+}
+
+func TestContextMemory_FindContextByTopic_NoMatch(t *testing.T) {
+	tmpDir := t.TempDir()
+	cm, err := NewContextMemory(tmpDir)
+	if err != nil {
+		t.Fatalf("NewContextMemory failed: %v", err)
+	}
+	defer cm.Close()
+
+	// Save a context
+	ctx := &domain.ConversationContext{
+		ID:           "ctx-1",
+		ProjectRoot:  "/project",
+		Topic:        "authentication",
+		LastAccessed: time.Now(),
+		CreatedAt:    time.Now(),
+	}
+	cm.SaveContext(ctx)
+
+	// Search for non-matching topic
+	found, err := cm.FindContextByTopic("/project", "database")
+	if err != nil {
+		t.Fatalf("FindContextByTopic failed: %v", err)
+	}
+
+	if len(found) != 0 {
+		t.Errorf("expected 0 matches, got %d", len(found))
+	}
+}
+
+func TestContextMemory_GetRecentContexts_Empty(t *testing.T) {
+	tmpDir := t.TempDir()
+	cm, err := NewContextMemory(tmpDir)
+	if err != nil {
+		t.Fatalf("NewContextMemory failed: %v", err)
+	}
+	defer cm.Close()
+
+	recent, err := cm.GetRecentContexts("/empty-project", 10)
+	if err != nil {
+		t.Fatalf("GetRecentContexts failed: %v", err)
+	}
+
+	if len(recent) != 0 {
+		t.Errorf("expected 0 contexts, got %d", len(recent))
+	}
+}
+
+func TestContextMemory_GetRecentContexts_DefaultLimit(t *testing.T) {
+	tmpDir := t.TempDir()
+	cm, err := NewContextMemory(tmpDir)
+	if err != nil {
+		t.Fatalf("NewContextMemory failed: %v", err)
+	}
+	defer cm.Close()
+
+	// Save multiple contexts
+	for i := 0; i < 15; i++ {
+		ctx := &domain.ConversationContext{
+			ID:           "ctx-" + string(rune('a'+i)),
+			ProjectRoot:  "/project",
+			Topic:        "topic",
+			LastAccessed: time.Now(),
+			CreatedAt:    time.Now(),
+		}
+		cm.SaveContext(ctx)
+	}
+
+	// Get with 0 limit (should default to 10)
+	recent, err := cm.GetRecentContexts("/project", 0)
+	if err != nil {
+		t.Fatalf("GetRecentContexts failed: %v", err)
+	}
+
+	if len(recent) > 10 {
+		t.Errorf("expected max 10 contexts with default limit, got %d", len(recent))
+	}
+}
+
+func TestExtractTopicFromMessage_EdgeCases(t *testing.T) {
+	tests := []struct {
+		message string
+		isEmpty bool
+	}{
+		{"", true},
+		{"a b", true}, // Too short words
+		{"the a an", true}, // Only stop words
+		{"implement authentication system", false},
+		{"работа над авторизацией", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.message, func(t *testing.T) {
+			topic := ExtractTopicFromMessage(tt.message)
+			if tt.isEmpty && topic != "" {
+				t.Errorf("expected empty topic for %q, got %q", tt.message, topic)
+			}
+			if !tt.isEmpty && topic == "" {
+				t.Errorf("expected non-empty topic for %q", tt.message)
+			}
+		})
+	}
+}

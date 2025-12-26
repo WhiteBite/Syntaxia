@@ -329,7 +329,10 @@ onUnmounted(() => {
 onMounted(() => {
   window.addEventListener('error', (event) => {
     if (event.message && event.message.includes('out of memory')) {
-      console.error('[App] Out of memory error detected!')
+      // Use logger for critical memory errors
+      const { useLogger } = require('@/composables/useLogger')
+      const memLogger = useLogger('App')
+      memLogger.error('Out of memory error detected!')
       uiStore.addToast('Critical memory error. Clearing caches...', 'error')
       
       // Emergency cleanup
@@ -345,7 +348,7 @@ onMounted(() => {
         contextStore.clearContext()
         fileStore.resetStore()
       } catch (e) {
-        console.error('Emergency cleanup failed:', e)
+        memLogger.error('Emergency cleanup failed:', e)
       }
     }
   })

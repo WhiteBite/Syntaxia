@@ -5,13 +5,19 @@
 
 import * as wails from '#wailsjs/go/main/App'
 import type { domain } from '#wailsjs/go/models'
+import { useLogger } from '@/composables/useLogger'
 import type {
+    AgenticChatRequest,
     AgenticChatResponse,
     FileQuickInfo,
     ImpactPreviewResult,
-    SmartSuggestionsResult,
+    SmartContextRequest,
+    SmartContextResult,
+    SmartSuggestionsResult
 } from '../types'
 import { apiCall, parseJsonResponse } from './base'
+
+const logger = useLogger('API:context')
 
 export const contextApi = {
     buildContext: (projectPath: string, files: string[], task: string): Promise<string> =>
@@ -25,7 +31,7 @@ export const contextApi = {
         try {
             return await wails.BuildContextFromRequest(projectPath, files, options)
         } catch (error) {
-            console.error('[API:context] Error building context from request:', error)
+            logger.error('Error building context from request:', error)
 
             let errorMsg = ''
             if (error && typeof error === 'object') {
@@ -103,7 +109,7 @@ export const contextApi = {
                 total: result.total || 0,
             }
         } catch (error) {
-            console.error('[API:context] Error getting smart suggestions:', error)
+            logger.error('Error getting smart suggestions:', error)
             return { suggestions: [], total: 0 }
         }
     },
@@ -151,13 +157,26 @@ export const contextApi = {
             { logContext: 'context' }
         ),
 
-    agenticChat: async (task: string, projectRoot: string): Promise<AgenticChatResponse> => {
-        const request = { task, projectRoot }
+    agenticChat: async (
+        task: string,
+        projectRoot: string,
+        smartContext?: SmartContextResult
+    ): Promise<AgenticChatResponse> => {
+        const request: AgenticChatRequest = { task, projectRoot, smartContext }
         const result = await apiCall(
             () => wails.AgenticChat(JSON.stringify(request)),
             'Failed to execute agentic chat.',
             { logContext: 'context' }
         )
         return parseJsonResponse(result, 'Failed to parse agentic chat response.')
+    },
+
+    collectSmartContext: async (request: SmartContextRequest): Promise<SmartContextResult> => {
+        const result = await apiCall(
+            () => wails.CollectSmartContext(JSON.stringify(request)),
+            'Failed to collect smart context.',
+            { logContext: 'context' }
+        )
+        return parseJsonResponse(result, 'Failed to parse smart context.')
     },
 }

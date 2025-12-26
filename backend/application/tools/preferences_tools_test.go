@@ -1,8 +1,66 @@
 package tools
 
 import (
+	"errors"
+	"strings"
 	"testing"
+
+	"syntaxia/domain"
 )
+
+// MockContextMemory implements domain.ContextMemory for preferences testing
+type MockContextMemory struct {
+	preferences map[string]string
+	saveError   error
+}
+
+func (m *MockContextMemory) SaveContext(ctx *domain.ConversationContext) error {
+	return m.saveError
+}
+
+func (m *MockContextMemory) GetContext(id string) (*domain.ConversationContext, error) {
+	return nil, errors.New("not found")
+}
+
+func (m *MockContextMemory) FindContextByTopic(projectRoot, topic string) ([]*domain.ConversationContext, error) {
+	return nil, nil
+}
+
+func (m *MockContextMemory) GetRecentContexts(projectRoot string, limit int) ([]*domain.ConversationContext, error) {
+	return nil, nil
+}
+
+func (m *MockContextMemory) SetPreference(key, value string) error {
+	if m.preferences == nil {
+		m.preferences = make(map[string]string)
+	}
+	m.preferences[key] = value
+	return nil
+}
+
+func (m *MockContextMemory) GetPreference(key string) (string, error) {
+	if m.preferences == nil {
+		return "", errors.New("not found")
+	}
+	if v, ok := m.preferences[key]; ok {
+		return v, nil
+	}
+	return "", errors.New("not found")
+}
+
+func (m *MockContextMemory) GetAllPreferences() (map[string]string, error) {
+	if m.preferences == nil {
+		return make(map[string]string), nil
+	}
+	return m.preferences, nil
+}
+
+func (m *MockContextMemory) Close() error { return nil }
+
+// containsStrPref checks if result contains substring
+func containsStrPref(result, substr string) bool {
+	return strings.Contains(result, substr)
+}
 
 func TestPreferencesHandler_CanHandle(t *testing.T) {
 	handler := NewPreferencesToolsHandler(nil, nil)
@@ -65,7 +123,7 @@ func TestSetPreference_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !containsStr(result, "theme") || !containsStr(result, "dark") {
+	if !containsStrPref(result, "theme") || !containsStrPref(result, "dark") {
 		t.Errorf("expected success message with key/value, got: %s", result)
 	}
 	if mock.preferences["theme"] != "dark" {
@@ -112,7 +170,7 @@ func TestGetPreferences_SingleKey(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !containsStr(result, "theme") || !containsStr(result, "dark") {
+	if !containsStrPref(result, "theme") || !containsStrPref(result, "dark") {
 		t.Errorf("expected preference value, got: %s", result)
 	}
 }
@@ -128,7 +186,7 @@ func TestGetPreferences_AllPreferences(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !containsStr(result, "theme") || !containsStr(result, "lang") {
+	if !containsStrPref(result, "theme") || !containsStrPref(result, "lang") {
 		t.Errorf("expected all preferences, got: %s", result)
 	}
 }

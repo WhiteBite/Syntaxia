@@ -13,23 +13,23 @@ export default defineConfig({
     hookTimeout: 10000,
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      reporter: ['text', 'json', 'html', 'lcov'],
       exclude: [
         'node_modules/',
         'tests/',
         '**/*.spec.ts',
         '**/*.test.ts',
         'wailsjs/',
-        'dist/'
+        'dist/',
+        '*.config.*',
+        'src/main.ts',
+        'src/App.vue'
       ],
       thresholds: {
-        // Realistic thresholds based on current coverage
-        // Current: lines 23.75%, functions 7.54%, branches 5.65%, statements 22.38%
-        // TODO: Gradually increase as test coverage improves
-        lines: 20,
-        functions: 5,
-        branches: 5,
-        statements: 20
+        statements: 25,
+        branches: 15,
+        functions: 15,
+        lines: 25
       }
     }
   },

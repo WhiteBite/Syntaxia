@@ -682,3 +682,100 @@ type ProjectStructureInfo struct {
 	EntryPoints []string          `json:"entryPoints,omitempty"`
 	Metadata    map[string]string `json:"metadata,omitempty"`
 }
+
+// =============================================================================
+// Sandbox Filesystem Interface
+// =============================================================================
+
+// SandboxChangeOperation represents the type of file change in sandbox
+type SandboxChangeOperation int
+
+const (
+	// SandboxOpCreate indicates a new file creation
+	SandboxOpCreate SandboxChangeOperation = iota
+	// SandboxOpModify indicates a file modification
+	SandboxOpModify
+	// SandboxOpDelete indicates a file deletion
+	SandboxOpDelete
+)
+
+// SandboxFileChange represents a single file change in the sandbox
+type SandboxFileChange struct {
+	Path            string                 `json:"path"`
+	Content         []byte                 `json:"content,omitempty"`
+	OriginalContent []byte                 `json:"originalContent,omitempty"`
+	Operation       SandboxChangeOperation `json:"operation"`
+	Timestamp       time.Time              `json:"timestamp"`
+}
+
+// SandboxFS defines interface for virtual filesystem that stores AI changes in memory
+// Changes are not written to disk until explicitly applied
+type SandboxFS interface {
+	FileSystemProvider
+
+	// DeleteFile marks a file as deleted in the sandbox
+	DeleteFile(filename string) error
+
+	// GetChanges returns all pending changes sorted by path
+	GetChanges() []*SandboxFileChange
+
+	// GetDiff returns unified diff for a single file
+	GetDiff(filename string) (string, error)
+
+	// GetAllDiffs returns unified diff for all changes
+	GetAllDiffs() (string, error)
+
+	// Apply applies all sandbox changes to the real filesystem
+	Apply() error
+
+	// Discard clears all pending changes
+	Discard()
+
+	// DiscardFile removes a single file from pending changes
+	DiscardFile(filename string)
+
+	// HasChanges returns true if there are pending changes
+	HasChanges() bool
+
+	// GetChangeCount returns the number of changed files
+	GetChangeCount() int
+
+	// GetProjectRoot returns the project root path
+	GetProjectRoot() string
+
+	// SetProjectRoot updates the project root path
+	SetProjectRoot(root string)
+}
+
+// =============================================================================
+// Smart Context Collector Interface
+// =============================================================================
+
+// SmartContextCollector собирает релевантный контекст для AI задачи
+type SmartContextCollector interface {
+	CollectContext(ctx context.Context, req SmartContextRequest) (*SmartContextResult, error)
+}
+
+// SmartContextRequest запрос на сбор контекста
+type SmartContextRequest struct {
+	Task          string   `json:"task"`
+	ProjectRoot   string   `json:"projectRoot"`
+	SelectedFiles []string `json:"selectedFiles,omitempty"`
+	MaxTokens     int      `json:"maxTokens,omitempty"`
+}
+
+// SmartContextResult результат сбора контекста
+type SmartContextResult struct {
+	ProjectStructure string        `json:"projectStructure"`
+	RelevantFiles    []ContextFile `json:"relevantFiles"`
+	TotalTokens      int           `json:"totalTokens"`
+	Strategy         string        `json:"strategy"`
+}
+
+// ContextFile файл с контекстом
+type ContextFile struct {
+	Path    string `json:"path"`
+	Content string `json:"content"`
+	Tokens  int    `json:"tokens"`
+	Reason  string `json:"reason"`
+}

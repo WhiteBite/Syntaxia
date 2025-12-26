@@ -1,6 +1,9 @@
+import { useLogger } from '@/composables/useLogger'
 import { useContextStore } from '@/features/context/model/context.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { computed, ref } from 'vue'
+
+const logger = useLogger('ChunkedCopy')
 
 export interface Chunk {
     index: number
@@ -193,7 +196,7 @@ export function useChunkedCopy() {
 
             chunks.value = result
         } catch (err) {
-            console.error('[useChunkedCopy] Failed to generate chunks:', err)
+            logger.error('Failed to generate chunks:', err)
         } finally {
             isProcessing.value = false
         }
@@ -212,7 +215,7 @@ export function useChunkedCopy() {
             currentChunkIndex.value = Math.min(index + 1, chunks.value.length - 1)
             return true
         } catch (err) {
-            console.error('[useChunkedCopy] Failed to copy chunk:', err)
+            logger.error('Failed to copy chunk:', err)
             return false
         }
     }

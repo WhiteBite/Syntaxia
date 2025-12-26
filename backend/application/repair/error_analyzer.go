@@ -3,8 +3,8 @@ package repair
 import (
 	"fmt"
 	"regexp"
-	"syntaxia/domain"
 	"strings"
+	"syntaxia/domain"
 )
 
 // ErrorAnalyzer implements the ErrorAnalyzer interface
@@ -24,6 +24,16 @@ func NewErrorAnalyzer(log domain.Logger) domain.ErrorAnalyzer {
 	analyzer.languageAnalyzers[langGo] = NewGoErrorAnalyzer()
 	analyzer.languageAnalyzers[langTypeScript] = NewTypeScriptErrorAnalyzer()
 	analyzer.languageAnalyzers[langJavaScript] = NewJavaScriptErrorAnalyzer()
+	analyzer.languageAnalyzers[langJava] = NewJavaErrorAnalyzer()
+	analyzer.languageAnalyzers[langRust] = NewRustErrorAnalyzer()
+	analyzer.languageAnalyzers[langPython] = NewPythonErrorAnalyzer()
+	analyzer.languageAnalyzers[langKotlin] = NewKotlinErrorAnalyzer()
+	analyzer.languageAnalyzers[langCSharp] = NewCSharpErrorAnalyzer()
+	analyzer.languageAnalyzers[langDart] = NewDartErrorAnalyzer()
+	analyzer.languageAnalyzers[langCpp] = NewCPPErrorAnalyzer()
+	analyzer.languageAnalyzers[langPHP] = NewPHPErrorAnalyzer()
+	analyzer.languageAnalyzers[langRuby] = NewRubyErrorAnalyzer()
+	analyzer.languageAnalyzers[langSwift] = NewSwiftErrorAnalyzer()
 
 	return analyzer
 }
@@ -217,162 +227,6 @@ func (e *ErrorAnalyzer) getGenericCorrections(errDetails *domain.ErrorDetails) [
 	}
 
 	return corrections
-}
-
-// Language-specific analyzers
-
-// GoErrorAnalyzer analyzes Go-specific errors
-type GoErrorAnalyzer struct{}
-
-func NewGoErrorAnalyzer() domain.LanguageErrorAnalyzer {
-	return &GoErrorAnalyzer{}
-}
-
-func (g *GoErrorAnalyzer) AnalyzeError(errorOutput string) (*domain.ErrorDetails, error) {
-	details := &domain.ErrorDetails{
-		Tool: "go",
-	}
-
-	if strings.Contains(errorOutput, "undefined:") {
-		details.ErrorType = domain.ErrorTypeCompilation
-		details.Suggestions = append(details.Suggestions, "Check if the identifier is declared or imported")
-	}
-
-	if strings.Contains(errorOutput, "cannot use") {
-		details.ErrorType = domain.ErrorTypeTypeCheck
-		details.Suggestions = append(details.Suggestions, "Check type compatibility")
-	}
-
-	return details, nil
-}
-
-func (g *GoErrorAnalyzer) SuggestCorrections(error *domain.ErrorDetails) ([]*domain.CorrectionStep, error) {
-	corrections := make([]*domain.CorrectionStep, 0)
-
-	if strings.Contains(error.Message, "undefined:") {
-		corrections = append(corrections, &domain.CorrectionStep{
-			Action:      domain.ActionAddMissingCode,
-			Target:      error.SourceFile,
-			Description: "Add missing declaration or import",
-		})
-	}
-
-	return corrections, nil
-}
-
-func (g *GoErrorAnalyzer) ClassifyErrorType(errorOutput string) domain.ErrorType {
-	if strings.Contains(errorOutput, "undefined:") || strings.Contains(errorOutput, "undeclared name:") {
-		return domain.ErrorTypeCompilation
-	}
-	if strings.Contains(errorOutput, "cannot use") || strings.Contains(errorOutput, "type") {
-		return domain.ErrorTypeTypeCheck
-	}
-	return domain.ErrorTypeCompilation
-}
-
-func (g *GoErrorAnalyzer) GetLanguage() string {
-	return langGo
-}
-
-// TypeScriptErrorAnalyzer analyzes TypeScript-specific errors
-type TypeScriptErrorAnalyzer struct{}
-
-func NewTypeScriptErrorAnalyzer() domain.LanguageErrorAnalyzer {
-	return &TypeScriptErrorAnalyzer{}
-}
-
-func (t *TypeScriptErrorAnalyzer) AnalyzeError(errorOutput string) (*domain.ErrorDetails, error) {
-	details := &domain.ErrorDetails{
-		Tool: "tsc",
-	}
-
-	if strings.Contains(errorOutput, "TS2304") {
-		details.ErrorType = domain.ErrorTypeImport
-		details.Suggestions = append(details.Suggestions, "Cannot find name - check imports or declarations")
-	}
-
-	if strings.Contains(errorOutput, "TS2322") {
-		details.ErrorType = domain.ErrorTypeTypeCheck
-		details.Suggestions = append(details.Suggestions, "Type assignment error - check type compatibility")
-	}
-
-	return details, nil
-}
-
-func (t *TypeScriptErrorAnalyzer) SuggestCorrections(error *domain.ErrorDetails) ([]*domain.CorrectionStep, error) {
-	corrections := make([]*domain.CorrectionStep, 0)
-
-	if strings.Contains(error.Message, "TS2304") {
-		corrections = append(corrections, &domain.CorrectionStep{
-			Action:      domain.ActionFixImport,
-			Target:      error.SourceFile,
-			Description: "Add missing import or type declaration",
-		})
-	}
-
-	return corrections, nil
-}
-
-func (t *TypeScriptErrorAnalyzer) ClassifyErrorType(errorOutput string) domain.ErrorType {
-	if strings.Contains(errorOutput, "TS2304") || strings.Contains(errorOutput, "Cannot find") {
-		return domain.ErrorTypeImport
-	}
-	if strings.Contains(errorOutput, "TS2322") || strings.Contains(errorOutput, "Type") {
-		return domain.ErrorTypeTypeCheck
-	}
-	return domain.ErrorTypeCompilation
-}
-
-func (t *TypeScriptErrorAnalyzer) GetLanguage() string {
-	return langTypeScript
-}
-
-// JavaScriptErrorAnalyzer analyzes JavaScript-specific errors
-type JavaScriptErrorAnalyzer struct{}
-
-func NewJavaScriptErrorAnalyzer() domain.LanguageErrorAnalyzer {
-	return &JavaScriptErrorAnalyzer{}
-}
-
-func (j *JavaScriptErrorAnalyzer) AnalyzeError(errorOutput string) (*domain.ErrorDetails, error) {
-	details := &domain.ErrorDetails{
-		Tool: "eslint",
-	}
-
-	if strings.Contains(errorOutput, "is not defined") {
-		details.ErrorType = domain.ErrorTypeImport
-		details.Suggestions = append(details.Suggestions, "Variable or function not defined - check imports")
-	}
-
-	return details, nil
-}
-
-func (j *JavaScriptErrorAnalyzer) SuggestCorrections(error *domain.ErrorDetails) ([]*domain.CorrectionStep, error) {
-	corrections := make([]*domain.CorrectionStep, 0)
-
-	if strings.Contains(error.Message, "is not defined") {
-		corrections = append(corrections, &domain.CorrectionStep{
-			Action:      domain.ActionFixImport,
-			Target:      error.SourceFile,
-			Description: "Add missing import or declaration",
-		})
-	}
-
-	return corrections, nil
-}
-
-func (j *JavaScriptErrorAnalyzer) ClassifyErrorType(errorOutput string) domain.ErrorType {
-	if strings.Contains(errorOutput, "is not defined") {
-		return domain.ErrorTypeImport
-	}
-	if strings.Contains(errorOutput, "SyntaxError") {
-		return domain.ErrorTypeSyntax
-	}
-	return domain.ErrorTypeCompilation
-}
-
-func (j *JavaScriptErrorAnalyzer) GetLanguage() string {
-	return langJavaScript
 }
 
 // Utility functions

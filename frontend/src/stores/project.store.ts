@@ -3,11 +3,14 @@
  * Direct localStorage integration for simplicity
  */
 
+import { useLogger } from '@/composables/useLogger'
 import { useContextStore } from '@/features/context'
 import { useFileStore } from '@/features/files'
 import { apiService } from '@/services/api.service'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+
+const logger = useLogger('ProjectStore')
 
 export interface RecentProject {
   path: string
@@ -68,7 +71,7 @@ export const useProjectStore = defineStore('project', () => {
         const name = path.split(/[\\/]/).pop() || path
         await apiService.addRecentProject(path, name)
       } catch (backendError) {
-        console.error('Failed to save project to backend:', backendError)
+        logger.error('Failed to save project to backend:', backendError)
         // Продолжаем выполнение, даже если сохранение в бэкенд не удалось
       }
 
@@ -140,7 +143,7 @@ export const useProjectStore = defineStore('project', () => {
         }
       }
     } catch (err) {
-      console.error('Failed to fetch recent projects from backend:', err)
+      logger.error('Failed to fetch recent projects from backend:', err)
       error.value = err instanceof Error ? err.message : 'Failed to load recent projects'
       // В случае ошибки оставляем текущий список (из localStorage)
     } finally {
@@ -179,7 +182,7 @@ export const useProjectStore = defineStore('project', () => {
     try {
       await apiService.removeRecentProject(path)
     } catch (backendError) {
-      console.error('Failed to remove project from backend:', backendError)
+      logger.error('Failed to remove project from backend:', backendError)
       // Продолжаем выполнение, даже если удаление из бэкенда не удалось
     }
 

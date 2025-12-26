@@ -35,17 +35,17 @@ export const useUIStore = defineStore('ui', () => {
       action
     }
 
-    // Log toast to console
+    // Log toast to console using logger
     const logMessage = `[Toast ${type.toUpperCase()}] ${message}`
     switch (type) {
       case 'error':
-        console.error(logMessage)
+        logger.error(logMessage)
         break
       case 'warning':
-        console.warn(logMessage)
+        logger.warn(logMessage)
         break
       case 'info':
-        console.info(logMessage)
+        logger.info(logMessage)
         break
       case 'success':
         logger.debug(logMessage)

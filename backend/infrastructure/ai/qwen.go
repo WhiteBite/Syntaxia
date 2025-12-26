@@ -80,31 +80,33 @@ func (p *QwenProviderImpl) Generate(ctx context.Context, req domain.AIRequest) (
 	startTime := time.Now()
 	p.log.Info(fmt.Sprintf("Sending request to Qwen API with model: %s", req.Model))
 
-	completionReq := common.BuildCompletionRequest(req, false)
-	resp, err := p.client.CreateChatCompletion(ctx, completionReq)
-	if err != nil {
-		p.log.Error(fmt.Sprintf("Qwen API request failed: %v", err))
-		if domainErr := common.HandleOpenAIError(err); !errors.Is(domainErr, err) {
-			return domain.AIResponse{}, domainErr
+	return common.WithRetry(ctx, common.DefaultRetryConfig(), func() (domain.AIResponse, error) {
+		completionReq := common.BuildCompletionRequest(req, false)
+		resp, err := p.client.CreateChatCompletion(ctx, completionReq)
+		if err != nil {
+			p.log.Error(fmt.Sprintf("Qwen API request failed: %v", err))
+			if domainErr := common.HandleOpenAIError(err); !errors.Is(domainErr, err) {
+				return domain.AIResponse{}, domainErr
+			}
+			return domain.AIResponse{}, err
 		}
-		return domain.AIResponse{}, err
-	}
 
-	if len(resp.Choices) == 0 {
-		return domain.AIResponse{}, fmt.Errorf("no choices returned from Qwen API")
-	}
+		if len(resp.Choices) == 0 {
+			return domain.AIResponse{}, fmt.Errorf("no choices returned from Qwen API")
+		}
 
-	processingTime := time.Since(startTime)
-	tokensUsed := resp.Usage.TotalTokens
+		processingTime := time.Since(startTime)
+		tokensUsed := resp.Usage.TotalTokens
 
-	return domain.AIResponse{
-		Content:        resp.Choices[0].Message.Content,
-		TokensUsed:     tokensUsed,
-		ModelUsed:      req.Model,
-		ProcessingTime: processingTime,
-		FinishReason:   string(resp.Choices[0].FinishReason),
-		Confidence:     0.9,
-	}, nil
+		return domain.AIResponse{
+			Content:        resp.Choices[0].Message.Content,
+			TokensUsed:     tokensUsed,
+			ModelUsed:      req.Model,
+			ProcessingTime: processingTime,
+			FinishReason:   string(resp.Choices[0].FinishReason),
+			Confidence:     0.9,
+		}, nil
+	})
 }
 
 // GenerateStream sends a streaming request to Qwen API

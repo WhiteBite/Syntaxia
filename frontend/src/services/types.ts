@@ -43,12 +43,39 @@ export interface GitLabCommit {
 }
 
 // ============================================
+// Smart Context types
+// ============================================
+
+export interface SmartContextRequest {
+    task: string
+    projectRoot: string
+    selectedFiles?: string[]
+    maxTokens?: number
+}
+
+export interface SmartContextResult {
+    projectStructure: string
+    relevantFiles: ContextFile[]
+    totalTokens: number
+    strategy: string
+}
+
+export interface ContextFile {
+    path: string
+    content: string
+    tokens: number
+    reason: string
+}
+
+// ============================================
 // Agentic Chat types
 // ============================================
 
 export interface AgenticChatRequest {
     task: string
     projectRoot: string
+    context?: string[]
+    smartContext?: SmartContextResult
     maxTokens?: number
 }
 
@@ -63,6 +90,21 @@ export interface ToolCallLog {
     tool: string
     arguments: string
     result: string
+}
+
+// ============================================
+// Sandbox types
+// ============================================
+
+export interface SandboxChange {
+    path: string
+    operation: 'create' | 'modify' | 'delete'
+    diff: string
+}
+
+export interface SandboxChangesResponse {
+    changes: SandboxChange[]
+    totalCount: number
 }
 
 // ============================================

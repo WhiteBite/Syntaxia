@@ -13,20 +13,12 @@ Application — use cases и бизнес-логика. Оркестрирует
 
 ```
 backend/application/
-├── tools/              # AI tool handlers
-│   ├── file_tools.go
-│   ├── git_tools.go
-│   ├── symbol_tools.go
-│   ├── memory_tools.go
-│   └── ...
-├── ai/                 # AI сервисы
-├── analysis/           # Анализ кода
+├── tools/              # AI tool handlers (file, git, symbol, memory)
+├── ai/                 # AI сервисы (chat, providers)
+├── analysis/           # Анализ кода (symbol index, call graph)
 ├── project/            # Проект сервисы
-├── taskflow/           # Taskflow engine
-├── verification/       # Verification pipeline
-├── repair/             # Self-correction
-├── guardrails/         # Guardrails
-├── tool_executor.go    # Главный executor
+├── diff/               # Применение изменений, diff generation
+├── tool_executor.go    # Главный executor для AI tools
 └── constants.go        # Константы
 ```
 
@@ -89,25 +81,28 @@ func (te *ToolExecutorImpl) ExecuteTool(call domain.ToolCall, projectRoot string
 }
 ```
 
-## Taskflow Engine
+## AI Chat с Tool Calling
 
-Управление задачами:
+Основной flow для редактирования файлов:
 
 ```go
-// application/taskflow/
-├── engine.go           # Основной движок
-├── decomposer.go       # Декомпозиция задач
-├── scheduler.go        # Планировщик
-└── executor.go         # Выполнение
+// application/ai/chat_service.go
+type ChatService struct {
+    provider     domain.AIProvider
+    toolExecutor domain.ToolExecutor
+    changeManager *ChangeManager
+}
+
+// AI вызывает tools → изменения сохраняются → пользователь может откатить
 ```
 
-## Verification Pipeline
+## Change Manager
+
+Управление изменениями файлов:
 
 ```go
-// application/verification/
-├── pipeline.go         # Основной pipeline
-├── stages.go           # Этапы верификации
-└── reporter.go         # Отчёты
-
-// Этапы: analysis → linting → building → testing → guardrails
+// application/diff/
+├── apply_service.go    # Применение изменений
+├── diff_service.go     # Генерация diff
+└── change_manager.go   # История изменений, rollback
 ```

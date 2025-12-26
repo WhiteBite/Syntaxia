@@ -1,7 +1,10 @@
+import { useLogger } from '@/composables/useLogger'
 import { useFileStore } from '@/features/files'
 import { apiService } from '@/services/api.service'
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
+
+const logger = useLogger('TaskStore')
 
 export interface TaskDraft {
     description: string
@@ -167,7 +170,7 @@ export const useTaskStore = defineStore('task', () => {
             }
             localStorage.setItem('task-draft', JSON.stringify(draft))
         } catch (err) {
-            console.warn('Failed to save task draft:', err)
+            logger.warn('Failed to save task draft:', err)
         }
     }
 
@@ -180,7 +183,7 @@ export const useTaskStore = defineStore('task', () => {
                 taskType.value = draft.type || 'feature'
             }
         } catch (err) {
-            console.warn('Failed to load task draft:', err)
+            logger.warn('Failed to load task draft:', err)
         }
     }
 

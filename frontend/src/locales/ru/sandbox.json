@@ -1,0 +1,12 @@
+{
+    "sandbox.reviewChanges": "Просмотр изменений",
+    "sandbox.files": "файлов",
+    "sandbox.selectFile": "Выберите файл для просмотра diff",
+    "sandbox.applyAll": "Применить все",
+    "sandbox.discardAll": "Отменить все",
+    "sandbox.apply": "Применить",
+    "sandbox.discard": "Отменить",
+    "sandbox.noChanges": "Нет изменений",
+    "sandbox.changesApplied": "Изменения применены",
+    "sandbox.changesDiscarded": "Изменения отменены"
+}

@@ -3,8 +3,11 @@
  * Catches unhandled errors and displays user-friendly messages
  */
 
-import type { App } from 'vue'
+import { useLogger } from '@/composables/useLogger'
 import { useUIStore } from '@/stores/ui.store'
+import type { App } from 'vue'
+
+const logger = useLogger('ErrorHandler')
 
 export interface ErrorHandlerOptions {
   showNotification?: boolean
@@ -20,9 +23,9 @@ export function setupErrorHandler(app: App, options: ErrorHandlerOptions = {}) {
   // Vue error handler
   app.config.errorHandler = (err, instance, info) => {
     if (logToConsole) {
-      console.error('[Error Handler]', err)
-      console.error('Component:', instance)
-      console.error('Error info:', info)
+      logger.error('Vue error:', err)
+      logger.error('Component:', instance)
+      logger.error('Error info:', info)
     }
 
     if (showNotification) {
@@ -31,8 +34,8 @@ export function setupErrorHandler(app: App, options: ErrorHandlerOptions = {}) {
         const message = err instanceof Error ? err.message : String(err)
         uiStore.addToast(`Application error: ${message}`, 'error')
       } catch (toastError) {
-        // Fallback to console if toast system fails
-        console.error('Failed to show error toast:', toastError)
+        // Fallback to logger if toast system fails
+        logger.error('Failed to show error toast:', toastError)
         if (import.meta.env.PROD) {
           alert(`An error occurred: ${err instanceof Error ? err.message : String(err)}`)
         }
@@ -41,14 +44,14 @@ export function setupErrorHandler(app: App, options: ErrorHandlerOptions = {}) {
 
     // Additional info in development
     if (import.meta.env.DEV) {
-      console.error('Error details:', { err, instance, info })
+      logger.error('Error details:', { err, instance, info })
     }
   }
 
   // Handle unhandled promise rejections
   window.addEventListener('unhandledrejection', (event) => {
     if (logToConsole) {
-      console.error('[Unhandled Promise Rejection]', event.reason)
+      logger.error('Unhandled Promise Rejection:', event.reason)
     }
 
     if (showNotification) {
@@ -57,7 +60,7 @@ export function setupErrorHandler(app: App, options: ErrorHandlerOptions = {}) {
         const message = event.reason instanceof Error ? event.reason.message : String(event.reason)
         uiStore.addToast(`Unhandled promise rejection: ${message}`, 'error')
       } catch (toastError) {
-        console.error('Failed to show rejection toast:', toastError)
+        logger.error('Failed to show rejection toast:', toastError)
       }
     }
 

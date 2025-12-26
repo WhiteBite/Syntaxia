@@ -96,8 +96,11 @@
 
 <script setup lang="ts">
 import { useI18n } from '@/composables/useI18n'
+import { useLogger } from '@/composables/useLogger'
 import { computed, onMounted, ref } from 'vue'
 import { GetReleases, GetVersionInfo } from '../../wailsjs/go/main/App'
+
+const logger = useLogger('VersionBadge')
 
 interface Release {
     tag_name: string
@@ -163,7 +166,7 @@ async function loadReleases() {
             error.value = response.error
         }
     } catch (e) {
-        console.error('Failed to load releases:', e)
+        logger.error('Failed to load releases:', e)
         error.value = e instanceof Error ? e.message : 'Unknown error'
     } finally {
         isLoading.value = false

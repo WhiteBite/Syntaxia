@@ -1,0 +1,72 @@
+{
+  "author": "Pionxzh",
+  "name": "ast-types-x",
+  "version": "1.18.0",
+  "packageManager": "pnpm@8.15.7",
+  "description": "Esprima-compatible implementation of the Mozilla JS Parser API",
+  "keywords": [
+    "ast",
+    "abstract syntax tree",
+    "hierarchy",
+    "mozilla",
+    "spidermonkey",
+    "parser api",
+    "esprima",
+    "types",
+    "type system",
+    "type checking",
+    "dynamic types",
+    "parsing",
+    "transformation",
+    "syntax"
+  ],
+  "homepage": "http://github.com/pionxzh/ast-types-x",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/pionxzh/ast-types-x.git"
+  },
+  "license": "MIT",
+  "main": "lib/main.js",
+  "types": "lib/main.d.ts",
+  "exports": {
+    ".": "./lib/main.js",
+    "./lib/*": "./lib/*.js",
+    "./lib/*.js": "./lib/*.js",
+    "./*": "./lib/*.js",
+    "./*.js": "./lib/*.js"
+  },
+  "dependencies": {
+    "tslib": "^2.0.1"
+  },
+  "devDependencies": {
+    "@babel/parser": "7.24.8",
+    "@babel/types": "7.24.9",
+    "@types/esprima": "4.0.6",
+    "@types/estree": "^1.0.5",
+    "@types/glob": "8.1.0",
+    "@types/mocha": "10.0.7",
+    "espree": "9.4.1",
+    "esprima": "4.0.1",
+    "esprima-fb": "15001.1001.0-dev-harmony-fb",
+    "flow-parser": "0.195.2",
+    "glob": "8.0.3",
+    "mocha": "^10.2.0",
+    "recast": "^0.23.0",
+    "reify": "0.20.12",
+    "rimraf": "6.0.1",
+    "ts-node": "10.9.2",
+    "tsx": "^4.16.2",
+    "typescript": "5.5.3"
+  },
+  "engines": {
+    "node": ">=4"
+  },
+  "scripts": {
+    "gen": "ts-node --transpile-only script/gen-types.ts",
+    "test": "npm run gen && npm run build && script/run-tests.sh",
+    "test:watch": "mocha --reporter spec --full-trace src/test/run.ts --watch --watch-files src",
+    "run-test": "npm run gen && npm run build && mocha --reporter spec --full-trace lib/test/run.js",
+    "clean": "rimraf lib/",
+    "build": "tsc"
+  }
+}

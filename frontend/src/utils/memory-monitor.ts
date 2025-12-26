@@ -274,7 +274,7 @@ export class MemoryMonitor {
         });
       }, 500);
     } catch (e) {
-      console.error('Error during emergency memory cleanup:', e);
+      logger.error('Error during emergency memory cleanup:', e);
     }
   }
 
@@ -290,7 +290,7 @@ export class MemoryMonitor {
         logger.debug(`Heap snapshot saved: ${filename}`);
         this.uiStore.addToast(`Heap snapshot saved: ${filename}`, 'info');
       } catch (e) {
-        console.error('Failed to dump heap snapshot:', e);
+        logger.error('Failed to dump heap snapshot:', e);
       }
     } else {
       console.warn('Heap snapshot API not available. Run Chrome with --enable-precise-memory-info flag.');
@@ -375,7 +375,7 @@ export class MemoryMonitor {
     // Check if we've reached critical threshold
     if (percentage >= criticalPercentage) {
       if (!this.criticalIssued) {
-        console.error(`CRITICAL: Memory usage at ${percentage}% (${used}MB / ${total}MB)`);
+        logger.error(`CRITICAL: Memory usage at ${percentage}% (${used}MB / ${total}MB)`);
 
         if (this.options.showToasts) {
           // Get current locale for localized message
@@ -402,7 +402,7 @@ export class MemoryMonitor {
           try {
             cb();
           } catch (e) {
-            console.error('Critical callback error:', e);
+            logger.error('Critical callback error:', e);
           }
         }
 

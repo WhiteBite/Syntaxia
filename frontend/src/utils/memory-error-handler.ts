@@ -136,9 +136,9 @@ export class MemoryErrorHandler {
         }
     }
 
-    // Log to console if not silent
+    // Log to logger if not silent
     if (!options.silent) {
-      console.error(`[${details.code}] ${errorObj.message}`, errorObj, options.context || {});
+      logger.error(`[${details.code}] ${errorObj.message}`, errorObj, options.context || {});
     }
 
     return details;

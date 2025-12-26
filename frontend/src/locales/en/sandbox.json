@@ -1,0 +1,12 @@
+{
+    "sandbox.reviewChanges": "Review Changes",
+    "sandbox.files": "files",
+    "sandbox.selectFile": "Select a file to view diff",
+    "sandbox.applyAll": "Apply All",
+    "sandbox.discardAll": "Discard All",
+    "sandbox.apply": "Apply",
+    "sandbox.discard": "Discard",
+    "sandbox.noChanges": "No changes",
+    "sandbox.changesApplied": "Changes applied",
+    "sandbox.changesDiscarded": "Changes discarded"
+}

@@ -5,7 +5,10 @@
 
 import * as wails from '#wailsjs/go/main/App'
 import type { domain } from '#wailsjs/go/models'
+import { useLogger } from '@/composables/useLogger'
 import { apiCall } from './base'
+
+const logger = useLogger('API:files')
 
 export const filesApi = {
     listFiles: (path: string, useGitignore = true, useCustomIgnore = true): Promise<domain.FileNode[]> =>
@@ -15,7 +18,7 @@ export const filesApi = {
         try {
             await wails.ClearFileTreeCache()
         } catch (error) {
-            console.error('[API:files] Error clearing file tree cache:', error)
+            logger.error('Error clearing file tree cache:', error)
         }
     },
 

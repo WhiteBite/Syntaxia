@@ -35,9 +35,17 @@ jobs:
         run: npm ci
         working-directory: frontend
 
-      - name: Run Frontend Tests
+      - name: Run Frontend Tests with Coverage
         run: npm run test:run -- --coverage
         working-directory: frontend
+
+      - name: Upload frontend coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: frontend/coverage/lcov.info
+          flags: frontend
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -45,9 +53,17 @@ jobs:
           go-version: "1.24"
           cache-dependency-path: backend/go.sum
 
-      - name: Run Backend Tests
-        run: go test ./application/... ./domain/... ./handlers/... ./infrastructure/... ./internal/... ./tests/... -short -count=1
+      - name: Run Backend Tests with Coverage
+        run: go test ./application/... ./domain/... ./handlers/... ./infrastructure/... ./internal/... ./tests/... -short -count=1 -coverprofile=coverage.out -covermode=atomic
         working-directory: backend
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: backend/coverage.out
+          flags: backend
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
 
       - name: Create frontend dist placeholder
         run: mkdir -p backend/frontend/dist && touch backend/frontend/dist/.gitkeep

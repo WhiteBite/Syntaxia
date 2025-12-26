@@ -174,10 +174,13 @@
 <script setup lang="ts">
 import VersionBadge from '@/components/VersionBadge.vue';
 import { useI18n } from '@/composables/useI18n';
+import { useLogger } from '@/composables/useLogger';
 import { apiService } from '@/services/api.service';
 import { computed, onMounted, ref } from 'vue';
 import { useProjectStore } from '../stores/project.store';
 import { useUIStore } from '../stores/ui.store';
+
+const logger = useLogger('ProjectSelector')
 
 const emit = defineEmits<{
   (e: 'opened', path: string): void
@@ -221,7 +224,7 @@ onMounted(async () => {
   try {
     await projectStore.fetchRecentProjects()
   } catch (error) {
-    console.error('Failed to load recent projects:', error)
+    logger.error('Failed to load recent projects:', error)
   }
 })
 
@@ -272,7 +275,7 @@ async function selectProject() {
       emit('opened', projectStore.currentPath)
     }
   } catch (error) {
-    console.error('Failed to select project:', error)
+    logger.error('Failed to select project:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     uiStore.addToast(`Failed to select directory: ${errorMessage}`, 'error')
   }
@@ -283,7 +286,7 @@ async function openRecentProject(path: string) {
     await projectStore.openProjectByPath(path)
     emit('opened', path)
   } catch (error) {
-    console.error('Failed to open recent project:', error)
+    logger.error('Failed to open recent project:', error)
     uiStore.addToast('Failed to open project', 'error')
   }
 }
@@ -293,7 +296,7 @@ async function removeProject(path: string) {
     await projectStore.removeFromRecent(path)
     uiStore.addToast(t('welcome.projectRemoved'), 'success')
   } catch (error) {
-    console.error('Failed to remove project:', error)
+    logger.error('Failed to remove project:', error)
   }
 }
 
@@ -319,7 +322,7 @@ async function copyProjectPath() {
       await navigator.clipboard.writeText(contextMenu.value.project.path)
       uiStore.addToast(t('welcome.pathCopied'), 'success')
     } catch (error) {
-      console.error('Failed to copy path:', error)
+      logger.error('Failed to copy path:', error)
     }
   }
   hideContextMenu()

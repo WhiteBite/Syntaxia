@@ -23,6 +23,7 @@ type ToolExecutorImpl struct {
 	projectStructure        domain.ProjectStructureDetector
 	hasSemanticSearch       bool
 	semanticSearcherService tools.SemanticSearcher
+	sandboxFS               domain.SandboxFS
 	handlerRegistry         *tools.HandlerRegistry
 }
 
@@ -51,8 +52,8 @@ func NewToolExecutor(
 
 // registerHandlers registers all tool handlers
 func (te *ToolExecutorImpl) registerHandlers() {
-	// File tools
-	te.handlerRegistry.Register(tools.NewFileToolsHandler(te.logger, te.fileReader))
+	// File tools (with sandbox for write operations)
+	te.handlerRegistry.Register(tools.NewFileToolsHandler(te.logger, te.fileReader, te.sandboxFS))
 
 	// Symbol tools
 	te.handlerRegistry.Register(tools.NewSymbolToolsHandler(te.registry, te.symbolIndex, te.logger, te.referenceFinder))
@@ -95,6 +96,12 @@ func (te *ToolExecutorImpl) SetSemanticSearch(ss tools.SemanticSearcher) {
 	te.rebuildHandlerRegistry()
 }
 
+// SetSandboxFS sets the sandbox filesystem for write operations
+func (te *ToolExecutorImpl) SetSandboxFS(sandbox domain.SandboxFS) {
+	te.sandboxFS = sandbox
+	te.rebuildHandlerRegistry()
+}
+
 // SetAnalysisContainer configures the tool executor with all services from the container
 func (te *ToolExecutorImpl) SetAnalysisContainer(container *appanalysis.Container) {
 	if container == nil {
@@ -120,8 +127,8 @@ func (te *ToolExecutorImpl) SetAnalysisContainer(container *appanalysis.Containe
 func (te *ToolExecutorImpl) rebuildHandlerRegistry() {
 	te.handlerRegistry = tools.NewHandlerRegistry(te.logger)
 
-	// File tools
-	te.handlerRegistry.Register(tools.NewFileToolsHandler(te.logger, te.fileReader))
+	// File tools (with sandbox for write operations)
+	te.handlerRegistry.Register(tools.NewFileToolsHandler(te.logger, te.fileReader, te.sandboxFS))
 
 	// Symbol tools
 	te.handlerRegistry.Register(tools.NewSymbolToolsHandler(te.registry, te.symbolIndex, te.logger, te.referenceFinder))

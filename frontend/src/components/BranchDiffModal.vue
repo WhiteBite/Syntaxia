@@ -131,8 +131,11 @@
 
 <script setup lang="ts">
 import { useI18n } from '@/composables/useI18n'
+import { useLogger } from '@/composables/useLogger'
 import { apiService } from '@/services/api.service'
 import { computed, ref, watch } from 'vue'
+
+const logger = useLogger('BranchDiffModal')
 
 interface DiffFile {
   path: string
@@ -228,7 +231,7 @@ async function loadDiff() {
       })
 
   } catch (err) {
-    console.error('Failed to load diff:', err)
+    logger.error('Failed to load diff:', err)
     error.value = t('error.loadFailed')
   } finally {
     isLoading.value = false

@@ -3,8 +3,11 @@
  * Handles saving/loading context names and favorites to localStorage
  */
 
+import { useLogger } from '@/composables/useLogger'
 import { STORAGE_KEYS } from '@/config/constants'
 import type { ContextSummary } from '../model/context.store'
+
+const logger = useLogger('ContextMetadata')
 
 interface ContextMetadataItem {
     id: string
@@ -24,7 +27,7 @@ export function saveContextMetadata(contexts: ContextSummary[]): void {
         }))
         localStorage.setItem(STORAGE_KEYS.CONTEXT_METADATA, JSON.stringify(metadata))
     } catch (err) {
-        console.warn('[ContextMetadata] Failed to save:', err)
+        logger.warn('Failed to save:', err)
     }
 }
 
@@ -46,7 +49,7 @@ export function loadContextMetadata(contexts: ContextSummary[]): void {
             }
         }
     } catch (err) {
-        console.warn('[ContextMetadata] Failed to load:', err)
+        logger.warn('Failed to load:', err)
     }
 }
 

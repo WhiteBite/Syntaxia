@@ -9,6 +9,7 @@ import (
 	"syntaxia/application"
 	appai "syntaxia/application/ai"
 	"syntaxia/application/analysis"
+	appcontext "syntaxia/application/context"
 	"syntaxia/application/build"
 	"syntaxia/application/diff"
 	"syntaxia/application/export"
@@ -60,6 +61,7 @@ import (
 	"syntaxia/infrastructure/diffengine"
 	"syntaxia/infrastructure/pdfgen"
 	"syntaxia/infrastructure/policy"
+	"syntaxia/infrastructure/sandbox"
 	"syntaxia/infrastructure/symbolgraph"
 	"syntaxia/internal/initmanager"
 
@@ -97,6 +99,12 @@ type AppContainer struct {
 	DiffService           *diff.Service
 	BuildService          domain.IBuildService
 	ExportService         *export.Service
+
+	// Sandbox for AI file changes
+	SandboxFS domain.SandboxFS
+
+	// Smart Context Collector
+	SmartContextCollector domain.SmartContextCollector
 
 	// Unified internal services (new architecture)
 	ContextService *contextservice.Service
@@ -182,6 +190,9 @@ func NewContainer(ctx context.Context, embeddedIgnoreGlob, defaultCustomPrompt s
 	c.GitRepo = git.New(c.Log)
 	c.TreeBuilder = fsscanner.New(c.SettingsRepo, c.Log)
 	c.ContextSplitter = textutils.NewContextSplitter(c.Log)
+
+	// Smart Context Collector
+	c.SmartContextCollector = appcontext.NewSmartContextCollector(c.Log, c.FileReader, c.TreeBuilder)
 	c.Watcher, err = fswatcher.New(ctx, c.Bus)
 	if err != nil {
 		return nil, err
@@ -280,8 +291,15 @@ func NewContainer(ctx context.Context, embeddedIgnoreGlob, defaultCustomPrompt s
 	symbolGraphBuilders := make(map[string]domain.SymbolGraphBuilder)
 	symbolGraphBuilders["go"] = goSymbolGraphBuilder
 
-	// Create import graph builders (currently no implementation, using nil map)
+	// Create import graph builders
 	importGraphBuilders := make(map[string]domain.ImportGraphBuilder)
+
+	// Create analyzer registry for TS/JS/Vue import graph builder
+	tsAnalyzerRegistry := analyzers.NewAnalyzerRegistry()
+	tsImportGraphBuilder := symbolgraph.NewTSImportGraphBuilder(c.Log, tsAnalyzerRegistry)
+	importGraphBuilders["typescript"] = tsImportGraphBuilder
+	importGraphBuilders["javascript"] = tsImportGraphBuilder
+	importGraphBuilders["vue"] = tsImportGraphBuilder
 
 	c.SymbolGraph = symbol.NewService(c.Log, symbolGraphBuilders, importGraphBuilders)
 
@@ -298,13 +316,65 @@ func NewContainer(ctx context.Context, embeddedIgnoreGlob, defaultCustomPrompt s
 	c.testServiceOnce.Do(func() {
 		testEngine := testengine.NewTestEngine(c.Log, goSymbolGraphBuilder)
 		testEngine.RegisterTestRunner("go", testengine.NewGoTestRunner(c.Log))
-		// testEngine.RegisterTestRunner("typescript", testengine.NewTypeScriptTestRunner(c.Log))
-		// testEngine.RegisterTestRunner("java", testengine.NewJavaTestRunner(c.Log))
+		testEngine.RegisterTestRunner("python", testengine.NewPythonTestRunner(c.Log))
+
+		// TypeScript/JavaScript test runner (same runner for both)
+		tsRunner := testengine.NewTypeScriptTestRunner(c.Log)
+		testEngine.RegisterTestRunner("typescript", tsRunner)
+		testEngine.RegisterTestRunner("javascript", tsRunner)
+
+		// Java test runner
+		testEngine.RegisterTestRunner("java", testengine.NewJavaTestRunner(c.Log))
+
+		// Rust test runner
+		testEngine.RegisterTestRunner("rust", testengine.NewRustTestRunner(c.Log))
+
+		// Kotlin test runner
+		testEngine.RegisterTestRunner("kotlin", testengine.NewKotlinTestRunner(c.Log))
+
+		// C# test runner
+		testEngine.RegisterTestRunner("csharp", testengine.NewCSharpTestRunner(c.Log))
 
 		// Register test analyzers for supported languages
 		testEngine.RegisterTestAnalyzer("go", testengine.NewGoTestAnalyzer(c.Log))
-		// testEngine.RegisterTestAnalyzer("typescript", testengine.NewTypeScriptTestAnalyzer(c.Log))
-		// testEngine.RegisterTestAnalyzer("java", testengine.NewJavaTestAnalyzer(c.Log))
+		testEngine.RegisterTestAnalyzer("python", testengine.NewPythonTestAnalyzer(c.Log))
+
+		// TypeScript/JavaScript test analyzer (same analyzer for both)
+		tsAnalyzer := testengine.NewTypeScriptTestAnalyzer(c.Log)
+		testEngine.RegisterTestAnalyzer("typescript", tsAnalyzer)
+		testEngine.RegisterTestAnalyzer("javascript", tsAnalyzer)
+
+		// Java test analyzer
+		testEngine.RegisterTestAnalyzer("java", testengine.NewJavaTestAnalyzer(c.Log))
+
+		// Rust test analyzer
+		testEngine.RegisterTestAnalyzer("rust", testengine.NewRustTestAnalyzer(c.Log))
+
+		// Kotlin test analyzer
+		testEngine.RegisterTestAnalyzer("kotlin", testengine.NewKotlinTestAnalyzer(c.Log))
+
+		// C# test analyzer
+		testEngine.RegisterTestAnalyzer("csharp", testengine.NewCSharpTestAnalyzer(c.Log))
+
+		// Dart test runner and analyzer
+		testEngine.RegisterTestRunner("dart", testengine.NewDartTestRunner(c.Log))
+		testEngine.RegisterTestAnalyzer("dart", testengine.NewDartTestAnalyzer(c.Log))
+
+		// Ruby test runner and analyzer
+		testEngine.RegisterTestRunner("ruby", testengine.NewRubyTestRunner(c.Log))
+		testEngine.RegisterTestAnalyzer("ruby", testengine.NewRubyTestAnalyzer(c.Log))
+
+		// C++ test runner and analyzer
+		testEngine.RegisterTestRunner("cpp", testengine.NewCppTestRunner(c.Log))
+		testEngine.RegisterTestAnalyzer("cpp", testengine.NewCppTestAnalyzer(c.Log))
+
+		// Swift test runner and analyzer
+		testEngine.RegisterTestRunner("swift", testengine.NewSwiftTestRunner(c.Log))
+		testEngine.RegisterTestAnalyzer("swift", testengine.NewSwiftTestAnalyzer(c.Log))
+
+		// PHP test runner and analyzer
+		testEngine.RegisterTestRunner("php", testengine.NewPHPTestRunner(c.Log))
+		testEngine.RegisterTestAnalyzer("php", testengine.NewPHPTestAnalyzer(c.Log))
 
 		// Create TestService with the TestEngine
 		c.TestService = build.NewTestService(c.Log, testEngine)
@@ -317,6 +387,13 @@ func NewContainer(ctx context.Context, embeddedIgnoreGlob, defaultCustomPrompt s
 	staticAnalyzerEngine.RegisterAnalyzer(staticanalyzer.NewErrorProneAnalyzer(c.Log))
 	staticAnalyzerEngine.RegisterAnalyzer(staticanalyzer.NewRuffAnalyzer(c.Log))
 	staticAnalyzerEngine.RegisterAnalyzer(staticanalyzer.NewClangTidyAnalyzer(c.Log))
+	staticAnalyzerEngine.RegisterAnalyzer(staticanalyzer.NewClippyAnalyzer(c.Log))
+	staticAnalyzerEngine.RegisterAnalyzer(staticanalyzer.NewKtlintAnalyzer(c.Log))
+	staticAnalyzerEngine.RegisterAnalyzer(staticanalyzer.NewDotnetFormatAnalyzer(c.Log))
+	staticAnalyzerEngine.RegisterAnalyzer(staticanalyzer.NewDartAnalyzeAnalyzer(c.Log))
+	staticAnalyzerEngine.RegisterAnalyzer(staticanalyzer.NewSwiftLintAnalyzer(c.Log))
+	staticAnalyzerEngine.RegisterAnalyzer(staticanalyzer.NewPHPCSAnalyzer(c.Log))
+	staticAnalyzerEngine.RegisterAnalyzer(staticanalyzer.NewRuboCopAnalyzer(c.Log))
 	c.StaticAnalyzerService = analysis.NewStaticAnalyzerService(c.Log, staticAnalyzerEngine)
 
 	// Create SBOM infrastructure components
@@ -627,6 +704,11 @@ func (c *AppContainer) initializeHandlers() error {
 	c.ToolExecutor.SetAnalysisContainer(c.AnalysisContainer)
 	c.ToolExecutor.SetContextMemory(c.AnalysisContainer.GetContextMemory())
 
+	// Wire sandbox for file write operations
+	if c.SandboxFS != nil {
+		c.ToolExecutor.SetSandboxFS(c.SandboxFS)
+	}
+
 	// Wire semantic search if available
 	if c.SemanticSearch != nil {
 		// Create adapter for SemanticSearcher interface
@@ -893,6 +975,10 @@ func initializeTaskProtocolServices(c *AppContainer) error {
 	// Initialize Correction Engine with file system provider
 	fileSystemProvider := &OSFileSystemProvider{}
 	c.CorrectionEngine = repair.NewCorrectionEngine(c.Log, fileSystemProvider)
+
+	// Initialize SandboxFS for AI file changes
+	// Note: projectRoot will be set when project is opened via SetProjectRoot
+	c.SandboxFS = sandbox.NewSandboxFS("", fileSystemProvider, c.Log)
 
 	// Initialize Task Protocol Config Service
 	c.TaskProtocolConfigService = protocol.NewConfigService(c.Log, fileSystemProvider)

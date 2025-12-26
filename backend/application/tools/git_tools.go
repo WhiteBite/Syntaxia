@@ -3,9 +3,21 @@ package tools
 import (
 	"fmt"
 	"os/exec"
+	"strings"
+
 	"syntaxia/domain"
 	"syntaxia/internal/executil"
-	"strings"
+)
+
+const (
+	// minLimit is the minimum allowed value for limit parameters
+	minLimit = 1
+	// maxLimit is the maximum allowed value for limit parameters
+	maxLimit = 100
+	// defaultLimit is the default value for limit parameters
+	defaultLimit = 10
+	// maxDiffSize is the maximum size of diff output before truncation
+	maxDiffSize = 5000
 )
 
 // GitToolsHandler handles git-related tools
@@ -34,6 +46,74 @@ var gitToolNames = map[string]bool{
 // CanHandle returns true if this handler can handle the given tool
 func (h *GitToolsHandler) CanHandle(toolName string) bool {
 	return gitToolNames[toolName]
+}
+
+// validateArgs validates that all required arguments are present and not nil
+func (h *GitToolsHandler) validateArgs(args map[string]any, required []string) error {
+	for _, key := range required {
+		val, ok := args[key]
+		if !ok {
+			return fmt.Errorf("missing required argument: %s", key)
+		}
+		if val == nil {
+			return fmt.Errorf("argument %s cannot be nil", key)
+		}
+	}
+	return nil
+}
+
+// getStringArg safely extracts a string argument with a default value
+func (h *GitToolsHandler) getStringArg(args map[string]any, key string, defaultVal string) string {
+	if val, ok := args[key].(string); ok {
+		return val
+	}
+	return defaultVal
+}
+
+// getIntArg safely extracts an integer argument with a default value
+// Handles both float64 (JSON numbers) and int types
+func (h *GitToolsHandler) getIntArg(args map[string]any, key string, defaultVal int) int {
+	if val, ok := args[key].(float64); ok {
+		return int(val)
+	}
+	if val, ok := args[key].(int); ok {
+		return val
+	}
+	return defaultVal
+}
+
+// getBoolArg safely extracts a boolean argument with a default value
+func (h *GitToolsHandler) getBoolArg(args map[string]any, key string, defaultVal bool) bool {
+	if val, ok := args[key].(bool); ok {
+		return val
+	}
+	return defaultVal
+}
+
+// getStringArrayArg safely extracts a string array argument
+func (h *GitToolsHandler) getStringArrayArg(args map[string]any, key string) ([]string, error) {
+	val, ok := args[key]
+	if !ok {
+		return nil, nil
+	}
+	if val == nil {
+		return nil, nil
+	}
+
+	arr, ok := val.([]any)
+	if !ok {
+		return nil, fmt.Errorf("argument %s must be an array", key)
+	}
+
+	result := make([]string, 0, len(arr))
+	for i, item := range arr {
+		str, ok := item.(string)
+		if !ok {
+			return nil, fmt.Errorf("argument %s[%d] must be a string", key, i)
+		}
+		result = append(result, str)
+	}
+	return result, nil
 }
 
 // GetTools returns the list of git tools
@@ -106,6 +186,11 @@ func (h *GitToolsHandler) GetTools() []domain.Tool {
 
 // Execute executes a git tool
 func (h *GitToolsHandler) Execute(toolName string, args map[string]any, projectRoot string) (string, error) {
+	// Validate args is not nil
+	if args == nil {
+		args = make(map[string]any)
+	}
+
 	switch toolName {
 	case "git_status":
 		return h.gitStatus(projectRoot)
@@ -168,8 +253,8 @@ func (h *GitToolsHandler) gitStatus(projectRoot string) (string, error) {
 }
 
 func (h *GitToolsHandler) gitDiff(args map[string]any, projectRoot string) (string, error) {
-	path, _ := args["path"].(string)
-	staged, _ := args["staged"].(bool)
+	path := h.getStringArg(args, "path", "")
+	staged := h.getBoolArg(args, "staged", false)
 
 	cmdArgs := []string{"diff"}
 	if staged {
@@ -192,19 +277,25 @@ func (h *GitToolsHandler) gitDiff(args map[string]any, projectRoot string) (stri
 	}
 
 	result := string(output)
-	if len(result) > 5000 {
-		result = result[:5000] + "\n... (truncated)"
+	if len(result) > maxDiffSize {
+		result = result[:maxDiffSize] + "\n... (truncated)"
 	}
 
 	return result, nil
 }
 
 func (h *GitToolsHandler) gitLog(args map[string]any, projectRoot string) (string, error) {
-	limit := 10
-	if l, ok := args["limit"].(float64); ok && l > 0 {
-		limit = int(l)
+	limit := h.getIntArg(args, "limit", defaultLimit)
+
+	// Validate limit range
+	if limit < minLimit {
+		limit = minLimit
 	}
-	path, _ := args["path"].(string)
+	if limit > maxLimit {
+		limit = maxLimit
+	}
+
+	path := h.getStringArg(args, "path", "")
 
 	cmdArgs := []string{"log", fmt.Sprintf("-n%d", limit), "--oneline", "--format=%h %s (%an, %ar)"}
 	if path != "" {
@@ -231,8 +322,8 @@ func (h *GitToolsHandler) gitChangedFiles(args map[string]any, projectRoot strin
 		return "", fmt.Errorf("git context not initialized")
 	}
 
-	since, _ := args["since"].(string)
-	pathFilter, _ := args["path_filter"].(string)
+	since := h.getStringArg(args, "since", "")
+	pathFilter := h.getStringArg(args, "path_filter", "")
 
 	changes, err := h.GitContext.GetRecentChanges(since, pathFilter)
 	if err != nil {
@@ -256,13 +347,22 @@ func (h *GitToolsHandler) gitCoChanged(args map[string]any, projectRoot string) 
 		return "", fmt.Errorf("git context not initialized")
 	}
 
-	filePath, _ := args["file_path"].(string)
-	if filePath == "" {
-		return "", fmt.Errorf("file_path is required")
+	// Validate required argument
+	if err := h.validateArgs(args, []string{"file_path"}); err != nil {
+		return "", err
 	}
-	limit := 10
-	if l, ok := args["limit"].(float64); ok {
-		limit = int(l)
+
+	filePath := h.getStringArg(args, "file_path", "")
+	if filePath == "" {
+		return "", fmt.Errorf("file_path cannot be empty")
+	}
+
+	limit := h.getIntArg(args, "limit", defaultLimit)
+	if limit < minLimit {
+		limit = minLimit
+	}
+	if limit > maxLimit {
+		limit = maxLimit
 	}
 
 	coChanged, err := h.GitContext.GetCoChangedFiles(filePath, limit)
@@ -287,18 +387,19 @@ func (h *GitToolsHandler) gitSuggestContext(args map[string]any, projectRoot str
 		return "", fmt.Errorf("git context not initialized")
 	}
 
-	task, _ := args["task"].(string)
-	var currentFiles []string
-	if files, ok := args["current_files"].([]any); ok {
-		for _, f := range files {
-			if s, ok := f.(string); ok {
-				currentFiles = append(currentFiles, s)
-			}
-		}
+	task := h.getStringArg(args, "task", "")
+
+	currentFiles, err := h.getStringArrayArg(args, "current_files")
+	if err != nil {
+		return "", err
 	}
-	limit := 10
-	if l, ok := args["limit"].(float64); ok {
-		limit = int(l)
+
+	limit := h.getIntArg(args, "limit", defaultLimit)
+	if limit < minLimit {
+		limit = minLimit
+	}
+	if limit > maxLimit {
+		limit = maxLimit
 	}
 
 	suggestions, err := h.GitContext.SuggestContextFiles(task, currentFiles, limit)

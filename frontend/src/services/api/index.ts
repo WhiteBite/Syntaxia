@@ -20,6 +20,7 @@ export { gitlabApi } from './gitlab.api'
 export { memoryApi } from './memory.api'
 export { projectApi } from './project.api'
 export { reportsApi } from './reports.api'
+export { sandboxApi } from './sandbox.api'
 export { semanticApi } from './semantic.api'
 export { settingsApi } from './settings.api'
 export { taskflowApi } from './taskflow.api'
@@ -36,6 +37,7 @@ import { gitlabApi } from './gitlab.api'
 import { memoryApi } from './memory.api'
 import { projectApi } from './project.api'
 import { reportsApi } from './reports.api'
+import { sandboxApi } from './sandbox.api'
 import { semanticApi } from './semantic.api'
 import { settingsApi } from './settings.api'
 import { taskflowApi } from './taskflow.api'
@@ -55,6 +57,7 @@ export const api = {
     taskflow: taskflowApi,
     semantic: semanticApi,
     memory: memoryApi,
+    sandbox: sandboxApi,
 }
 
 // Re-export types

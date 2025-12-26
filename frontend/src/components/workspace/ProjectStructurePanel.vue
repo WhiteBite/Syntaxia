@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { useI18n } from '@/composables/useI18n'
+import { useLogger } from '@/composables/useLogger'
 import { useProjectStore } from '@/stores/project.store'
 import type { ProjectStructure } from '@/types/dto'
 import { onMounted, ref, watch } from 'vue'
 import { GetProjectStructure } from '../../../wailsjs/go/main/App'
 
 const { t } = useI18n()
+const logger = useLogger('ProjectStructurePanel')
 const projectStore = useProjectStore()
 
 const structure = ref<ProjectStructure | null>(null)
@@ -23,7 +25,7 @@ async function loadStructure() {
     structure.value = await GetProjectStructure(projectStore.currentPath) as unknown as ProjectStructure
   } catch (e) {
     error.value = String(e)
-    console.error('Failed to load project structure:', e)
+    logger.error('Failed to load project structure:', e)
   } finally {
     loading.value = false
   }

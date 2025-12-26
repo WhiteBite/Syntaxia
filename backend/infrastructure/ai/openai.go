@@ -53,31 +53,36 @@ func (p *OpenAIProviderImpl) Generate(ctx context.Context, req domain.AIRequest)
 	startTime := time.Now()
 	p.log.Info(fmt.Sprintf("Sending request to OpenAI compatible API with model: %s", req.Model))
 
-	completionReq := common.BuildCompletionRequest(req, false)
-	resp, err := p.client.CreateChatCompletion(ctx, completionReq)
+	return common.WithRetry(ctx, common.DefaultRetryConfig(), func() (domain.AIResponse, error) {
+		completionReq := common.BuildCompletionRequest(req, false)
+		resp, err := p.client.CreateChatCompletion(ctx, completionReq)
 
-	if err != nil {
-		p.log.Error(fmt.Sprintf("OpenAI API request failed: %v", err))
-		return domain.AIResponse{}, err
-	}
+		if err != nil {
+			p.log.Error(fmt.Sprintf("OpenAI API request failed: %v", err))
+			if domainErr := common.HandleOpenAIError(err); !errors.Is(domainErr, err) {
+				return domain.AIResponse{}, domainErr
+			}
+			return domain.AIResponse{}, err
+		}
 
-	if len(resp.Choices) == 0 {
-		return domain.AIResponse{}, fmt.Errorf("no choices returned from OpenAI API")
-	}
+		if len(resp.Choices) == 0 {
+			return domain.AIResponse{}, fmt.Errorf("no choices returned from OpenAI API")
+		}
 
-	processingTime := time.Since(startTime)
+		processingTime := time.Since(startTime)
 
-	// Подсчитываем токены (примерная оценка)
-	tokensUsed := resp.Usage.TotalTokens
+		// Подсчитываем токены (примерная оценка)
+		tokensUsed := resp.Usage.TotalTokens
 
-	return domain.AIResponse{
-		Content:        resp.Choices[0].Message.Content,
-		TokensUsed:     tokensUsed,
-		ModelUsed:      req.Model,
-		ProcessingTime: processingTime,
-		FinishReason:   string(resp.Choices[0].FinishReason),
-		Confidence:     0.9, // Базовая оценка
-	}, nil
+		return domain.AIResponse{
+			Content:        resp.Choices[0].Message.Content,
+			TokensUsed:     tokensUsed,
+			ModelUsed:      req.Model,
+			ProcessingTime: processingTime,
+			FinishReason:   string(resp.Choices[0].FinishReason),
+			Confidence:     0.9, // Базовая оценка
+		}, nil
+	})
 }
 
 func (p *OpenAIProviderImpl) GetProviderInfo() domain.ProviderInfo {

@@ -4,6 +4,7 @@
  */
 
 import * as wails from '#wailsjs/go/main/App'
+import { useLogger } from '@/composables/useLogger'
 import type {
     QwenContextPreview,
     QwenModelInfo,
@@ -11,6 +12,8 @@ import type {
     QwenTaskResponse,
 } from '../types'
 import { apiCall, parseJsonResponse } from './base'
+
+const logger = useLogger('API:ai')
 
 export const aiApi = {
     generateCode: (context: string, task: string): Promise<string> =>
@@ -20,7 +23,7 @@ export const aiApi = {
         try {
             wails.GenerateCodeStream(context, task)
         } catch (error) {
-            console.error('[API:ai] Error starting code stream:', error)
+            logger.error('Error starting code stream:', error)
         }
     },
 

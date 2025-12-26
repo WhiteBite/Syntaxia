@@ -31,7 +31,10 @@
 <script setup lang="ts">
 import { getErrorMessage } from '@/composables/useErrorHandler'
 import { useI18n } from '@/composables/useI18n'
+import { useLogger } from '@/composables/useLogger'
 import { onErrorCaptured, ref } from 'vue'
+
+const logger = useLogger('ErrorBoundary')
 
 interface Props {
   canRetry?: boolean
@@ -49,7 +52,7 @@ const errorMessage = ref('')
 onErrorCaptured((err) => {
   error.value = err
   errorMessage.value = getErrorMessage(err)
-  console.error('[ErrorBoundary] Caught error:', err)
+  logger.error('Caught error:', err)
   return false // Prevent error from propagating
 })
 

@@ -7,6 +7,8 @@ export { default as FileFilterDropdown } from './ui/FileFilterDropdown.vue'
 export { default as FileTreeNode } from './ui/FileTreeNode.vue'
 
 // Composables
+export { useAnalysisStatus } from './composables/useAnalysisStatus'
+export type { AffectedFile, ImpactResult } from './composables/useAnalysisStatus'
 export { useFileExplorer } from './composables/useFileExplorer'
 export { useFileSearch } from './composables/useFileSearch'
 export { provideHoveredFile, useHoveredFile } from './composables/useHoveredFile'

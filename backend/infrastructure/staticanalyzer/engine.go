@@ -77,6 +77,10 @@ func NewStaticAnalyzerEngine(log domain.Logger) *StaticAnalyzerEngineImpl {
 	engine.languageMap["c"] = domain.StaticAnalyzerTypeClangTidy
 	engine.languageMap["cpp"] = domain.StaticAnalyzerTypeClangTidy
 	engine.languageMap["cc"] = domain.StaticAnalyzerTypeClangTidy
+	engine.languageMap["rust"] = domain.StaticAnalyzerTypeClippy
+	engine.languageMap["rs"] = domain.StaticAnalyzerTypeClippy
+	engine.languageMap["kotlin"] = domain.StaticAnalyzerTypeKtlint
+	engine.languageMap["kt"] = domain.StaticAnalyzerTypeKtlint
 
 	return engine
 }

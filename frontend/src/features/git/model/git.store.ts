@@ -1,6 +1,9 @@
+import { useLogger } from '@/composables/useLogger'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { GitBranch, GitCommit, GitProvider, RecentRepo } from './types'
+
+const logger = useLogger('GitStore')
 
 const RECENT_REPOS_KEY = 'git-recent-repos'
 const SELECTION_KEY = 'git-file-selection'
@@ -150,7 +153,7 @@ export const useGitStore = defineStore('git', () => {
                 recentRepos.value = JSON.parse(stored)
             }
         } catch (e) {
-            console.error('[GitStore] Failed to load recent repos:', e)
+            logger.error('Failed to load recent repos:', e)
         }
     }
 
@@ -185,7 +188,7 @@ export const useGitStore = defineStore('git', () => {
             const data = { files: Array.from(files), timestamp: Date.now() }
             localStorage.setItem(`${SELECTION_KEY}-${key}`, JSON.stringify(data))
         } catch (e) {
-            console.error('[GitStore] Failed to save selection:', e)
+            logger.error('Failed to save selection:', e)
         }
     }
 
@@ -199,7 +202,7 @@ export const useGitStore = defineStore('git', () => {
                 }
             }
         } catch (e) {
-            console.error('[GitStore] Failed to load selection:', e)
+            logger.error('Failed to load selection:', e)
         }
         return new Set()
     }

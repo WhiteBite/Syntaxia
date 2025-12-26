@@ -127,7 +127,7 @@ export function useExport() {
       return true
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Ошибка экспорта'
-      console.error('Export failed:', err)
+      logger.error('Export failed:', err)
       return false
     } finally {
       isExporting.value = false

@@ -1,9 +1,12 @@
 import { useI18n } from '@/composables/useI18n'
+import { useLogger } from '@/composables/useLogger'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useUIStore } from '@/stores/ui.store'
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { formatContextSize, formatTimestamp as formatTs } from '../lib/context-utils'
 import { useContextStore, type ContextSummary } from '../model/context.store'
+
+const logger = useLogger('ContextList')
 
 type SortBy = 'date' | 'name' | 'size'
 
@@ -93,7 +96,7 @@ export function useContextList() {
         try {
             await contextStore.listProjectContexts()
         } catch (error) {
-            console.error('[ContextList] Failed to refresh:', error)
+            logger.error('Failed to refresh:', error)
         }
     }
 
@@ -175,7 +178,7 @@ export function useContextList() {
             await navigator.clipboard.writeText(fullContent)
             uiStore.addToast(t('toast.contextCopied'), 'success')
         } catch (error) {
-            console.error('[ContextList] Failed to copy:', error)
+            logger.error('Failed to copy:', error)
             uiStore.addToast(t('toast.copyError'), 'error')
         }
     }
@@ -198,7 +201,7 @@ export function useContextList() {
                 await navigator.clipboard.writeText(merged)
                 uiStore.addToast(t('toast.contextCopied'), 'success')
             } catch (error) {
-                console.error('[ContextList] Failed to copy multiple:', error)
+                logger.error('Failed to copy multiple:', error)
                 uiStore.addToast(t('toast.copyError'), 'error')
             }
         }
@@ -212,7 +215,7 @@ export function useContextList() {
                 uiStore.addToast(t('context.duplicated'), 'success')
             }
         } catch (error) {
-            console.error('[ContextList] Failed to duplicate:', error)
+            logger.error('Failed to duplicate:', error)
         }
     }
 
@@ -221,7 +224,7 @@ export function useContextList() {
         try {
             await contextStore.exportContext(contextId)
         } catch (error) {
-            console.error('[ContextList] Export failed:', error)
+            logger.error('Export failed:', error)
         }
     }
 
@@ -255,7 +258,7 @@ export function useContextList() {
                 uiStore.addToast(t('context.deleted'), 'success')
             }
         } catch (error) {
-            console.error('[ContextList] Delete failed:', error)
+            logger.error('Delete failed:', error)
         } finally {
             deleteModal.show = false
             deleteModal.contextId = null
@@ -283,7 +286,7 @@ export function useContextList() {
                 uiStore.addToast(t('context.merged'), 'success')
             }
         } catch (error) {
-            console.error('[ContextList] Failed to merge:', error)
+            logger.error('Failed to merge:', error)
         }
     }
 

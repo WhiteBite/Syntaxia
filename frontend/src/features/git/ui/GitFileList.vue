@@ -67,9 +67,12 @@
 </template>
 
 <script setup lang="ts">
-import SimpleFileTree from '@/components/SimpleFileTree.vue';
-import { useI18n } from '@/composables/useI18n';
-import { computed, ref } from 'vue';
+import SimpleFileTree from '@/components/SimpleFileTree.vue'
+import { useI18n } from '@/composables/useI18n'
+import { useLogger } from '@/composables/useLogger'
+import { computed, ref } from 'vue'
+
+const logger = useLogger('GitFileList')
 
 const props = defineProps<{
   title: string
@@ -117,6 +120,7 @@ const filteredFiles = computed(() => {
     })
   }
 
+  logger.debug('Filtered files', { total: props.files.length, filtered: result.length })
   return result
 })
 
@@ -138,4 +142,17 @@ function toggleFilter(filterId: string) {
   }
   activeFilters.value = newFilters
 }
+
+// Suppress unused variable warning - logger is used for debugging
+void logger
 </script>
+
+
+<style scoped>
+.file-list-container {
+  flex: 1;
+  min-height: 0;
+  max-height: 35vh;
+  overflow-y: auto;
+}
+</style>

@@ -1,0 +1,78 @@
+{
+    "name": "postcss-styl",
+    "version": "0.12.3",
+    "description": "PostCSS parser plugin for converting Stylus syntax to PostCSS AST.",
+    "main": "lib/index.js",
+    "scripts": {
+        "lint": "eslint .",
+        "test:base": "cross-env DEBUG=postcss-styl* mocha \"tests/**/*.js\" --reporter dot",
+        "test:update-fixtures": "cross-env UPDATE_FIXTURES=true npm run test:base",
+        "test": "npm run test:base -- --timeout 60000",
+        "test:nyc": "nyc --reporter=lcov npm run test:base -- --timeout 60000",
+        "test:debug": "mocha \"tests/**/*.js\" --reporter dot",
+        "preversion": "npm run test",
+        "version": "npm run lint -- --fix && git add .",
+        "try:stylelint": "stylelint \"**/*.(vue|styl)\" --custom-syntax ./tests/integration/stylelint/custom-syntax.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/stylus/postcss-styl.git"
+    },
+    "keywords": [
+        "postcss",
+        "stylus",
+        "styl",
+        "parser",
+        "stringifier",
+        "syntax",
+        "css"
+    ],
+    "author": "Yosuke Ota",
+    "funding": "https://opencollective.com/stylus",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/stylus/postcss-styl/issues"
+    },
+    "homepage": "https://github.com/stylus/postcss-styl#readme",
+    "engines": {
+        "node": "^8.10.0 || ^10.13.0 || ^11.10.1 || >=12.13.0"
+    },
+    "files": [
+        "lib"
+    ],
+    "dependencies": {
+        "debug": "^4.1.1",
+        "fast-diff": "^1.2.0",
+        "lodash.sortedlastindex": "^4.1.0",
+        "postcss": "^7.0.27 || ^8.0.0",
+        "stylus": "^0.57.0"
+    },
+    "devDependencies": {
+        "@ota-meshi/eslint-plugin": "^0.10.0",
+        "autoprefixer": "^10.0.0",
+        "cross-env": "^7.0.2",
+        "eslint": "^8.0.0",
+        "eslint-config-prettier": "^8.0.0",
+        "eslint-plugin-eslint-comments": "^3.2.0",
+        "eslint-plugin-json-schema-validator": "^2.0.0",
+        "eslint-plugin-jsonc": "^2.0.0",
+        "eslint-plugin-markdown": "^2.0.0-0",
+        "eslint-plugin-node": "^11.1.0",
+        "eslint-plugin-node-dependencies": "^0.8.0",
+        "eslint-plugin-prettier": "^4.0.0",
+        "eslint-plugin-regexp": "^1.0.0",
+        "eslint-plugin-vue": "^8.0.3",
+        "eslint-plugin-yml": "^0.14.0",
+        "lodash": "^4.17.15",
+        "mocha": "^9.0.0",
+        "nyc": "^15.0.0",
+        "postcss-html": "^1.0.1",
+        "postcss-nested": "^5.0.4",
+        "postcss-parser-tests": "^8.3.5",
+        "postcss-styl": "file:.",
+        "prettier": "^2.2.1",
+        "semver": "^7.3.4",
+        "stylelint": "^14.0.0",
+        "stylelint-config-standard": "^25.0.0"
+    }
+}

@@ -5,8 +5,11 @@
 
 import * as wails from '#wailsjs/go/main/App'
 import type { domain } from '#wailsjs/go/models'
+import { useLogger } from '@/composables/useLogger'
 import type { CommitInfo } from '../types'
 import { apiCall, apiCallWithDefault, parseJsonResponse } from './base'
+
+const logger = useLogger('API:git')
 
 export const gitApi = {
     getUncommittedFiles: (repoPath: string): Promise<domain.FileStatus[]> =>
@@ -70,7 +73,7 @@ export const gitApi = {
         try {
             await wails.CleanupTempRepository(path)
         } catch (error) {
-            console.error('[API:git] Error cleaning up temp repository:', error)
+            logger.error('Error cleaning up temp repository:', error)
         }
     },
 

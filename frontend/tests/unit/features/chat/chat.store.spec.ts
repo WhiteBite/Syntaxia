@@ -65,7 +65,11 @@ describe('chat.store', () => {
 
         await store.sendMessage('Test message')
 
-        expect(apiService.agenticChat).toHaveBeenCalledWith('Test message', '/test/project')
+        expect(apiService.agenticChat).toHaveBeenCalledWith(
+            'Test message',
+            '/test/project',
+            expect.toBeOneOf([expect.anything(), undefined])
+        )
     })
 
     it('clearMessages clears history', async () => {

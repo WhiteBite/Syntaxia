@@ -106,7 +106,8 @@ func (h *PreferencesToolsHandler) getPreferences(args map[string]any) (string, e
 	if key != "" {
 		value, err := h.Store.GetPreference(key)
 		if err != nil {
-			return "", fmt.Errorf("failed to get preference: %w", err)
+			// Return user-friendly message for not found case
+			return fmt.Sprintf("Preference '%s' not found", key), nil
 		}
 		if value == "" {
 			return fmt.Sprintf("Preference '%s' not found", key), nil

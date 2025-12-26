@@ -13,6 +13,9 @@
   <a href="https://github.com/WhiteBite/Syntaxia/actions/workflows/build.yml">
     <img src="https://github.com/WhiteBite/Syntaxia/actions/workflows/build.yml/badge.svg" alt="Build Status">
   </a>
+  <a href="https://codecov.io/gh/WhiteBite/Syntaxia">
+    <img src="https://codecov.io/gh/WhiteBite/Syntaxia/branch/main/graph/badge.svg" alt="Coverage">
+  </a>
   <a href="https://github.com/WhiteBite/Syntaxia/releases/latest">
     <img src="https://img.shields.io/github/v/release/WhiteBite/Syntaxia?color=blue" alt="Release">
   </a>

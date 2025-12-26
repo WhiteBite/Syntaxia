@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { useI18n } from '@/composables/useI18n'
+import { useLogger } from '@/composables/useLogger'
 import { apiService, type SemanticIndexStats, type SemanticSearchResult } from '@/services/api.service'
 import { useProjectStore } from '@/stores/project.store'
 import { computed, onMounted, ref } from 'vue'
 
 const { t } = useI18n()
+const logger = useLogger('SemanticSearch')
 const projectStore = useProjectStore()
 
 // State
@@ -34,7 +36,7 @@ async function checkAvailability() {
       }
     }
   } catch (e) {
-    console.error('Failed to check semantic search availability:', e)
+    logger.error('Failed to check semantic search availability:', e)
     isAvailable.value = false
   }
 }
@@ -44,7 +46,7 @@ async function loadStats() {
   try {
     stats.value = await apiService.semanticGetStats(projectRoot.value)
   } catch (e) {
-    console.error('Failed to load stats:', e)
+    logger.error('Failed to load stats:', e)
   }
 }
 
@@ -60,7 +62,7 @@ async function indexProject() {
     await loadStats()
   } catch (e: unknown) {
     error.value = (e as Error).message || 'Failed to index project'
-    console.error('Indexing failed:', e)
+    logger.error('Indexing failed:', e)
   } finally {
     isIndexing.value = false
   }
@@ -84,7 +86,7 @@ async function search() {
     results.value = response.results
   } catch (e: unknown) {
     error.value = (e as Error).message || 'Search failed'
-    console.error('Search failed:', e)
+    logger.error('Search failed:', e)
   } finally {
     isSearching.value = false
   }

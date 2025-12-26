@@ -1,8 +1,11 @@
 import { useI18n } from '@/composables/useI18n'
+import { useLogger } from '@/composables/useLogger'
 import { apiService } from '@/services/api.service'
 import { useAIStore } from '@/stores/ai.store'
 import { useUIStore } from '@/stores/ui.store'
 import { computed, reactive, ref } from 'vue'
+
+const logger = useLogger('AISettings')
 
 export interface AIProvider {
     id: string
@@ -166,7 +169,7 @@ export function useAISettings() {
             settings.selectedModels = dto.selectedModels || {}
             settings.availableModels = dto.availableModels || {}
         } catch (e) {
-            console.error('Failed to load settings:', e)
+            logger.error('Failed to load settings:', e)
         }
     }
 

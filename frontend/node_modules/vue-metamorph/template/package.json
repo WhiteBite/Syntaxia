@@ -1,0 +1,26 @@
+{
+  "name": "my-codemod",
+  "type": "module",
+  "bin": {
+    "my-codemod": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc && vite build && chmod +x dist/cli.js",
+    "lint": "eslint . --ext .ts",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "vue-metamorph": "^3.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "@typescript-eslint/eslint-plugin": "^7.3.1",
+    "@typescript-eslint/parser": "^7.3.1",
+    "eslint": "^8.57.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-airbnb-typescript": "^18.0.0",
+    "typescript": "^5.4.3",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.5"
+  }
+}

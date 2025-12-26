@@ -1,5 +1,8 @@
 import { useI18n } from '@/composables/useI18n'
+import { useLogger } from '@/composables/useLogger'
 import { useUIStore } from '@/stores/ui.store'
+
+const logger = useLogger('ErrorHandler')
 
 export interface ErrorContext {
     context: string
@@ -46,7 +49,7 @@ export function handleError(error: unknown, context: string, silent = false): vo
     const uiStore = useUIStore()
     const message = getErrorMessage(error)
 
-    console.error(`[${context}]`, error)
+    logger.error(`[${context}]`, error)
 
     if (!silent) {
         uiStore.addToast(message, 'error')

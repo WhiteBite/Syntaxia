@@ -74,59 +74,65 @@ func (p *GeminiProviderImpl) Generate(ctx context.Context, req domain.AIRequest)
 	startTime := time.Now()
 	p.log.Info(fmt.Sprintf("Sending request to Gemini API with model: %s", req.Model))
 
-	client, err := genai.NewClient(ctx, option.WithAPIKey(p.apiKey))
-	if err != nil {
-		return domain.AIResponse{}, fmt.Errorf("failed to create gemini client: %w", err)
-	}
-	defer client.Close()
+	return common.WithRetry(ctx, common.DefaultRetryConfig(), func() (domain.AIResponse, error) {
+		client, err := genai.NewClient(ctx, option.WithAPIKey(p.apiKey))
+		if err != nil {
+			return domain.AIResponse{}, fmt.Errorf("failed to create gemini client: %w", err)
+		}
+		defer client.Close()
 
-	model := client.GenerativeModel(req.Model)
-	model.SystemInstruction = &genai.Content{
-		Parts: []genai.Part{genai.Text(req.SystemPrompt)},
-	}
+		model := client.GenerativeModel(req.Model)
+		model.SystemInstruction = &genai.Content{
+			Parts: []genai.Part{genai.Text(req.SystemPrompt)},
+		}
 
-	// Настраиваем параметры генерации
-	if req.Temperature > 0 {
-		temp := float32(req.Temperature)
-		model.Temperature = &temp
-	}
-	if req.MaxTokens > 0 {
-		maxTokens := int32(req.MaxTokens) //nolint:gosec // MaxTokens is always positive and within int32 range
-		model.MaxOutputTokens = &maxTokens
-	}
-	if req.TopP > 0 {
-		topP := float32(req.TopP)
-		model.TopP = &topP
-	}
+		// Настраиваем параметры генерации
+		if req.Temperature > 0 {
+			temp := float32(req.Temperature)
+			model.Temperature = &temp
+		}
+		if req.MaxTokens > 0 {
+			maxTokens := int32(req.MaxTokens) //nolint:gosec // MaxTokens is always positive and within int32 range
+			model.MaxOutputTokens = &maxTokens
+		}
+		if req.TopP > 0 {
+			topP := float32(req.TopP)
+			model.TopP = &topP
+		}
 
-	resp, err := model.GenerateContent(ctx, genai.Text(req.UserPrompt))
-	if err != nil {
-		p.log.Error(fmt.Sprintf("Gemini API request failed: %v", err))
-		return domain.AIResponse{}, err
-	}
+		resp, err := model.GenerateContent(ctx, genai.Text(req.UserPrompt))
+		if err != nil {
+			p.log.Error(fmt.Sprintf("Gemini API request failed: %v", err))
+			// Convert Gemini errors to domain errors for proper retry handling
+			if strings.Contains(err.Error(), "API_KEY_INVALID") {
+				return domain.AIResponse{}, domain.ErrInvalidAPIKey
+			}
+			return domain.AIResponse{}, err
+		}
 
-	if len(resp.Candidates) == 0 || resp.Candidates[0].Content == nil || len(resp.Candidates[0].Content.Parts) == 0 {
-		return domain.AIResponse{}, fmt.Errorf("no content returned from Gemini API")
-	}
+		if len(resp.Candidates) == 0 || resp.Candidates[0].Content == nil || len(resp.Candidates[0].Content.Parts) == 0 {
+			return domain.AIResponse{}, fmt.Errorf("no content returned from Gemini API")
+		}
 
-	firstPart := resp.Candidates[0].Content.Parts[0]
-	if text, ok := firstPart.(genai.Text); ok {
-		processingTime := time.Since(startTime)
+		firstPart := resp.Candidates[0].Content.Parts[0]
+		if text, ok := firstPart.(genai.Text); ok {
+			processingTime := time.Since(startTime)
 
-		// Подсчитываем токены (примерная оценка)
-		tokensUsed := len(string(text)) / 4
+			// Подсчитываем токены (примерная оценка)
+			tokensUsed := len(string(text)) / 4
 
-		return domain.AIResponse{
-			Content:        string(text),
-			TokensUsed:     tokensUsed,
-			ModelUsed:      req.Model,
-			ProcessingTime: processingTime,
-			FinishReason:   "stop",
-			Confidence:     0.9,
-		}, nil
-	}
+			return domain.AIResponse{
+				Content:        string(text),
+				TokensUsed:     tokensUsed,
+				ModelUsed:      req.Model,
+				ProcessingTime: processingTime,
+				FinishReason:   "stop",
+				Confidence:     0.9,
+			}, nil
+		}
 
-	return domain.AIResponse{}, fmt.Errorf("unsupported content type returned from Gemini: %T", firstPart)
+		return domain.AIResponse{}, fmt.Errorf("unsupported content type returned from Gemini: %T", firstPart)
+	})
 }
 
 func (p *GeminiProviderImpl) GetProviderInfo() domain.ProviderInfo {

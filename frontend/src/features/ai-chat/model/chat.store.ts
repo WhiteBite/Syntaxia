@@ -1,9 +1,14 @@
 import { useI18n } from '@/composables/useI18n'
+import { useLogger } from '@/composables/useLogger'
+import { useFileStore } from '@/features/files'
 import { apiService } from '@/services/api.service'
+import type { SmartContextResult } from '@/services/types'
 import { useProjectStore } from '@/stores/project.store'
 import { useUIStore } from '@/stores/ui.store'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+
+const logger = useLogger('ChatStore')
 
 export interface Message {
     id: string
@@ -60,6 +65,24 @@ export const useChatStore = defineStore('chat', () => {
 
     // Actions
     async function sendMessage(content: string, contextId?: string): Promise<void> {
+        const fileStore = useFileStore()
+        const projectRoot = projectStore.currentPath || ''
+
+        // Collect smart context
+        const selectedPaths = fileStore.selectedFilesList
+
+        let smartContext: SmartContextResult | undefined
+        try {
+            smartContext = await apiService.collectSmartContext({
+                task: content,
+                projectRoot,
+                selectedFiles: selectedPaths.length > 0 ? selectedPaths : undefined,
+                maxTokens: 50000
+            })
+        } catch {
+            // Continue without smart context
+        }
+
         const userMessage: Message = {
             id: `msg-${Date.now()}`,
             role: 'user',
@@ -71,8 +94,7 @@ export const useChatStore = defineStore('chat', () => {
         messages.value.push(userMessage)
 
         try {
-            const projectRoot = projectStore.currentPath || ''
-            const response = await apiService.agenticChat(content, projectRoot)
+            const response = await apiService.agenticChat(content, projectRoot, smartContext)
 
             const assistantMessage: Message = {
                 id: `msg-${Date.now()}-ai`,
@@ -84,11 +106,9 @@ export const useChatStore = defineStore('chat', () => {
 
             messages.value.push(assistantMessage)
             await saveChat()
-        } catch (error) {
-            console.error('[ChatStore] sendMessage error:', error)
+        } catch {
             uiStore.addToast(t('chat.error'), 'error')
 
-            // Add error message
             messages.value.push({
                 id: `msg-${Date.now()}-error`,
                 role: 'assistant',
@@ -146,7 +166,7 @@ export const useChatStore = defineStore('chat', () => {
             const systemPrompt = 'You are a helpful coding assistant.'
             apiService.generateCodeStream(systemPrompt, content)
         } catch (error) {
-            console.error('[ChatStore] streamMessage error:', error)
+            logger.error('streamMessage error:', error)
             isStreaming.value = false
             uiStore.addToast(t('chat.error'), 'error')
         }
@@ -167,7 +187,7 @@ export const useChatStore = defineStore('chat', () => {
                 chatHistory.value = parsed.slice(0, MAX_SAVED_CHATS)
             }
         } catch (error) {
-            console.warn('[ChatStore] Failed to load history:', error)
+            logger.warn('Failed to load history:', error)
         }
     }
 
@@ -203,7 +223,7 @@ export const useChatStore = defineStore('chat', () => {
 
             localStorage.setItem(key, JSON.stringify(chatHistory.value))
         } catch (error) {
-            console.warn('[ChatStore] Failed to save chat:', error)
+            logger.warn('Failed to save chat:', error)
         }
     }
 
