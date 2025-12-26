@@ -68,12 +68,15 @@
 
 <script setup lang="ts">
 import { useI18n } from '@/composables/useI18n'
+import { useLogger } from '@/composables/useLogger'
 // Direct imports to avoid circular dependency with barrel exports
 import { useFileStore } from '@/features/files/model/file.store'
 import FileExplorer from '@/features/files/ui/FileExplorer.vue'
 import ContextList from '@/features/context/ui/ContextList.vue'
 import GitSourceSelector from '@/features/git/ui/GitSourceSelector.vue'
 import { computed, ref, watch } from 'vue'
+
+const logger = useLogger('LeftSidebar')
 
 const fileStore = useFileStore()
 const { t } = useI18n()
@@ -111,7 +114,7 @@ watch(currentTab, (tab) => {
   try {
     localStorage.setItem('left-sidebar-tab', tab)
   } catch (err) {
-    console.warn('Failed to save sidebar tab:', err)
+    logger.warn('Failed to save sidebar tab:', err)
   }
 })
 
@@ -122,7 +125,7 @@ try {
     currentTab.value = savedTab
   }
 } catch (err) {
-  console.warn('Failed to load sidebar tab:', err)
+  logger.warn('Failed to load sidebar tab:', err)
 }
 </script>
 

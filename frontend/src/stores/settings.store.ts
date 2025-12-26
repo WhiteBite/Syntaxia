@@ -1,5 +1,8 @@
+import { useLogger } from '@/composables/useLogger'
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
+
+const logger = useLogger('SettingsStore')
 
 export type OutputFormat = 'markdown' | 'xml' | 'plain'
 
@@ -172,7 +175,7 @@ export const useSettingsStore = defineStore('settings', () => {
         try {
             localStorage.setItem('app-settings', JSON.stringify(settings))
         } catch (err) {
-            console.warn('Failed to save settings:', err)
+            logger.warn('Failed to save settings:', err)
         }
     }
 

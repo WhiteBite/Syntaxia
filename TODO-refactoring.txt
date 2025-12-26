@@ -345,9 +345,9 @@ UI: SmartContextPreviewPanel.vue - "Suggested Files" с relevance score.
 4. Tests
 
 ### Phase 5: Test Coverage → 80%
-Текущее покрытие (январь 2025):
-- application/tools: 88.6%
-- application/repair: 71.2%
+Текущее покрытие (декабрь 2025):
+- application/tools: 88.6% ✅
+- application/repair: 71.2% ✅
 - infrastructure/staticanalyzer: 63.4%
 - infrastructure/testengine: 55.3%
 - Backend лучшие: contextbuilder 95.6%, settings 94.3%, memory 92.3%
@@ -355,8 +355,48 @@ UI: SmartContextPreviewPanel.vue - "Suggested Files" с relevance score.
 Цели:
 1. [x] application/tools → 80% (достигнуто: 88.6%)
 2. [x] application/repair → 70% (достигнуто: 71.2%)
-3. [ ] infrastructure/staticanalyzer → 70% (сейчас: 63.4%)
-4. [ ] infrastructure/testengine → 70% (сейчас: 55.3%)
+3. [ ] infrastructure/staticanalyzer → 70% (сейчас: 63.4%, нужно +7%)
+4. [ ] infrastructure/testengine → 70% (сейчас: 55.3%, нужно +15%)
 5. [ ] Frontend stores/composables → 70%
 6. [ ] Общее покрытие → 60%
+
+================================================================================
+## 8. ОСТАВШИЕСЯ ЗАДАЧИ (Phase 6)
+================================================================================
+
+### 8.1 Frontend Fixes (HIGH PRIORITY)
+- [ ] Исправить responsive design в AI Chat (w-64 → flex) — 1 ч
+- [ ] Убрать console.error, заменить на logger — 30 мин
+- [ ] Разбить ContextPanel.vue на подкомпоненты (1030 строк → <300) — 3 ч
+- [ ] Разбить GitSourceSelector.vue (339 строк → <300) — 2 ч
+
+### 8.2 Build Pipeline (MEDIUM PRIORITY)
+Добавить build runners для оставшихся языков:
+- [ ] Python: pip/poetry/pyproject.toml
+- [ ] Rust: cargo build
+- [ ] C#: dotnet build
+- [ ] Kotlin: gradle/kotlinc
+- [ ] Dart: dart compile/flutter build
+- [ ] C/C++: cmake/make/g++
+- [ ] PHP: composer
+- [ ] Ruby: bundler/rake
+- [ ] Swift: swift build/xcodebuild
+
+### 8.3 Symbol Analysis (MEDIUM PRIORITY)
+Добавить symbol analyzers для:
+- [ ] C/C++ — tree-sitter-c, tree-sitter-cpp
+- [ ] PHP — tree-sitter-php
+- [ ] Ruby — tree-sitter-ruby
+- [ ] Swift — tree-sitter-swift
+
+### 8.4 Performance Optimization (LOW PRIORITY)
+- [ ] Кэширование результатов анализа (LRU cache)
+- [ ] Параллельное выполнение тестов (goroutines)
+- [ ] Инкрементальные билды (track file changes)
+- [ ] Кэширование symbol graph
+
+### 8.5 Test Coverage Improvements
+- [ ] infrastructure/staticanalyzer: 63.4% → 70%
+- [ ] infrastructure/testengine: 55.3% → 70%
+- [ ] Frontend unit tests для Files Module
 

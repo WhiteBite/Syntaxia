@@ -1,5 +1,5 @@
 import { useSettingsStore } from '@/stores/settings.store'
-import { computed, ref, shallowRef } from 'vue'
+import { computed, ref, shallowRef, watch, type Ref } from 'vue'
 
 export interface ChunkInfo {
     index: number
@@ -8,11 +8,18 @@ export interface ChunkInfo {
     tokenCount: number
 }
 
+export interface ChunkingContext {
+    tokenCount: Ref<number>
+    lineCount: Ref<number>
+    fileCount: Ref<number>
+    hasContext: Ref<boolean>
+}
+
 /**
  * Composable for managing context chunking logic.
  * Handles chunk calculation, navigation, and copy state.
  */
-export function useChunking() {
+export function useChunking(context?: ChunkingContext) {
     const settingsStore = useSettingsStore()
 
     // State
@@ -229,6 +236,74 @@ export function useChunking() {
             .map(chunk => chunk.endLine)
     }
 
+    // Show HUD when chunking is enabled and total tokens exceed chunk limit
+    const showChunkHUD = computed(() => {
+        if (!context?.hasContext.value) return false
+        if (!settingsStore.settings.context.enableAutoSplit) return false
+        const totalTokens = context.tokenCount.value
+        const maxPerChunk = settingsStore.settings.context.maxTokensPerChunk
+        return totalTokens > maxPerChunk
+    })
+
+    // Auto-calculate chunks when context changes (if context provided)
+    if (context) {
+        watch(
+            () => [
+                context.tokenCount.value,
+                context.lineCount.value,
+                context.fileCount.value,
+                settingsStore.settings.context.enableAutoSplit,
+                settingsStore.settings.context.maxTokensPerChunk,
+                settingsStore.settings.context.splitStrategy
+            ],
+            () => {
+                if (!settingsStore.settings.context.enableAutoSplit) {
+                    setChunks([])
+                    return
+                }
+
+                const totalTokens = context.tokenCount.value
+                const totalLines = context.lineCount.value
+                const maxPerChunk = settingsStore.settings.context.maxTokensPerChunk
+
+                if (totalTokens <= 0 || totalLines <= 0) {
+                    setChunks([])
+                    return
+                }
+
+                const numChunks = Math.ceil(totalTokens / maxPerChunk)
+
+                if (numChunks <= 1) {
+                    setChunks([{
+                        index: 0,
+                        startLine: 0,
+                        endLine: totalLines - 1,
+                        tokenCount: totalTokens
+                    }])
+                    return
+                }
+
+                const tokensPerChunk = Math.ceil(totalTokens / numChunks)
+                const linesPerChunk = Math.ceil(totalLines / numChunks)
+
+                const newChunks: ChunkInfo[] = []
+
+                for (let i = 0; i < numChunks; i++) {
+                    const startLine = i * linesPerChunk
+                    const endLine = Math.min((i + 1) * linesPerChunk - 1, totalLines - 1)
+                    const chunkTokens = i === numChunks - 1
+                        ? totalTokens - (tokensPerChunk * (numChunks - 1))
+                        : tokensPerChunk
+
+                    newChunks.push({ index: i, startLine, endLine, tokenCount: chunkTokens })
+                }
+
+                setChunks(newChunks)
+            },
+            { immediate: true }
+        )
+    }
+
     return {
         // State
         currentChunkIndex,
@@ -242,6 +317,7 @@ export function useChunking() {
         hasMultipleChunks,
         allChunksCopied,
         currentChunkInfo,
+        showChunkHUD,
 
         // Methods
         calculateChunks,

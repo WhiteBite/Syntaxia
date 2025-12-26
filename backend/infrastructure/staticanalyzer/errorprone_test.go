@@ -392,3 +392,195 @@ func TestErrorProneAnalyzer_ParseErrorProneOutput_MessageExtraction(t *testing.T
 		})
 	}
 }
+
+
+func TestErrorProneAnalyzer_GetCategory_AllCategories(t *testing.T) {
+	analyzer := NewErrorProneAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		message  string
+		expected string
+	}{
+		{"NullPointerException may be thrown", "null-safety"},
+		{"null dereference detected", "null-safety"},
+		{"Possible null value", "null-safety"},
+		{"NULL check missing", "null-safety"},
+		{"Unused variable 'temp'", "unused-code"},
+		{"unused private method", "unused-code"},
+		{"UNUSED field", "unused-code"},
+		{"Deprecated method usage", "deprecation"},
+		{"deprecated API call", "deprecation"},
+		{"DEPRECATED class", "deprecation"},
+		{"Concurrent modification", "concurrency"},
+		{"concurrent access issue", "concurrency"},
+		{"CONCURRENT thread problem", "concurrency"},
+		{"Resource leak detected", "resource-management"},
+		{"resource not closed", "resource-management"},
+		{"RESOURCE handle", "resource-management"},
+		{"Some other error message", "other"},
+		{"", "other"},
+		{"Generic compilation error", "other"},
+		{"Syntax error", "other"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.message, func(t *testing.T) {
+			result := analyzer.getCategory(tt.message)
+			if result != tt.expected {
+				t.Errorf("getCategory(%q) = %q, want %q", tt.message, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestErrorProneAnalyzer_ParseErrorProneOutput_AllFormats(t *testing.T) {
+	analyzer := NewErrorProneAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name          string
+		output        string
+		expectedCount int
+	}{
+		{
+			name:          "empty output",
+			output:        "",
+			expectedCount: 0,
+		},
+		{
+			name:          "whitespace only",
+			output:        "   \n\t\n   ",
+			expectedCount: 0,
+		},
+		{
+			name:          "non-error output",
+			output:        "Compiling 10 source files...\nBuild successful",
+			expectedCount: 0,
+		},
+		{
+			name:          "single error",
+			output:        "src/Main.java:10:15: [error] NullPointerException may be thrown",
+			expectedCount: 1,
+		},
+		{
+			name:          "single warning",
+			output:        "src/Utils.java:25:5: [warning] Unused variable 'temp'",
+			expectedCount: 1,
+		},
+		{
+			name: "multiple issues",
+			output: `src/Main.java:10:15: [error] NullPointerException may be thrown
+src/Main.java:20:10: [warning] Deprecated method usage
+src/Utils.java:5:1: [error] Resource leak: stream is never closed`,
+			expectedCount: 3,
+		},
+		{
+			name: "mixed with non-error lines",
+			output: `Note: Some input files use unchecked operations
+src/Main.java:10:15: [error] NullPointerException may be thrown
+Note: Recompile with -Xlint:unchecked for details
+src/Utils.java:5:1: [warning] Unused import`,
+			expectedCount: 2,
+		},
+		{
+			name:          "line with insufficient parts",
+			output:        "src/Main.java:10",
+			expectedCount: 0,
+		},
+		{
+			name:          "line with non-numeric line number",
+			output:        "src/Main.java:abc:10: [error] Some error",
+			expectedCount: 0,
+		},
+		{
+			name:          "line with non-numeric column",
+			output:        "src/Main.java:10:abc: [error] Some error",
+			expectedCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			issues, err := analyzer.parseErrorProneOutput([]byte(tt.output))
+			if err != nil {
+				t.Errorf("parseErrorProneOutput() error = %v", err)
+				return
+			}
+
+			if len(issues) != tt.expectedCount {
+				t.Errorf("parseErrorProneOutput() returned %d issues, want %d", len(issues), tt.expectedCount)
+			}
+		})
+	}
+}
+
+func TestErrorProneAnalyzer_HasJavaFilePaths(t *testing.T) {
+	analyzer := NewErrorProneAnalyzer(&mockLogger{})
+
+	// Test with non-existent path
+	result := analyzer.hasJavaFilePaths("/non/existent/path")
+	if result {
+		t.Errorf("hasJavaFilePaths() for non-existent path = true, want false")
+	}
+
+	// Test with current directory (no Java files)
+	result = analyzer.hasJavaFilePaths(".")
+	if result {
+		t.Errorf("hasJavaFilePaths() for current dir = true, want false")
+	}
+}
+
+
+func TestErrorProneAnalyzer_ParseErrorProneOutput_WithCategory(t *testing.T) {
+	analyzer := NewErrorProneAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name             string
+		output           string
+		expectedCategory string
+	}{
+		{
+			name:             "null safety",
+			output:           "src/Main.java:10:15: [error] NullPointerException may be thrown",
+			expectedCategory: "null-safety",
+		},
+		{
+			name:             "unused code",
+			output:           "src/Main.java:10:15: [warning] unused variable 'temp'",
+			expectedCategory: "unused-code",
+		},
+		{
+			name:             "deprecation",
+			output:           "src/Main.java:10:15: [warning] deprecated method usage",
+			expectedCategory: "deprecation",
+		},
+		{
+			name:             "concurrency",
+			output:           "src/Main.java:10:15: [error] concurrent modification detected",
+			expectedCategory: "concurrency",
+		},
+		{
+			name:             "resource management",
+			output:           "src/Main.java:10:15: [error] resource leak detected",
+			expectedCategory: "resource-management",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			issues, err := analyzer.parseErrorProneOutput([]byte(tt.output))
+			if err != nil {
+				t.Errorf("parseErrorProneOutput() error = %v", err)
+				return
+			}
+
+			if len(issues) != 1 {
+				t.Errorf("parseErrorProneOutput() returned %d issues, want 1", len(issues))
+				return
+			}
+
+			if issues[0].Category != tt.expectedCategory {
+				t.Errorf("issue.Category = %q, want %q", issues[0].Category, tt.expectedCategory)
+			}
+		})
+	}
+}

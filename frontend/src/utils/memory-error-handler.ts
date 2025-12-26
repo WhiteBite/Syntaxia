@@ -158,7 +158,7 @@ export class MemoryErrorHandler {
         window.gc();
         logger.debug('Garbage collection triggered successfully');
       } catch (e) {
-        console.warn('Failed to trigger garbage collection via window.gc', e);
+        logger.warn('Failed to trigger garbage collection via window.gc', e);
       }
     }
 
@@ -169,7 +169,7 @@ export class MemoryErrorHandler {
         gc();
         logger.debug('Garbage collection triggered successfully via global.gc');
       } catch (e) {
-        console.warn('Failed to trigger garbage collection via global.gc', e);
+        logger.warn('Failed to trigger garbage collection via global.gc', e);
       }
     }
 

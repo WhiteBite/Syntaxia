@@ -441,3 +441,315 @@ func TestClippyAnalyzer_ParseClippyOutput_NoCode(t *testing.T) {
 		t.Errorf("issue.Code = %q, want empty string", issues[0].Code)
 	}
 }
+
+
+func TestClippyAnalyzer_GetCategory_AllCases(t *testing.T) {
+	analyzer := NewClippyAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		code     string
+		expected string
+	}{
+		{"", "other"},
+		{"E0001", "compiler-error"},
+		{"E0425", "compiler-error"},
+		{"E9999", "compiler-error"},
+		{"W0001", "compiler-warning"},
+		{"W9999", "compiler-warning"},
+		{"clippy::cognitive_complexity", "complexity"},
+		{"clippy::too_many_arguments", "complexity"},
+		{"clippy::too_many_lines", "complexity"},
+		{"clippy::type_complexity", "complexity"},
+		{"clippy::excessive_precision", "complexity"},
+		{"clippy::needless_return", "style"},
+		{"clippy::redundant_closure", "style"},
+		{"clippy::single_match", "style"},
+		{"clippy::match_bool", "style"},
+		{"clippy::if_same_then_else", "style"},
+		{"clippy::collapsible_if", "style"},
+		{"clippy::needless_collect", "performance"},
+		{"clippy::unnecessary_to_owned", "performance"},
+		{"clippy::clone_on_copy", "performance"},
+		{"clippy::useless_vec", "performance"},
+		{"clippy::box_collection", "performance"},
+		{"clippy::eq_op", "correctness"},
+		{"clippy::erasing_op", "correctness"},
+		{"clippy::almost_swapped", "correctness"},
+		{"clippy::suspicious_arithmetic_impl", "correctness"},
+		{"clippy::misrefactored_assign_op", "correctness"},
+		{"clippy::unknown_lint", "clippy"},
+		{"clippy::some_other_lint", "clippy"},
+		{"unknown_code", "other"},
+		{"random", "other"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.code, func(t *testing.T) {
+			result := analyzer.getCategory(tt.code)
+			if result != tt.expected {
+				t.Errorf("getCategory(%q) = %q, want %q", tt.code, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestClippyAnalyzer_ConvertSeverity_AllCases(t *testing.T) {
+	analyzer := NewClippyAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"error", "error"},
+		{"ERROR", "error"},
+		{"Error", "error"},
+		{"eRrOr", "error"},
+		{"warning", "warning"},
+		{"WARNING", "warning"},
+		{"Warning", "warning"},
+		{"wArNiNg", "warning"},
+		{"note", "info"},
+		{"NOTE", "info"},
+		{"Note", "info"},
+		{"nOtE", "info"},
+		{"help", "hint"},
+		{"HELP", "hint"},
+		{"Help", "hint"},
+		{"hElP", "hint"},
+		{"unknown", "warning"},
+		{"", "warning"},
+		{"other", "warning"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result := analyzer.convertSeverity(tt.input)
+			if result != tt.expected {
+				t.Errorf("convertSeverity(%q) = %q, want %q", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestClippyAnalyzer_ParseClippyOutput_EdgeCases(t *testing.T) {
+	analyzer := NewClippyAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name          string
+		output        string
+		expectedCount int
+	}{
+		{
+			name:          "empty output",
+			output:        "",
+			expectedCount: 0,
+		},
+		{
+			name:          "whitespace only",
+			output:        "   \n\t\n   ",
+			expectedCount: 0,
+		},
+		{
+			name:          "non-json output",
+			output:        "Compiling myproject v0.1.0\nFinished dev [unoptimized + debuginfo] target(s)",
+			expectedCount: 0,
+		},
+		{
+			name:          "build artifact message",
+			output:        `{"reason":"build-script-executed","package_id":"myproject 0.1.0"}`,
+			expectedCount: 0,
+		},
+		{
+			name:          "message without spans",
+			output:        `{"reason":"compiler-message","message":{"code":{"code":"E0001"},"level":"error","message":"some error","spans":[],"children":[]}}`,
+			expectedCount: 0,
+		},
+		{
+			name: "multiple messages mixed with artifacts",
+			output: `{"reason":"build-script-executed","package_id":"pkg1"}
+{"reason":"compiler-message","message":{"code":{"code":"clippy::test"},"level":"warning","message":"test","spans":[{"file_name":"src/main.rs","line_start":1,"line_end":1,"column_start":1,"column_end":1,"is_primary":true}],"children":[]}}
+{"reason":"build-finished","success":true}`,
+			expectedCount: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			issues, err := analyzer.parseClippyOutput([]byte(tt.output))
+			if err != nil {
+				t.Errorf("parseClippyOutput() error = %v", err)
+				return
+			}
+
+			if len(issues) != tt.expectedCount {
+				t.Errorf("parseClippyOutput() returned %d issues, want %d", len(issues), tt.expectedCount)
+			}
+		})
+	}
+}
+
+
+func TestClippyAnalyzer_ParseClippyOutput_AllCases(t *testing.T) {
+	analyzer := NewClippyAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name          string
+		output        string
+		expectedCount int
+	}{
+		{
+			name:          "empty output",
+			output:        "",
+			expectedCount: 0,
+		},
+		{
+			name:          "whitespace only",
+			output:        "   \n\t\n   ",
+			expectedCount: 0,
+		},
+		{
+			name:          "non-json output",
+			output:        "Compiling myproject v0.1.0\nFinished dev [unoptimized + debuginfo] target(s)",
+			expectedCount: 0,
+		},
+		{
+			name:          "build artifact message",
+			output:        `{"reason":"build-script-executed","package_id":"myproject 0.1.0"}`,
+			expectedCount: 0,
+		},
+		{
+			name:          "message without spans",
+			output:        `{"reason":"compiler-message","message":{"code":{"code":"E0001"},"level":"error","message":"some error","spans":[],"children":[]}}`,
+			expectedCount: 0,
+		},
+		{
+			name: "single warning with children",
+			output: `{"reason":"compiler-message","message":{"code":{"code":"clippy::needless_return"},"level":"warning","message":"unneeded return statement","spans":[{"file_name":"src/main.rs","line_start":10,"line_end":10,"column_start":5,"column_end":15,"is_primary":true}],"children":[{"level":"help","message":"remove return"},{"level":"note","message":"see docs"}]}}`,
+			expectedCount: 1,
+		},
+		{
+			name: "multiple messages",
+			output: `{"reason":"compiler-message","message":{"code":{"code":"clippy::test1"},"level":"warning","message":"test1","spans":[{"file_name":"src/a.rs","line_start":1,"line_end":1,"column_start":1,"column_end":1,"is_primary":true}],"children":[]}}
+{"reason":"compiler-message","message":{"code":{"code":"clippy::test2"},"level":"error","message":"test2","spans":[{"file_name":"src/b.rs","line_start":2,"line_end":2,"column_start":1,"column_end":1,"is_primary":true}],"children":[]}}`,
+			expectedCount: 2,
+		},
+		{
+			name: "message with non-primary span only",
+			output: `{"reason":"compiler-message","message":{"code":{"code":"E0001"},"level":"error","message":"test error","spans":[{"file_name":"src/test.rs","line_start":5,"line_end":5,"column_start":1,"column_end":10,"is_primary":false}],"children":[]}}`,
+			expectedCount: 1,
+		},
+		{
+			name: "message without code",
+			output: `{"reason":"compiler-message","message":{"code":null,"level":"warning","message":"test warning","spans":[{"file_name":"src/test.rs","line_start":1,"line_end":1,"column_start":1,"column_end":1,"is_primary":true}],"children":[]}}`,
+			expectedCount: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			issues, err := analyzer.parseClippyOutput([]byte(tt.output))
+			if err != nil {
+				t.Errorf("parseClippyOutput() error = %v", err)
+				return
+			}
+
+			if len(issues) != tt.expectedCount {
+				t.Errorf("parseClippyOutput() returned %d issues, want %d", len(issues), tt.expectedCount)
+			}
+		})
+	}
+}
+
+func TestClippyAnalyzer_CategorizeLint_AllCategories(t *testing.T) {
+	analyzer := NewClippyAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		lintName string
+		expected string
+	}{
+		{"cognitive_complexity", "complexity"},
+		{"too_many_arguments", "complexity"},
+		{"too_many_lines", "complexity"},
+		{"type_complexity", "complexity"},
+		{"excessive_precision", "complexity"},
+		{"needless_return", "style"},
+		{"redundant_closure", "style"},
+		{"single_match", "style"},
+		{"match_bool", "style"},
+		{"if_same_then_else", "style"},
+		{"collapsible_if", "style"},
+		{"needless_collect", "performance"},
+		{"unnecessary_to_owned", "performance"},
+		{"clone_on_copy", "performance"},
+		{"useless_vec", "performance"},
+		{"box_collection", "performance"},
+		{"eq_op", "correctness"},
+		{"erasing_op", "correctness"},
+		{"almost_swapped", "correctness"},
+		{"suspicious_arithmetic_impl", "correctness"},
+		{"misrefactored_assign_op", "correctness"},
+		{"unknown_lint_name", "clippy"},
+		{"", "clippy"},
+		{"some_random_lint", "clippy"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.lintName, func(t *testing.T) {
+			result := analyzer.categorizeLint(tt.lintName)
+			if result != tt.expected {
+				t.Errorf("categorizeLint(%q) = %q, want %q", tt.lintName, result, tt.expected)
+			}
+		})
+	}
+}
+
+
+func TestClippyAnalyzer_ParseClippyOutput_MultipleSpans(t *testing.T) {
+	analyzer := NewClippyAnalyzer(&mockLogger{})
+
+	// Test with multiple spans where first is not primary
+	output := `{"reason":"compiler-message","message":{"code":{"code":"E0001"},"level":"error","message":"test error","spans":[{"file_name":"src/secondary.rs","line_start":1,"line_end":1,"column_start":1,"column_end":1,"is_primary":false},{"file_name":"src/primary.rs","line_start":10,"line_end":10,"column_start":5,"column_end":15,"is_primary":true}],"children":[]}}`
+
+	issues, err := analyzer.parseClippyOutput([]byte(output))
+	if err != nil {
+		t.Errorf("parseClippyOutput() error = %v", err)
+		return
+	}
+
+	if len(issues) != 1 {
+		t.Errorf("parseClippyOutput() returned %d issues, want 1", len(issues))
+		return
+	}
+
+	// Should use primary span
+	if issues[0].File != "src/primary.rs" {
+		t.Errorf("issue.File = %q, want %q", issues[0].File, "src/primary.rs")
+	}
+	if issues[0].Line != 10 {
+		t.Errorf("issue.Line = %d, want 10", issues[0].Line)
+	}
+}
+
+func TestClippyAnalyzer_GetCategory_CompilerCodes(t *testing.T) {
+	analyzer := NewClippyAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		code     string
+		expected string
+	}{
+		{"E0001", "compiler-error"},
+		{"E0425", "compiler-error"},
+		{"E9999", "compiler-error"},
+		{"W0001", "compiler-warning"},
+		{"W9999", "compiler-warning"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.code, func(t *testing.T) {
+			result := analyzer.getCategory(tt.code)
+			if result != tt.expected {
+				t.Errorf("getCategory(%q) = %q, want %q", tt.code, result, tt.expected)
+			}
+		})
+	}
+}

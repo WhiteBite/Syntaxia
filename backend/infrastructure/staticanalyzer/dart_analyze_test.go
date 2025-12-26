@@ -1,6 +1,7 @@
 package staticanalyzer
 
 import (
+	"context"
 	"syntaxia/domain"
 	"testing"
 )
@@ -188,5 +189,163 @@ Done.`),
 				}
 			}
 		})
+	}
+}
+
+
+func TestDartAnalyzeAnalyzer_ParseDartAnalyzeOutput_AllSeverities(t *testing.T) {
+	analyzer := NewDartAnalyzeAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name           string
+		output         []byte
+		expectedCount  int
+		expectedIssues []expectedIssue
+	}{
+		{
+			name:          "error severity",
+			output:        []byte(`ERROR|COMPILE_TIME_ERROR|UNDEFINED_IDENTIFIER|lib/main.dart|10|5|3|Undefined name 'foo'`),
+			expectedCount: 1,
+			expectedIssues: []expectedIssue{
+				{file: "lib/main.dart", line: 10, severity: "error", code: "UNDEFINED_IDENTIFIER"},
+			},
+		},
+		{
+			name:          "warning severity",
+			output:        []byte(`WARNING|STATIC_WARNING|UNUSED_LOCAL_VARIABLE|lib/utils.dart|20|3|5|Unused variable`),
+			expectedCount: 1,
+			expectedIssues: []expectedIssue{
+				{file: "lib/utils.dart", line: 20, severity: "warning", code: "UNUSED_LOCAL_VARIABLE"},
+			},
+		},
+		{
+			name:          "info severity",
+			output:        []byte(`INFO|HINT|UNNECESSARY_CAST|lib/helper.dart|5|10|8|Unnecessary cast`),
+			expectedCount: 1,
+			expectedIssues: []expectedIssue{
+				{file: "lib/helper.dart", line: 5, severity: "info", code: "UNNECESSARY_CAST"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			issues, err := analyzer.parseDartAnalyzeOutput(tt.output)
+			if err != nil {
+				t.Errorf("parseDartAnalyzeOutput() error = %v", err)
+				return
+			}
+
+			if len(issues) != tt.expectedCount {
+				t.Errorf("parseDartAnalyzeOutput() returned %d issues, want %d", len(issues), tt.expectedCount)
+				return
+			}
+
+			for i, expected := range tt.expectedIssues {
+				if i >= len(issues) {
+					break
+				}
+				issue := issues[i]
+				if issue.Severity != expected.severity {
+					t.Errorf("issue[%d].Severity = %q, want %q", i, issue.Severity, expected.severity)
+				}
+			}
+		})
+	}
+}
+
+func TestDartAnalyzeAnalyzer_ParseDartAnalyzeOutput_EdgeCases(t *testing.T) {
+	analyzer := NewDartAnalyzeAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name          string
+		output        []byte
+		expectedCount int
+	}{
+		{
+			name:          "line with insufficient parts",
+			output:        []byte(`ERROR|COMPILE_TIME_ERROR|CODE`),
+			expectedCount: 0,
+		},
+		{
+			name:          "line with wrong format",
+			output:        []byte(`This is not a valid format`),
+			expectedCount: 0,
+		},
+		{
+			name: "multiple lines with mixed validity",
+			output: []byte(`Analyzing...
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_IDENTIFIER|lib/main.dart|10|5|3|Error
+Invalid line
+WARNING|STATIC_WARNING|UNUSED|lib/utils.dart|20|3|5|Warning
+Done.`),
+			expectedCount: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			issues, err := analyzer.parseDartAnalyzeOutput(tt.output)
+			if err != nil {
+				t.Errorf("parseDartAnalyzeOutput() error = %v", err)
+				return
+			}
+
+			if len(issues) != tt.expectedCount {
+				t.Errorf("parseDartAnalyzeOutput() returned %d issues, want %d", len(issues), tt.expectedCount)
+			}
+		})
+	}
+}
+
+
+func TestDartAnalyzeAnalyzer_Analyze_DartNotInstalled(t *testing.T) {
+	analyzer := NewDartAnalyzeAnalyzer(&mockLogger{})
+	ctx := context.Background()
+
+	config := &domain.StaticAnalyzerConfig{
+		Language:    "dart",
+		ProjectPath: "/non/existent/path",
+		Analyzer:    domain.StaticAnalyzerTypeDartAnalyze,
+	}
+
+	result, err := analyzer.Analyze(ctx, config)
+	if err != nil {
+		t.Errorf("Analyze() should not return error, got %v", err)
+		return
+	}
+
+	if result == nil {
+		t.Error("Analyze() should return a result even when Dart is not installed")
+		return
+	}
+
+	t.Logf("Analyze result: Success=%v, Error=%q", result.Success, result.Error)
+}
+
+func TestDartAnalyzeAnalyzer_ParseDartAnalyzeOutput_AllSeveritiesLowercase(t *testing.T) {
+	analyzer := NewDartAnalyzeAnalyzer(&mockLogger{})
+
+	output := []byte(`ERROR|COMPILE_TIME_ERROR|CODE1|lib/main.dart|10|5|3|Error message
+WARNING|STATIC_WARNING|CODE2|lib/utils.dart|20|3|5|Warning message
+INFO|HINT|CODE3|lib/helper.dart|5|10|8|Info message`)
+
+	issues, err := analyzer.parseDartAnalyzeOutput(output)
+	if err != nil {
+		t.Errorf("parseDartAnalyzeOutput() error = %v", err)
+		return
+	}
+
+	if len(issues) != 3 {
+		t.Errorf("parseDartAnalyzeOutput() returned %d issues, want 3", len(issues))
+		return
+	}
+
+	// Check severities are lowercase
+	expectedSeverities := []string{"error", "warning", "info"}
+	for i, expected := range expectedSeverities {
+		if issues[i].Severity != expected {
+			t.Errorf("issue[%d].Severity = %q, want %q", i, issues[i].Severity, expected)
+		}
 	}
 }

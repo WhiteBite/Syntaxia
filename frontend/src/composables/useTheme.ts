@@ -3,8 +3,10 @@
  * Persists theme preference to localStorage
  */
 
-import { ref, watch, onMounted } from 'vue'
+import { useLogger } from '@/composables/useLogger'
+import { onMounted, ref, watch } from 'vue'
 
+const logger = useLogger('Theme')
 const THEME_KEY = 'Syntaxia_theme'
 
 export type Theme = 'dark' | 'light' | 'system'
@@ -16,7 +18,7 @@ let initialized = false
 export function useTheme() {
   const applyTheme = () => {
     const root = document.documentElement
-    
+
     if (currentTheme.value === 'system') {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
       root.classList.toggle('dark', prefersDark)
@@ -39,7 +41,7 @@ export function useTheme() {
   // Initialize only once
   if (!initialized) {
     initialized = true
-    
+
     // Load saved theme from localStorage
     onMounted(() => {
       try {
@@ -48,7 +50,7 @@ export function useTheme() {
           currentTheme.value = saved as Theme
         }
       } catch (err) {
-        console.warn('Failed to load theme from localStorage:', err)
+        logger.warn('Failed to load theme from localStorage:', err)
       }
     })
 
@@ -57,7 +59,7 @@ export function useTheme() {
       try {
         localStorage.setItem(THEME_KEY, newTheme)
       } catch (err) {
-        console.warn('Failed to save theme to localStorage:', err)
+        logger.warn('Failed to save theme to localStorage:', err)
       }
       applyTheme()
     }, { immediate: true })

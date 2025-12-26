@@ -1,6 +1,7 @@
 package staticanalyzer
 
 import (
+	"context"
 	"syntaxia/domain"
 	"testing"
 )
@@ -412,5 +413,245 @@ file2.swift:20:1: error: Valid error (rule2)`,
 				t.Errorf("parsePlainOutput() returned %d issues, want %d", len(issues), tt.expectedCount)
 			}
 		})
+	}
+}
+
+
+func TestSwiftLintAnalyzer_MapSeverity_AllCases(t *testing.T) {
+	analyzer := NewSwiftLintAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"error", "error"},
+		{"ERROR", "error"},
+		{"Error", "error"},
+		{"eRrOr", "error"},
+		{"warning", "warning"},
+		{"WARNING", "warning"},
+		{"Warning", "warning"},
+		{"wArNiNg", "warning"},
+		{"info", "info"},
+		{"INFO", "info"},
+		{"Info", "info"},
+		{"unknown", "info"},
+		{"", "info"},
+		{"other", "info"},
+		{"hint", "info"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result := analyzer.mapSeverity(tt.input)
+			if result != tt.expected {
+				t.Errorf("mapSeverity(%q) = %q, want %q", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestSwiftLintAnalyzer_ParseJSONOutput_AllCases(t *testing.T) {
+	analyzer := NewSwiftLintAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name          string
+		output        string
+		projectPath   string
+		expectedCount int
+		wantErr       bool
+	}{
+		{
+			name:          "empty array",
+			output:        "[]",
+			projectPath:   "/project",
+			expectedCount: 0,
+			wantErr:       false,
+		},
+		{
+			name:        "no JSON found",
+			output:      "some random text without json",
+			projectPath: "/project",
+			wantErr:     true,
+		},
+		{
+			name:          "single warning",
+			output:        `[{"rule_id":"trailing_whitespace","reason":"Lines should not have trailing whitespace.","line":10,"column":5,"file":"main.swift","severity":"warning"}]`,
+			projectPath:   "/project",
+			expectedCount: 1,
+		},
+		{
+			name:          "single error",
+			output:        `[{"rule_id":"force_cast","reason":"Force casts should be avoided.","line":25,"column":10,"file":"Utils.swift","severity":"error"}]`,
+			projectPath:   "/project",
+			expectedCount: 1,
+		},
+		{
+			name: "multiple issues",
+			output: `[
+				{"rule_id":"line_length","reason":"Line should be 120 characters or less","line":5,"column":121,"file":"File1.swift","severity":"warning"},
+				{"rule_id":"force_unwrapping","reason":"Force unwrapping should be avoided.","line":15,"column":8,"file":"File2.swift","severity":"error"}
+			]`,
+			projectPath:   "/project",
+			expectedCount: 2,
+		},
+		{
+			name:          "JSON with prefix text",
+			output:        `Loading configuration from .swiftlint.yml\n[{"rule_id":"test","reason":"Test","line":1,"file":"test.swift","severity":"warning"}]`,
+			projectPath:   "/project",
+			expectedCount: 1,
+		},
+		{
+			name:        "malformed JSON",
+			output:      `[{"rule_id": "test", "reason": "incomplete`,
+			projectPath: "/project",
+			wantErr:     true,
+		},
+		{
+			name:          "JSON with trailing text",
+			output:        `[{"rule_id":"test","reason":"Test","line":1,"file":"test.swift","severity":"warning"}]\nDone.`,
+			projectPath:   "/project",
+			expectedCount: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			issues, err := analyzer.parseJSONOutput(tt.output, tt.projectPath)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseJSONOutput() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr && len(issues) != tt.expectedCount {
+				t.Errorf("parseJSONOutput() returned %d issues, want %d", len(issues), tt.expectedCount)
+			}
+		})
+	}
+}
+
+func TestSwiftLintAnalyzer_ParsePlainOutput_AllCases(t *testing.T) {
+	analyzer := NewSwiftLintAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name          string
+		output        string
+		projectPath   string
+		expectedCount int
+	}{
+		{
+			name:          "empty output",
+			output:        "",
+			projectPath:   ".",
+			expectedCount: 0,
+		},
+		{
+			name:          "whitespace only",
+			output:        "   \n\t\n   ",
+			projectPath:   ".",
+			expectedCount: 0,
+		},
+		{
+			name:          "single warning",
+			output:        "main.swift:10:5: warning: Lines should not have trailing whitespace. (trailing_whitespace)",
+			projectPath:   ".",
+			expectedCount: 1,
+		},
+		{
+			name:          "single error",
+			output:        "Utils.swift:25:10: error: Force casts should be avoided. (force_cast)",
+			projectPath:   ".",
+			expectedCount: 1,
+		},
+		{
+			name: "multiple issues",
+			output: `File1.swift:5:121: warning: Line should be 120 characters or less (line_length)
+File2.swift:15:8: error: Force unwrapping should be avoided. (force_unwrapping)`,
+			projectPath:   ".",
+			expectedCount: 2,
+		},
+		{
+			name:          "incomplete line format",
+			output:        "file.swift:10",
+			projectPath:   ".",
+			expectedCount: 0,
+		},
+		{
+			name:          "line without severity prefix",
+			output:        "file.swift:10:5: Some message without severity",
+			projectPath:   ".",
+			expectedCount: 1,
+		},
+		{
+			name: "mixed valid and invalid lines",
+			output: `file1.swift:10:5: warning: Valid warning (rule1)
+invalid line
+file2.swift:20:1: error: Valid error (rule2)`,
+			projectPath:   ".",
+			expectedCount: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			issues := analyzer.parsePlainOutput(tt.output, tt.projectPath)
+			if len(issues) != tt.expectedCount {
+				t.Errorf("parsePlainOutput() returned %d issues, want %d", len(issues), tt.expectedCount)
+			}
+		})
+	}
+}
+
+
+func TestSwiftLintAnalyzer_Analyze_SwiftLintNotInstalled(t *testing.T) {
+	analyzer := NewSwiftLintAnalyzer(&mockLogger{})
+	ctx := context.Background()
+
+	config := &domain.StaticAnalyzerConfig{
+		Language:    "swift",
+		ProjectPath: ".",
+		Analyzer:    domain.StaticAnalyzerTypeSwiftLint,
+	}
+
+	result, err := analyzer.Analyze(ctx, config)
+	if err != nil {
+		t.Errorf("Analyze() should not return error, got %v", err)
+		return
+	}
+
+	if result == nil {
+		t.Error("Analyze() should return a result")
+		return
+	}
+
+	t.Logf("Analyze result: Success=%v, Error=%q, Issues=%d", result.Success, result.Error, len(result.Issues))
+}
+
+func TestSwiftLintAnalyzer_ParseJSONOutput_WithRelativePath(t *testing.T) {
+	analyzer := NewSwiftLintAnalyzer(&mockLogger{})
+
+	output := `[{"rule_id":"test_rule","reason":"Test message","line":10,"column":5,"file":"/project/src/main.swift","severity":"warning"}]`
+
+	issues, err := analyzer.parseJSONOutput(output, "/project")
+	if err != nil {
+		t.Errorf("parseJSONOutput() error = %v", err)
+		return
+	}
+
+	if len(issues) != 1 {
+		t.Errorf("parseJSONOutput() returned %d issues, want 1", len(issues))
+		return
+	}
+
+	// Path should be relative (may use OS-specific separator)
+	expectedPaths := []string{"src/main.swift", "src\\main.swift"}
+	found := false
+	for _, expected := range expectedPaths {
+		if issues[0].File == expected {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("issue.File = %q, want one of %v", issues[0].File, expectedPaths)
 	}
 }

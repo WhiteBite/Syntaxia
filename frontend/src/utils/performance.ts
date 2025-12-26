@@ -224,7 +224,7 @@ export class PerformanceMonitor {
   endMeasurement(name: string): number {
     const startTime = this.marks.get(name)
     if (!startTime) {
-      console.warn(`No start mark found for measurement: ${name}`)
+      logger.warn(`No start mark found for measurement: ${name}`)
       return 0
     }
 

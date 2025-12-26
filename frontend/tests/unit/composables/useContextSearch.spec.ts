@@ -1,31 +1,39 @@
 import { useContextSearch } from '@/features/context/composables/useContextSearch'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { nextTick } from 'vue'
+import { nextTick, ref } from 'vue'
 
 describe('useContextSearch', () => {
-    const mockLines = {
-        lines: [
-            'function hello() {',
-            '  return "Hello World";',
-            '}',
-            '',
-            'function goodbye() {',
-            '  return "Goodbye";',
-            '}',
-            'export { hello, goodbye };'
-        ],
-        startLine: 1
-    }
+    const mockLinesData = [
+        'function hello() {',
+        '  return "Hello World";',
+        '}',
+        '',
+        'function goodbye() {',
+        '  return "Goodbye";',
+        '}',
+        'export { hello, goodbye };'
+    ]
 
-    let getLinesMock: () => { lines: string[]; startLine: number } | null
+    function createSearch(linesData: string[] | undefined = mockLinesData, startLineValue = 0) {
+        const lines = ref(linesData)
+        const startLine = ref(startLineValue)
+        const scrollToLine = vi.fn()
+
+        const search = useContextSearch({
+            lines,
+            startLine,
+            scrollToLine
+        })
+
+        return { search, lines, startLine, scrollToLine }
+    }
 
     beforeEach(() => {
         vi.clearAllMocks()
-        getLinesMock = () => mockLines
     })
 
     it('should initialize with default state', () => {
-        const search = useContextSearch(getLinesMock)
+        const { search } = createSearch()
 
         expect(search.showSearch.value).toBe(false)
         expect(search.searchQuery.value).toBe('')
@@ -34,7 +42,7 @@ describe('useContextSearch', () => {
     })
 
     it('should toggle search visibility', () => {
-        const search = useContextSearch(getLinesMock)
+        const { search } = createSearch()
 
         expect(search.showSearch.value).toBe(false)
 
@@ -46,7 +54,7 @@ describe('useContextSearch', () => {
     })
 
     it('should close search', async () => {
-        const search = useContextSearch(getLinesMock)
+        const { search } = createSearch()
 
         search.showSearch.value = true
         search.searchQuery.value = 'test'
@@ -59,27 +67,27 @@ describe('useContextSearch', () => {
     })
 
     it('should find matching lines when searching', async () => {
-        const search = useContextSearch(getLinesMock)
+        const { search } = createSearch()
 
         search.searchQuery.value = 'function'
         await nextTick()
 
-        expect(search.searchResults.value).toEqual([1, 5])
+        expect(search.searchResults.value).toEqual([0, 4])
         expect(search.currentSearchIndex.value).toBe(0)
     })
 
     it('should perform case-insensitive search', async () => {
-        const search = useContextSearch(getLinesMock)
+        const { search } = createSearch()
 
         search.searchQuery.value = 'HELLO'
         await nextTick()
 
-        // 'hello' appears in lines 1, 2, and 8 (export { hello, goodbye })
-        expect(search.searchResults.value).toEqual([1, 2, 8])
+        // 'hello' appears in lines 0, 1, and 7 (export { hello, goodbye })
+        expect(search.searchResults.value).toEqual([0, 1, 7])
     })
 
     it('should clear results when query is empty', async () => {
-        const search = useContextSearch(getLinesMock)
+        const { search } = createSearch()
 
         search.searchQuery.value = 'function'
         await nextTick()
@@ -92,7 +100,7 @@ describe('useContextSearch', () => {
     })
 
     it('should navigate to next search result', async () => {
-        const search = useContextSearch(getLinesMock)
+        const { search } = createSearch()
 
         search.searchQuery.value = 'function'
         await nextTick()
@@ -108,7 +116,7 @@ describe('useContextSearch', () => {
     })
 
     it('should navigate to previous search result', async () => {
-        const search = useContextSearch(getLinesMock)
+        const { search } = createSearch()
 
         search.searchQuery.value = 'function'
         await nextTick()
@@ -124,7 +132,7 @@ describe('useContextSearch', () => {
     })
 
     it('should not navigate when no results', async () => {
-        const search = useContextSearch(getLinesMock)
+        const { search } = createSearch()
 
         search.searchQuery.value = 'nonexistent'
         await nextTick()
@@ -139,23 +147,23 @@ describe('useContextSearch', () => {
     })
 
     it('should highlight current search result line', async () => {
-        const search = useContextSearch(getLinesMock)
+        const { search } = createSearch()
 
         search.searchQuery.value = 'function'
         await nextTick()
 
-        // First result (line 1) should be highlighted
-        expect(search.isLineHighlighted(1)).toBe(true)
-        expect(search.isLineHighlighted(5)).toBe(false)
+        // First result (line 0) should be highlighted
+        expect(search.highlightedLinesSet.value.has(0)).toBe(true)
+        expect(search.highlightedLinesSet.value.has(4)).toBe(false)
 
         // Navigate to next
         search.searchNext()
-        expect(search.isLineHighlighted(1)).toBe(false)
-        expect(search.isLineHighlighted(5)).toBe(true)
+        expect(search.highlightedLinesSet.value.has(0)).toBe(false)
+        expect(search.highlightedLinesSet.value.has(4)).toBe(true)
     })
 
-    it('should handle null getLines', async () => {
-        const search = useContextSearch(() => null)
+    it('should handle undefined lines', async () => {
+        const { search } = createSearch(undefined)
 
         search.searchQuery.value = 'test'
         await nextTick()
@@ -164,7 +172,7 @@ describe('useContextSearch', () => {
     })
 
     it('should handle empty lines array', async () => {
-        const search = useContextSearch(() => ({ lines: [], startLine: 1 }))
+        const { search } = createSearch([])
 
         search.searchQuery.value = 'test'
         await nextTick()
@@ -173,11 +181,7 @@ describe('useContextSearch', () => {
     })
 
     it('should calculate correct line numbers with startLine offset', async () => {
-        const offsetLines = {
-            lines: ['first line', 'second line', 'third line'],
-            startLine: 100
-        }
-        const search = useContextSearch(() => offsetLines)
+        const { search } = createSearch(['first line', 'second line', 'third line'], 100)
 
         search.searchQuery.value = 'line'
         await nextTick()
@@ -185,33 +189,8 @@ describe('useContextSearch', () => {
         expect(search.searchResults.value).toEqual([100, 101, 102])
     })
 
-    it('should set line refs correctly', () => {
-        const search = useContextSearch(getLinesMock)
-        const mockElement = document.createElement('div')
-
-        search.setLineRef(mockElement, 5)
-
-        // Line ref should be stored (internal state)
-        expect(search.isLineHighlighted(5)).toBe(false) // Not highlighted until search
-    })
-
-    it('should not set line ref for null element', () => {
-        const search = useContextSearch(getLinesMock)
-
-        // Should not throw
-        search.setLineRef(null, 5)
-    })
-
-    it('should not set line ref for null line number', () => {
-        const search = useContextSearch(getLinesMock)
-        const mockElement = document.createElement('div')
-
-        // Should not throw
-        search.setLineRef(mockElement, null)
-    })
-
     it('should clear query when search is closed', async () => {
-        const search = useContextSearch(getLinesMock)
+        const { search } = createSearch()
 
         search.showSearch.value = true
         search.searchQuery.value = 'function'
@@ -221,5 +200,26 @@ describe('useContextSearch', () => {
         await nextTick()
 
         expect(search.searchQuery.value).toBe('')
+    })
+
+    it('should call scrollToLine when navigating results', async () => {
+        const { search, scrollToLine } = createSearch()
+
+        search.searchQuery.value = 'function'
+        await nextTick()
+        await nextTick() // Wait for scroll
+
+        expect(scrollToLine).toHaveBeenCalledWith(0)
+
+        search.searchNext()
+        await nextTick()
+
+        expect(scrollToLine).toHaveBeenCalledWith(4)
+    })
+
+    it('should return empty highlightedLinesSet when no results', () => {
+        const { search } = createSearch()
+
+        expect(search.highlightedLinesSet.value.size).toBe(0)
     })
 })

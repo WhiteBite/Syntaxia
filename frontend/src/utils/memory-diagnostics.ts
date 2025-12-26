@@ -292,7 +292,7 @@ class MemoryDiagnostics {
                 }
             }
         } catch (e) {
-            console.warn('[MemoryDiagnostics] Error collecting store stats:', e)
+            logger.warn('Error collecting store stats:', e)
         }
 
         return stats
@@ -509,7 +509,7 @@ class MemoryDiagnostics {
             logger.debug('Report saved:', filename)
             return filename
         } catch (e) {
-            console.error('[MemoryDiagnostics] Failed to save report:', e)
+            logger.error('Failed to save report:', e)
             throw e
         }
     }

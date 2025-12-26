@@ -1,6 +1,7 @@
 package staticanalyzer
 
 import (
+	"context"
 	"syntaxia/domain"
 	"testing"
 )
@@ -336,5 +337,290 @@ func TestClangTidyAnalyzer_HasCppFilePaths(t *testing.T) {
 	result = analyzer.hasCppFilePaths(".")
 	if result {
 		t.Errorf("hasCppFilePaths() for current dir = true, want false")
+	}
+}
+
+func TestClangTidyAnalyzer_GetCategory_AllCategories(t *testing.T) {
+	analyzer := NewClangTidyAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		diagnosticName string
+		expected       string
+	}{
+		{"unused-variable", "unused-code"},
+		{"unused-parameter", "unused-code"},
+		{"clang-analyzer-core.NullDereference", "null-safety"},
+		{"null-pointer", "null-safety"},
+		{"memory-leak", "memory-management"},
+		{"memory-allocation", "memory-management"},
+		{"performance-unnecessary-copy", "performance"},
+		{"performance-move-const-arg", "performance"},
+		{"modernize-use-auto", "modernization"},
+		{"modernize-loop-convert", "modernization"},
+		{"bugprone-use-after-move", "bug-prone"},
+		{"bugprone-branch-clone", "bug-prone"},
+		{"misc-redundant-expression", "other"},
+		{"readability-identifier-naming", "other"},
+		{"", "other"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.diagnosticName, func(t *testing.T) {
+			result := analyzer.getCategory(tt.diagnosticName)
+			if result != tt.expected {
+				t.Errorf("getCategory(%q) = %q, want %q", tt.diagnosticName, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestClangTidyAnalyzer_ParseClangTidyLine_AllCases(t *testing.T) {
+	analyzer := NewClangTidyAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name     string
+		line     string
+		wantNil  bool
+		wantCode string
+	}{
+		{
+			name:    "empty line",
+			line:    "",
+			wantNil: true,
+		},
+		{
+			name:    "line without DiagnosticName",
+			line:    `{"Message": "test"}`,
+			wantNil: true,
+		},
+		{
+			name:     "valid diagnostic line",
+			line:     `{"DiagnosticName": "unused-variable", "Message": "Variable is unused", "FilePathPath": "main.cpp", "FilePathLineNumber": 10, "FilePathColumnStart": 5}`,
+			wantNil:  false,
+			wantCode: "unused-variable",
+		},
+		{
+			name:    "diagnostic without file path",
+			line:    `{"DiagnosticName": "test", "Message": "test"}`,
+			wantNil: true,
+		},
+		{
+			name:     "error diagnostic",
+			line:     `{"DiagnosticName": "error-prone-check", "Message": "Error message", "FilePathPath": "src/file.cpp", "FilePathLineNumber": 20, "FilePathColumnStart": 1}`,
+			wantNil:  false,
+			wantCode: "error-prone-check",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := analyzer.parseClangTidyLine(tt.line)
+			if tt.wantNil {
+				if result != nil {
+					t.Errorf("parseClangTidyLine() = %v, want nil", result)
+				}
+			} else {
+				if result == nil {
+					t.Errorf("parseClangTidyLine() = nil, want non-nil")
+				} else if result.Code != tt.wantCode {
+					t.Errorf("parseClangTidyLine().Code = %q, want %q", result.Code, tt.wantCode)
+				}
+			}
+		})
+	}
+}
+
+func TestClangTidyAnalyzer_ExtractClangString_EdgeCases(t *testing.T) {
+	analyzer := NewClangTidyAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name     string
+		line     string
+		prefix   string
+		expected string
+	}{
+		{
+			name:     "normal extraction",
+			line:     `{"DiagnosticName": "test-name", "other": "value"}`,
+			prefix:   "\"DiagnosticName\": \"",
+			expected: "test-name",
+		},
+		{
+			name:     "prefix not found",
+			line:     `{"other": "value"}`,
+			prefix:   "\"DiagnosticName\": \"",
+			expected: "",
+		},
+		{
+			name:     "empty line",
+			line:     "",
+			prefix:   "\"DiagnosticName\": \"",
+			expected: "",
+		},
+		{
+			name:     "no closing quote",
+			line:     `{"DiagnosticName": "test`,
+			prefix:   "\"DiagnosticName\": \"",
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := analyzer.extractClangString(tt.line, tt.prefix)
+			if result != tt.expected {
+				t.Errorf("extractClangString() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestClangTidyAnalyzer_ExtractClangInt_EdgeCases(t *testing.T) {
+	analyzer := NewClangTidyAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name     string
+		line     string
+		prefix   string
+		expected int
+	}{
+		{
+			name:     "normal extraction with comma",
+			line:     `{"FilePathLineNumber": 42, "Column": 5}`,
+			prefix:   "\"FilePathLineNumber\": ",
+			expected: 42,
+		},
+		{
+			name:     "extraction at end with brace",
+			line:     `{"FilePathLineNumber": 100}`,
+			prefix:   "\"FilePathLineNumber\": ",
+			expected: 100,
+		},
+		{
+			name:     "prefix not found",
+			line:     `{"Line": 10}`,
+			prefix:   "\"NotFound\": ",
+			expected: 0,
+		},
+		{
+			name:     "empty line",
+			line:     "",
+			prefix:   "\"FilePathLineNumber\": ",
+			expected: 0,
+		},
+		{
+			name:     "no delimiter after number",
+			line:     `{"FilePathLineNumber": 50`,
+			prefix:   "\"FilePathLineNumber\": ",
+			expected: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := analyzer.extractClangInt(tt.line, tt.prefix)
+			if result != tt.expected {
+				t.Errorf("extractClangInt() = %d, want %d", result, tt.expected)
+			}
+		})
+	}
+}
+
+
+func TestClangTidyAnalyzer_ParseClangTidyOutput_AllCases(t *testing.T) {
+	analyzer := NewClangTidyAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name          string
+		output        []byte
+		expectedCount int
+	}{
+		{
+			name:          "empty output",
+			output:        []byte(``),
+			expectedCount: 0,
+		},
+		{
+			name:          "whitespace only",
+			output:        []byte(`   `),
+			expectedCount: 0,
+		},
+		{
+			name:          "non-diagnostic line",
+			output:        []byte(`Checking main.cpp...`),
+			expectedCount: 0,
+		},
+		{
+			name:          "line without DiagnosticName",
+			output:        []byte(`{"Message": "Some message"}`),
+			expectedCount: 0,
+		},
+		{
+			name: "valid diagnostic",
+			output: []byte(`{"DiagnosticName": "unused-variable", "Message": "Variable is unused", "FilePathPath": "main.cpp", "FilePathLineNumber": 10, "FilePathColumnStart": 5}`),
+			expectedCount: 1,
+		},
+		{
+			name: "multiple diagnostics",
+			output: []byte(`{"DiagnosticName": "unused-variable", "Message": "Unused var", "FilePathPath": "file1.cpp", "FilePathLineNumber": 10, "FilePathColumnStart": 5}
+{"DiagnosticName": "null-pointer", "Message": "Null ptr", "FilePathPath": "file2.cpp", "FilePathLineNumber": 20, "FilePathColumnStart": 1}`),
+			expectedCount: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			issues, err := analyzer.parseClangTidyOutput(tt.output)
+			if err != nil {
+				t.Errorf("parseClangTidyOutput() error = %v", err)
+				return
+			}
+
+			if len(issues) != tt.expectedCount {
+				t.Errorf("parseClangTidyOutput() returned %d issues, want %d", len(issues), tt.expectedCount)
+			}
+		})
+	}
+}
+
+
+func TestClangTidyAnalyzer_Analyze_ClangTidyNotInstalled(t *testing.T) {
+	analyzer := NewClangTidyAnalyzer(&mockLogger{})
+	ctx := context.Background()
+
+	config := &domain.StaticAnalyzerConfig{
+		Language:    "cpp",
+		ProjectPath: "/non/existent/path",
+		Analyzer:    domain.StaticAnalyzerTypeClangTidy,
+	}
+
+	result, err := analyzer.Analyze(ctx, config)
+	if err != nil {
+		t.Errorf("Analyze() should not return error, got %v", err)
+		return
+	}
+
+	if result == nil {
+		t.Error("Analyze() should return a result even when ClangTidy is not installed")
+		return
+	}
+
+	t.Logf("Analyze result: Success=%v, Error=%q", result.Success, result.Error)
+}
+
+func TestClangTidyAnalyzer_ParseClangTidyLine_ErrorSeverity(t *testing.T) {
+	analyzer := NewClangTidyAnalyzer(&mockLogger{})
+
+	// Test with error in diagnostic name
+	line := `{"DiagnosticName": "error-check", "Message": "Error message", "FilePathPath": "main.cpp", "FilePathLineNumber": 10, "FilePathColumnStart": 5}`
+
+	result := analyzer.parseClangTidyLine(line)
+	if result == nil {
+		t.Error("parseClangTidyLine() returned nil")
+		return
+	}
+
+	if result.Severity != "error" {
+		t.Errorf("Severity = %q, want %q", result.Severity, "error")
 	}
 }

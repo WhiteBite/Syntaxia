@@ -13,9 +13,12 @@
 </template>
 
 <script setup lang="ts">
+import { useLogger } from '@/composables/useLogger'
 import { ContextPanel } from '@/features/context'
 import { TaskPanel } from '@/features/task'
 import { ref, watch } from 'vue'
+
+const logger = useLogger('CenterWorkspace')
 
 const showTaskPanel = ref(false)
 
@@ -24,7 +27,7 @@ watch(showTaskPanel, (visible) => {
   try {
     localStorage.setItem('task-panel-visible', visible.toString())
   } catch (err) {
-    console.warn('Failed to save task panel visibility:', err)
+    logger.warn('Failed to save task panel visibility:', err)
   }
 })
 
@@ -37,7 +40,7 @@ try {
     showTaskPanel.value = false
   }
 } catch (err) {
-  console.warn('Failed to load task panel visibility:', err)
+  logger.warn('Failed to load task panel visibility:', err)
 }
 </script>
 

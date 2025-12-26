@@ -117,7 +117,7 @@ export const useProjectStore = defineStore('project', () => {
         autoOpenLast.value = auto === 'true'
       }
     } catch (err) {
-      console.warn('Failed to load recent projects:', err)
+      logger.warn('Failed to load recent projects:', err)
     }
   }
 
@@ -155,7 +155,7 @@ export const useProjectStore = defineStore('project', () => {
     try {
       localStorage.setItem(RECENT_PROJECTS_KEY, JSON.stringify(recentProjects.value))
     } catch (err) {
-      console.warn('Failed to save recent projects:', err)
+      logger.warn('Failed to save recent projects:', err)
     }
   }
 
@@ -164,7 +164,7 @@ export const useProjectStore = defineStore('project', () => {
     try {
       localStorage.setItem('Syntaxia_auto_open_last', String(value))
     } catch (err) {
-      console.warn('Failed to save auto-open setting:', err)
+      logger.warn('Failed to save auto-open setting:', err)
     }
   }
 

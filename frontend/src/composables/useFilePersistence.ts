@@ -38,7 +38,7 @@ export function useFilePersistence(options: UseFilePersistenceOptions) {
             localStorage.setItem(key, JSON.stringify(selection))
             logger.debug(`Saved selection: ${selection.length} files`)
         } catch (err) {
-            console.warn('[FilePersistence] Failed to save selection:', err)
+            logger.warn('Failed to save selection:', err)
         }
     }
 
@@ -62,7 +62,7 @@ export function useFilePersistence(options: UseFilePersistenceOptions) {
                 return selection
             }
         } catch (err) {
-            console.warn('[FilePersistence] Failed to load selection:', err)
+            logger.warn('Failed to load selection:', err)
         }
         return []
     }
@@ -79,7 +79,7 @@ export function useFilePersistence(options: UseFilePersistenceOptions) {
                 keys.forEach((k) => localStorage.removeItem(k))
             }
         } catch (err) {
-            console.warn('[FilePersistence] Failed to clear selection history:', err)
+            logger.warn('Failed to clear selection history:', err)
         }
     }
 
@@ -98,7 +98,7 @@ export function useFilePersistence(options: UseFilePersistenceOptions) {
                 }
             })
         } catch (err) {
-            console.warn('[FilePersistence] Failed to get selection stats:', err)
+            logger.warn('Failed to get selection stats:', err)
         }
         return stats
     }
@@ -118,7 +118,7 @@ export function useFilePersistence(options: UseFilePersistenceOptions) {
             const key = `${EXPANDED_PREFIX}${rootPath.value}`
             localStorage.setItem(key, JSON.stringify(expandedPaths))
         } catch (err) {
-            console.warn('[FilePersistence] Failed to save expanded state:', err)
+            logger.warn('Failed to save expanded state:', err)
         }
     }
 
@@ -149,7 +149,7 @@ export function useFilePersistence(options: UseFilePersistenceOptions) {
                 return expandedPaths
             }
         } catch (err) {
-            console.warn('[FilePersistence] Failed to load expanded state:', err)
+            logger.warn('Failed to load expanded state:', err)
         }
         return []
     }
@@ -166,7 +166,7 @@ export function useFilePersistence(options: UseFilePersistenceOptions) {
                 keys.forEach((k) => localStorage.removeItem(k))
             }
         } catch (err) {
-            console.warn('[FilePersistence] Failed to clear expanded history:', err)
+            logger.warn('Failed to clear expanded history:', err)
         }
     }
 

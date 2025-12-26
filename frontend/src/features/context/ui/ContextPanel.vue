@@ -1,12 +1,12 @@
 <template>
   <div class="context-panel-root layout-fill layout-column layout-clip"
        data-tour="context-preview"
-       @dragover.prevent="handleDragOver"
-       @dragleave="handleDragLeave"
-       @drop.prevent="handleDrop">
+       @dragover.prevent="dragDrop.handleDragOver"
+       @dragleave="dragDrop.handleDragLeave"
+       @drop.prevent="dragDrop.handleDrop">
     
     <!-- Drop Zone Overlay -->
-    <div v-if="isDragging" class="drop-zone-overlay">
+    <div v-if="dragDrop.isDragging.value" class="drop-zone-overlay">
       <div class="drop-zone-content">
         <svg class="w-12 h-12 text-indigo-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
@@ -20,26 +20,26 @@
     <!-- Header -->
     <ContextPanelHeader
       :has-context="contextStore.hasContext"
-      :show-search="showSearch"
+      :show-search="search.showSearch.value"
       :file-count="contextStore.fileCount"
       :line-count="contextStore.lineCount"
       :token-count="contextStore.tokenCount"
       :output-format="settingsStore.settings.context.outputFormat"
-      @toggle-search="showSearch = !showSearch"
+      @toggle-search="search.toggleSearch"
       @show-stats="showStatsPopover = true"
       @format-change="handleFormatChange"
     />
 
     <!-- Search Bar -->
     <ContextPanelToolbar
-      :visible="showSearch"
-      :search-query="searchQuery"
-      :results-count="searchResults.length"
-      :current-index="currentSearchIndex"
-      @update:search-query="searchQuery = $event"
-      @search-next="searchNext"
-      @search-prev="searchPrev"
-      @close="showSearch = false"
+      :visible="search.showSearch.value"
+      :search-query="search.searchQuery.value"
+      :results-count="search.searchResults.value.length"
+      :current-index="search.currentSearchIndex.value"
+      @update:search-query="search.searchQuery.value = $event"
+      @search-next="search.searchNext"
+      @search-prev="search.searchPrev"
+      @close="search.closeSearch"
     />
 
     <!-- Scrollable Content Area -->
@@ -56,23 +56,23 @@
       :has-context="contextStore.hasContext"
       :is-loading="contextStore.isLoading"
       :lines="contextStore.currentChunk?.lines"
-      :highlighted-lines="highlightedLinesSet"
-      :search-query="searchQuery"
-      :chunk-boundaries="showChunkHUD ? chunkBoundaries : undefined"
+      :highlighted-lines="search.highlightedLinesSet.value"
+      :search-query="search.searchQuery.value"
+      :chunk-boundaries="chunking.showChunkHUD.value ? chunkBoundaries : undefined"
       :output-format="settingsStore.settings.context.outputFormat"
     />
 
     <!-- UNIFIED CONTEXT HUD BAR -->
     <ContextPanelFooter
       :visible="contextStore.hasContext"
-      :show-chunk-nav="showChunkHUD"
+      :show-chunk-nav="chunking.showChunkHUD.value"
       :current-chunk="chunking.currentChunk.value"
       :total-chunks="chunking.totalChunks.value"
       :copy-success="copySuccess"
       :is-chunk-copied="chunking.isChunkCopied"
       @clear="contextStore.clearContext"
       @export="handleExport"
-      @copy="showChunkHUD ? handleCopyCurrentChunk() : handleCopyText()"
+      @copy="chunking.showChunkHUD.value ? handleCopyCurrentChunk() : handleCopyText()"
       @prev-chunk="goToPrevChunk"
       @next-chunk="goToNextChunk"
     />
@@ -92,8 +92,10 @@ import { useTemplateStore, generateFileTree, detectLanguages } from '@/features/
 import { useProjectStore } from '@/stores/project.store'
 import { useSettingsStore, type OutputFormat } from '@/stores/settings.store'
 import { useUIStore } from '@/stores/ui.store'
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, toRef } from 'vue'
 import { useChunking } from '../composables/useChunking'
+import { useContextSearch } from '../composables/useContextSearch'
+import { useDragDrop } from '../composables/useDragDrop'
 import { useContextStore } from '../model/context.store'
 
 // Child components
@@ -113,9 +115,8 @@ const { t } = useI18n()
 
 // Refs
 const contentRef = ref<InstanceType<typeof ContextPanelContent> | null>(null)
-
-// Copy state
 const copySuccess = ref(false)
+const showStatsPopover = ref(false)
 
 // Build status text for skeleton loader
 const buildStatusText = computed(() => {
@@ -127,97 +128,26 @@ const buildStatusText = computed(() => {
   return t('context.statusFinalizing')
 })
 
-// Chunking
-const chunking = useChunking()
+// Composables
+const dragDrop = useDragDrop()
 
-// Show HUD when chunking is enabled and total tokens exceed chunk limit
-const showChunkHUD = computed(() => {
-  if (!contextStore.hasContext) return false
-  if (!settingsStore.settings.context.enableAutoSplit) return false
-  const totalTokens = contextStore.tokenCount
-  const maxPerChunk = settingsStore.settings.context.maxTokensPerChunk
-  return totalTokens > maxPerChunk
+const chunking = useChunking({
+  tokenCount: toRef(() => contextStore.tokenCount),
+  lineCount: toRef(() => contextStore.lineCount),
+  fileCount: toRef(() => contextStore.fileCount),
+  hasContext: toRef(() => contextStore.hasContext)
 })
 
-// Auto-calculate chunks when context changes
-watch(
-  () => [
-    contextStore.tokenCount, 
-    contextStore.lineCount,
-    contextStore.fileCount,
-    settingsStore.settings.context.enableAutoSplit,
-    settingsStore.settings.context.maxTokensPerChunk,
-    settingsStore.settings.context.splitStrategy
-  ],
-  () => {
-    if (!settingsStore.settings.context.enableAutoSplit) {
-      chunking.setChunks([])
-      return
-    }
-    
-    const totalTokens = contextStore.tokenCount
-    const totalLines = contextStore.lineCount
-    const maxPerChunk = settingsStore.settings.context.maxTokensPerChunk
-    
-    if (totalTokens <= 0 || totalLines <= 0) {
-      chunking.setChunks([])
-      return
-    }
-    
-    const numChunks = Math.ceil(totalTokens / maxPerChunk)
-    
-    if (numChunks <= 1) {
-      chunking.setChunks([{
-        index: 0,
-        startLine: 0,
-        endLine: totalLines - 1,
-        tokenCount: totalTokens
-      }])
-      return
-    }
-    
-    const tokensPerChunk = Math.ceil(totalTokens / numChunks)
-    const linesPerChunk = Math.ceil(totalLines / numChunks)
-    
-    const chunks: { index: number; startLine: number; endLine: number; tokenCount: number }[] = []
-    
-    for (let i = 0; i < numChunks; i++) {
-      const startLine = i * linesPerChunk
-      const endLine = Math.min((i + 1) * linesPerChunk - 1, totalLines - 1)
-      const chunkTokens = i === numChunks - 1 
-        ? totalTokens - (tokensPerChunk * (numChunks - 1))
-        : tokensPerChunk
-      
-      chunks.push({ index: i, startLine, endLine, tokenCount: chunkTokens })
-    }
-    
-    chunking.setChunks(chunks)
-  },
-  { immediate: true }
-)
-
-// Search state
-const showSearch = ref(false)
-const showStatsPopover = ref(false)
-const searchQuery = ref('')
-const searchResults = ref<number[]>([])
-const currentSearchIndex = ref(0)
-
-// Computed for VirtualCodeView
-const highlightedLinesSet = computed(() => {
-  if (searchResults.value.length === 0) return new Set<number>()
-  const currentLine = searchResults.value[currentSearchIndex.value]
-  return currentLine !== undefined ? new Set([currentLine]) : new Set<number>()
+const search = useContextSearch({
+  lines: toRef(() => contextStore.currentChunk?.lines),
+  startLine: toRef(() => contextStore.currentChunk?.startLine ?? 0),
+  scrollToLine: (lineNum: number) => contentRef.value?.scrollToLine(lineNum)
 })
 
 const chunkBoundaries = computed(() => {
-  if (!showChunkHUD.value || chunking.chunks.value.length <= 1) return new Set<number>()
+  if (!chunking.showChunkHUD.value || chunking.chunks.value.length <= 1) return new Set<number>()
   return new Set(chunking.chunks.value.slice(1).map(c => c.startLine))
 })
-
-// Drag & drop state
-const isDragging = ref(false)
-let dragCounter = 0
 
 // Handle format change and rebuild context
 async function handleFormatChange(format: OutputFormat) {
@@ -226,37 +156,6 @@ async function handleFormatChange(format: OutputFormat) {
     await contextStore.rebuildContext()
   }
 }
-
-// Search functionality
-watch(searchQuery, (query) => {
-  if (!query || !contextStore.currentChunk?.lines) {
-    searchResults.value = []
-    currentSearchIndex.value = 0
-    return
-  }
-
-  const results: number[] = []
-  const lowerQuery = query.toLowerCase()
-
-  contextStore.currentChunk.lines.forEach((line, index) => {
-    if (line.toLowerCase().includes(lowerQuery)) {
-      results.push(contextStore.currentChunk!.startLine + index)
-    }
-  })
-
-  searchResults.value = results
-  currentSearchIndex.value = 0
-
-  if (results.length > 0) {
-    scrollToLine(results[0])
-  }
-})
-
-watch(showSearch, (show) => {
-  if (!show) {
-    searchQuery.value = ''
-  }
-})
 
 // Chunk navigation with scroll
 function goToPrevChunk() {
@@ -275,24 +174,6 @@ function scrollToCurrentChunk() {
     if (!chunkInfo) return
     contentRef.value?.scrollToLine(chunkInfo.startLine)
   })
-}
-
-function scrollToLine(lineNum: number) {
-  nextTick(() => {
-    contentRef.value?.scrollToLine(lineNum)
-  })
-}
-
-function searchNext() {
-  if (searchResults.value.length === 0) return
-  currentSearchIndex.value = (currentSearchIndex.value + 1) % searchResults.value.length
-  scrollToLine(searchResults.value[currentSearchIndex.value])
-}
-
-function searchPrev() {
-  if (searchResults.value.length === 0) return
-  currentSearchIndex.value = (currentSearchIndex.value - 1 + searchResults.value.length) % searchResults.value.length
-  scrollToLine(searchResults.value[currentSearchIndex.value])
 }
 
 async function handleExport() {
@@ -357,40 +238,6 @@ async function handleCopyCurrentChunk() {
 function showCopySuccess() {
   copySuccess.value = true
   setTimeout(() => { copySuccess.value = false }, 1500)
-}
-
-// Drag & drop handlers
-function handleDragOver(e: DragEvent) {
-  dragCounter++
-  isDragging.value = true
-  
-  if (e.dataTransfer?.types.includes('Files') || e.dataTransfer?.types.includes('text/plain')) {
-    e.dataTransfer.dropEffect = 'copy'
-  }
-}
-
-function handleDragLeave() {
-  dragCounter--
-  if (dragCounter <= 0) {
-    dragCounter = 0
-    isDragging.value = false
-  }
-}
-
-async function handleDrop(e: DragEvent) {
-  isDragging.value = false
-  dragCounter = 0
-  
-  if (!e.dataTransfer) return
-  
-  const textData = e.dataTransfer.getData('text/plain')
-  if (textData) {
-    const paths = textData.split('\n').filter(p => p.trim())
-    if (paths.length > 0) {
-      logger.debug('Dropped file paths:', paths.length)
-      window.dispatchEvent(new CustomEvent('add-files-to-context', { detail: { paths } }))
-    }
-  }
 }
 </script>
 

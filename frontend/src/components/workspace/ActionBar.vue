@@ -64,10 +64,13 @@
 
 <script setup lang="ts">
 import { useI18n } from '@/composables/useI18n'
+import { useLogger } from '@/composables/useLogger'
 import { useTemplateStore } from '@/features/templates'
 import { useProjectStore } from '@/stores/project.store'
 import { useUIStore } from '@/stores/ui.store'
 import { computed } from 'vue'
+
+const logger = useLogger('ActionBar')
 
 const projectStore = useProjectStore()
 const templateStore = useTemplateStore()
@@ -112,7 +115,7 @@ async function handleResetLayout() {
       await window.go.main.App.ResetWindowState()
     }
   } catch (error) {
-    console.warn('Failed to reset window state:', error)
+    logger.warn('Failed to reset window state:', error)
   }
 }
 </script>

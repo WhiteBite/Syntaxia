@@ -424,3 +424,262 @@ func TestKtlintAnalyzer_HasGradleKtlint(t *testing.T) {
 		t.Errorf("hasGradleKtlint() for current dir = true, want false (no ktlint plugin)")
 	}
 }
+
+func TestKtlintAnalyzer_CategorizeRule_AllCategories(t *testing.T) {
+	analyzer := NewKtlintAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		rule     string
+		expected string
+	}{
+		{"", "other"},
+		{"indent", "formatting"},
+		{"standard:indent", "formatting"},
+		{"spacing", "formatting"},
+		{"argument-list-spacing", "formatting"},
+		{"import-ordering", "imports"},
+		{"no-wildcard-imports", "imports"},
+		{"package-naming", "naming"},
+		{"class-naming", "naming"},
+		{"comment-spacing", "formatting"},
+		{"max-line-length", "formatting"},
+		{"no-unused-imports", "imports"},
+		{"unknown-rule", "style"},
+		{"custom-rule", "style"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.rule, func(t *testing.T) {
+			result := analyzer.categorizeRule(tt.rule)
+			if result != tt.expected {
+				t.Errorf("categorizeRule(%q) = %q, want %q", tt.rule, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestKtlintAnalyzer_GetGradleCommand(t *testing.T) {
+	analyzer := NewKtlintAnalyzer(&mockLogger{})
+
+	// Test with non-existent path - should return empty or gradle
+	result := analyzer.getGradleCommand("/non/existent/path")
+	// Result depends on whether gradle is installed globally
+	t.Logf("getGradleCommand() for non-existent path = %q", result)
+}
+
+func TestKtlintAnalyzer_HasGradleWrapper(t *testing.T) {
+	analyzer := NewKtlintAnalyzer(&mockLogger{})
+
+	// Test with non-existent path
+	result := analyzer.hasGradleWrapper("/non/existent/path")
+	if result {
+		t.Errorf("hasGradleWrapper() for non-existent path = true, want false")
+	}
+
+	// Test with current directory (no gradle wrapper)
+	result = analyzer.hasGradleWrapper(".")
+	if result {
+		t.Errorf("hasGradleWrapper() for current dir = true, want false")
+	}
+}
+
+func TestKtlintAnalyzer_ParseKtlintLine_AllFormats(t *testing.T) {
+	analyzer := NewKtlintAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name     string
+		line     string
+		wantNil  bool
+		wantFile string
+		wantLine int
+		wantCode string
+	}{
+		{
+			name:     "standard format with rule",
+			line:     "src/Main.kt:10:5: Unexpected indentation (indent)",
+			wantNil:  false,
+			wantFile: "src/Main.kt",
+			wantLine: 10,
+			wantCode: "indent",
+		},
+		{
+			name:     "format without rule",
+			line:     "src/File.kt:20:1: Some message",
+			wantNil:  false,
+			wantFile: "src/File.kt",
+			wantLine: 20,
+			wantCode: "",
+		},
+		{
+			name:    "incomplete line - only file and line",
+			line:    "src/File.kt:10",
+			wantNil: true,
+		},
+		{
+			name:    "empty line",
+			line:    "",
+			wantNil: true,
+		},
+		{
+			name:    "line with only two parts",
+			line:    "src/File.kt:10:",
+			wantNil: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := analyzer.parseKtlintLine(tt.line)
+			if tt.wantNil {
+				if result != nil {
+					t.Errorf("parseKtlintLine(%q) = %v, want nil", tt.line, result)
+				}
+				return
+			}
+			if result == nil {
+				t.Errorf("parseKtlintLine(%q) = nil, want non-nil", tt.line)
+				return
+			}
+			if result.File != tt.wantFile {
+				t.Errorf("File = %q, want %q", result.File, tt.wantFile)
+			}
+			if result.Line != tt.wantLine {
+				t.Errorf("Line = %d, want %d", result.Line, tt.wantLine)
+			}
+			if result.Code != tt.wantCode {
+				t.Errorf("Code = %q, want %q", result.Code, tt.wantCode)
+			}
+		})
+	}
+}
+
+
+func TestKtlintAnalyzer_ParseKtlintJSONOutput_AllCases(t *testing.T) {
+	analyzer := NewKtlintAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name          string
+		output        []byte
+		expectedCount int
+		wantErr       bool
+	}{
+		{
+			name:          "empty array",
+			output:        []byte(`[]`),
+			expectedCount: 0,
+			wantErr:       false,
+		},
+		{
+			name:    "invalid json",
+			output:  []byte(`not valid json`),
+			wantErr: true,
+		},
+		{
+			name: "multiple issues",
+			output: []byte(`[
+				{"file":"src/File1.kt","line":5,"column":1,"message":"No wildcard imports","rule":"no-wildcard-imports"},
+				{"file":"src/File2.kt","line":15,"column":10,"message":"Missing spacing","rule":"spacing"},
+				{"file":"src/File3.kt","line":25,"column":5,"message":"Unexpected indentation","rule":"indent"}
+			]`),
+			expectedCount: 3,
+			wantErr:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			issues, err := analyzer.parseKtlintJSONOutput(tt.output)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseKtlintJSONOutput() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr && len(issues) != tt.expectedCount {
+				t.Errorf("parseKtlintJSONOutput() returned %d issues, want %d", len(issues), tt.expectedCount)
+			}
+		})
+	}
+}
+
+func TestKtlintAnalyzer_ParseKtlintTextOutput_AllCases(t *testing.T) {
+	analyzer := NewKtlintAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name          string
+		output        string
+		expectedCount int
+	}{
+		{
+			name:          "empty output",
+			output:        "",
+			expectedCount: 0,
+		},
+		{
+			name: "multiple issues",
+			output: `src/File1.kt:5:1: No wildcard imports (no-wildcard-imports)
+src/File2.kt:15:10: Missing spacing (spacing)
+src/File3.kt:25:5: Unexpected indentation (indent)`,
+			expectedCount: 3,
+		},
+		{
+			name:          "non-kt line ignored",
+			output:        "Some random text without .kt extension",
+			expectedCount: 0,
+		},
+		{
+			name: "mixed valid and invalid lines",
+			output: `src/File1.kt:5:1: Valid issue (rule1)
+Invalid line without .kt
+src/File2.kt:10:1: Another valid issue (rule2)`,
+			expectedCount: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			issues := analyzer.parseKtlintTextOutput(tt.output)
+			if len(issues) != tt.expectedCount {
+				t.Errorf("parseKtlintTextOutput() returned %d issues, want %d", len(issues), tt.expectedCount)
+			}
+		})
+	}
+}
+
+
+func TestKtlintAnalyzer_CategorizeRule_Documentation(t *testing.T) {
+	analyzer := NewKtlintAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		rule     string
+		expected string
+	}{
+		{"comment-wrapping", "documentation"}, // contains "comment" but not "spacing"
+		{"kdoc-wrapping", "style"},            // doesn't contain "comment"
+		{"comment-spacing", "formatting"},     // "spacing" is checked before "comment"
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.rule, func(t *testing.T) {
+			result := analyzer.categorizeRule(tt.rule)
+			if result != tt.expected {
+				t.Errorf("categorizeRule(%q) = %q, want %q", tt.rule, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestKtlintAnalyzer_ParseKtlintLine_WithNestedParentheses(t *testing.T) {
+	analyzer := NewKtlintAnalyzer(&mockLogger{})
+
+	// Test with message containing parentheses
+	line := "src/Main.kt:10:5: Function name should be lowercase (see docs) (naming)"
+
+	result := analyzer.parseKtlintLine(line)
+	if result == nil {
+		t.Error("parseKtlintLine() returned nil")
+		return
+	}
+
+	if result.Code != "naming" {
+		t.Errorf("Code = %q, want %q", result.Code, "naming")
+	}
+}

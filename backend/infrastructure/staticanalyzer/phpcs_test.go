@@ -1,6 +1,7 @@
 package staticanalyzer
 
 import (
+	"context"
 	"syntaxia/domain"
 	"testing"
 )
@@ -302,5 +303,224 @@ func TestPHPCSAnalyzer_FindPHPCSPath(t *testing.T) {
 	result := analyzer.findPHPCSPath("/non/existent/path")
 	if result != "phpcs" {
 		t.Errorf("findPHPCSPath() for non-existent path = %q, want %q", result, "phpcs")
+	}
+}
+
+func TestPHPCSAnalyzer_GetCategory_AllStandards(t *testing.T) {
+	analyzer := NewPHPCSAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		source   string
+		expected string
+	}{
+		{"", "other"},
+		{"PSR1.Classes.ClassDeclaration", "style"},
+		{"PSR2.Methods.MethodDeclaration", "style"},
+		{"PSR12.Files.FileHeader", "style"},
+		{"Generic.CodeAnalysis.UnusedFunctionParameter", "complexity"},
+		{"Generic.Commenting.DocComment", "documentation"},
+		{"Generic.Files.LineLength", "style"},
+		{"Generic.Formatting.SpaceAfterCast", "style"},
+		{"Generic.Functions.OpeningFunctionBraceBsdAllman", "style"},
+		{"Generic.Metrics.CyclomaticComplexity", "complexity"},
+		{"Generic.NamingConventions.UpperCaseConstantName", "naming"},
+		{"Generic.PHP.DeprecatedFunctions", "correctness"},
+		{"Generic.Strings.UnnecessaryStringConcat", "style"},
+		{"Generic.WhiteSpace.DisallowTabIndent", "style"},
+		{"Squiz.Arrays.ArrayDeclaration", "squiz"},
+		{"PEAR.Commenting.FileComment", "pear"},
+		{"Zend.Files.ClosingTag", "zend"},
+		{"Unknown.Rule.Name", "other"},
+		{"Generic", "generic"},
+		{"Generic.Unknown", "generic"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.source, func(t *testing.T) {
+			result := analyzer.getCategory(tt.source)
+			if result != tt.expected {
+				t.Errorf("getCategory(%q) = %q, want %q", tt.source, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestPHPCSAnalyzer_ParsePHPCSOutput_FixableIssue(t *testing.T) {
+	analyzer := NewPHPCSAnalyzer(&mockLogger{})
+
+	output := []byte(`{
+		"totals":{"errors":0,"warnings":1,"fixable":1},
+		"files":{
+			"src/Fixable.php":{
+				"errors":0,
+				"warnings":1,
+				"messages":[{
+					"message":"Fixable issue",
+					"source":"PSR12.Fixable",
+					"severity":3,
+					"fixable":true,
+					"type":"WARNING",
+					"line":1,
+					"column":1
+				}]
+			}
+		}
+	}`)
+
+	issues, err := analyzer.parsePHPCSOutput(output)
+	if err != nil {
+		t.Errorf("parsePHPCSOutput() error = %v", err)
+		return
+	}
+
+	if len(issues) != 1 {
+		t.Errorf("parsePHPCSOutput() returned %d issues, want 1", len(issues))
+		return
+	}
+
+	if len(issues[0].Suggestions) == 0 {
+		t.Error("issue.Suggestions is empty, want auto-fix suggestion")
+	}
+}
+
+func TestPHPCSAnalyzer_HasPHPFiles(t *testing.T) {
+	analyzer := NewPHPCSAnalyzer(&mockLogger{})
+
+	// Test with non-existent path
+	result := analyzer.hasPHPFiles("/non/existent/path")
+	if result {
+		t.Errorf("hasPHPFiles() for non-existent path = true, want false")
+	}
+
+	// Test with current directory (no PHP files)
+	result = analyzer.hasPHPFiles(".")
+	if result {
+		t.Errorf("hasPHPFiles() for current dir = true, want false")
+	}
+}
+
+
+func TestPHPCSAnalyzer_ParsePHPCSOutput_AllTypes(t *testing.T) {
+	analyzer := NewPHPCSAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name          string
+		output        []byte
+		expectedCount int
+		wantErr       bool
+	}{
+		{
+			name:          "empty files",
+			output:        []byte(`{"totals":{"errors":0,"warnings":0,"fixable":0},"files":{}}`),
+			expectedCount: 0,
+			wantErr:       false,
+		},
+		{
+			name:    "invalid json",
+			output:  []byte(`not valid json`),
+			wantErr: true,
+		},
+		{
+			name: "multiple files with multiple messages",
+			output: []byte(`{
+				"totals":{"errors":3,"warnings":2,"fixable":2},
+				"files":{
+					"src/File1.php":{
+						"errors":2,
+						"warnings":1,
+						"messages":[
+							{"message":"Error 1","source":"PSR12.Error1","severity":5,"fixable":false,"type":"ERROR","line":5,"column":1},
+							{"message":"Error 2","source":"PSR12.Error2","severity":5,"fixable":true,"type":"ERROR","line":10,"column":1},
+							{"message":"Warning 1","source":"Generic.Warning1","severity":3,"fixable":true,"type":"WARNING","line":15,"column":1}
+						]
+					},
+					"src/File2.php":{
+						"errors":1,
+						"warnings":1,
+						"messages":[
+							{"message":"Error 3","source":"PSR12.Error3","severity":5,"fixable":false,"type":"ERROR","line":20,"column":1},
+							{"message":"Warning 2","source":"Generic.Warning2","severity":3,"fixable":false,"type":"WARNING","line":25,"column":1}
+						]
+					}
+				}
+			}`),
+			expectedCount: 5,
+			wantErr:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			issues, err := analyzer.parsePHPCSOutput(tt.output)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parsePHPCSOutput() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr && len(issues) != tt.expectedCount {
+				t.Errorf("parsePHPCSOutput() returned %d issues, want %d", len(issues), tt.expectedCount)
+			}
+		})
+	}
+}
+
+
+func TestPHPCSAnalyzer_Analyze_PHPCSNotInstalled(t *testing.T) {
+	analyzer := NewPHPCSAnalyzer(&mockLogger{})
+	ctx := context.Background()
+
+	config := &domain.StaticAnalyzerConfig{
+		Language:    "php",
+		ProjectPath: "/non/existent/path",
+		Analyzer:    domain.StaticAnalyzerTypePHPCS,
+	}
+
+	result, err := analyzer.Analyze(ctx, config)
+	if err != nil {
+		t.Errorf("Analyze() should not return error, got %v", err)
+		return
+	}
+
+	if result == nil {
+		t.Error("Analyze() should return a result even when PHPCS is not installed")
+		return
+	}
+
+	// Result should be returned with error message if PHPCS is not installed
+	t.Logf("Analyze result: Success=%v, Error=%q", result.Success, result.Error)
+}
+
+func TestPHPCSAnalyzer_ParsePHPCSOutput_EmptyOutput(t *testing.T) {
+	analyzer := NewPHPCSAnalyzer(&mockLogger{})
+
+	// Test with empty byte slice
+	issues, err := analyzer.parsePHPCSOutput([]byte{})
+	if err == nil {
+		t.Log("parsePHPCSOutput() with empty output returned no error")
+	}
+	if issues != nil && len(issues) > 0 {
+		t.Errorf("parsePHPCSOutput() with empty output returned %d issues, want 0", len(issues))
+	}
+}
+
+func TestPHPCSAnalyzer_Analyze_WithRules(t *testing.T) {
+	analyzer := NewPHPCSAnalyzer(&mockLogger{})
+	ctx := context.Background()
+
+	config := &domain.StaticAnalyzerConfig{
+		Language:     "php",
+		ProjectPath:  "/non/existent/path",
+		Analyzer:     domain.StaticAnalyzerTypePHPCS,
+		Rules:        []string{"PSR12", "PSR1"},
+		ExcludeRules: []string{"Generic.Files.LineLength"},
+	}
+
+	result, err := analyzer.Analyze(ctx, config)
+	if err != nil {
+		t.Errorf("Analyze() should not return error, got %v", err)
+		return
+	}
+
+	if result == nil {
+		t.Error("Analyze() should return a result")
 	}
 }

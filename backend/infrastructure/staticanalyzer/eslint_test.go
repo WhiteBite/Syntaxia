@@ -347,3 +347,242 @@ func TestESLintAnalyzer_HasTypeScriptFilePaths(t *testing.T) {
 		t.Errorf("hasTypeScriptFilePaths() for current dir = true, want false")
 	}
 }
+
+func TestESLintAnalyzer_ParseESLintOutput_UnknownSeverity(t *testing.T) {
+	analyzer := NewESLintAnalyzer(&mockLogger{})
+
+	// Test with unknown severity value (should default to warning)
+	output := []byte(`[{
+		"filePath": "src/test.ts",
+		"messages": [{
+			"ruleId": "test-rule",
+			"severity": 99,
+			"message": "Test message",
+			"line": 1,
+			"column": 1
+		}],
+		"errorCount": 0,
+		"warningCount": 0
+	}]`)
+
+	issues, err := analyzer.parseESLintOutput(output)
+	if err != nil {
+		t.Errorf("parseESLintOutput() error = %v", err)
+		return
+	}
+
+	if len(issues) != 1 {
+		t.Errorf("parseESLintOutput() returned %d issues, want 1", len(issues))
+		return
+	}
+
+	// Unknown severity should default to warning
+	if issues[0].Severity != "warning" {
+		t.Errorf("issue.Severity = %q, want %q", issues[0].Severity, "warning")
+	}
+}
+
+func TestESLintAnalyzer_ParseESLintOutput_MultipleMessagesInFile(t *testing.T) {
+	analyzer := NewESLintAnalyzer(&mockLogger{})
+
+	output := []byte(`[{
+		"filePath": "src/complex.ts",
+		"messages": [
+			{"ruleId": "rule1", "severity": 2, "message": "Error 1", "line": 1, "column": 1},
+			{"ruleId": "rule2", "severity": 1, "message": "Warning 1", "line": 5, "column": 10},
+			{"ruleId": "rule3", "severity": 2, "message": "Error 2", "line": 10, "column": 5}
+		],
+		"errorCount": 2,
+		"warningCount": 1
+	}]`)
+
+	issues, err := analyzer.parseESLintOutput(output)
+	if err != nil {
+		t.Errorf("parseESLintOutput() error = %v", err)
+		return
+	}
+
+	if len(issues) != 3 {
+		t.Errorf("parseESLintOutput() returned %d issues, want 3", len(issues))
+	}
+}
+
+func TestESLintAnalyzer_GetCategory_AllPrefixes(t *testing.T) {
+	analyzer := NewESLintAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		ruleID   string
+		expected string
+	}{
+		{"@typescript-eslint/no-explicit-any", "typescript"},
+		{"@typescript-eslint/strict-boolean-expressions", "typescript"},
+		{"react/jsx-key", "react"},
+		{"react/no-deprecated", "react"},
+		{"import/first", "imports"},
+		{"import/no-duplicates", "imports"},
+		{"prefer-template", "style"},
+		{"prefer-destructuring", "style"},
+		{"no-var", "best-practices"},
+		{"no-debugger", "best-practices"},
+		{"eqeqeq", "other"},
+		{"curly", "other"},
+		{"", "other"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.ruleID, func(t *testing.T) {
+			result := analyzer.getCategory(tt.ruleID)
+			if result != tt.expected {
+				t.Errorf("getCategory(%q) = %q, want %q", tt.ruleID, result, tt.expected)
+			}
+		})
+	}
+}
+
+
+func TestESLintAnalyzer_ParseESLintOutput_AllCases(t *testing.T) {
+	analyzer := NewESLintAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name          string
+		output        []byte
+		expectedCount int
+		wantErr       bool
+	}{
+		{
+			name:          "empty array",
+			output:        []byte(`[]`),
+			expectedCount: 0,
+			wantErr:       false,
+		},
+		{
+			name:    "invalid json",
+			output:  []byte(`not valid json`),
+			wantErr: true,
+		},
+		{
+			name: "multiple files with multiple messages",
+			output: []byte(`[
+				{"filePath": "src/file1.ts", "messages": [
+					{"ruleId": "rule1", "severity": 2, "message": "Error 1", "line": 1, "column": 1},
+					{"ruleId": "rule2", "severity": 1, "message": "Warning 1", "line": 5, "column": 10}
+				], "errorCount": 1, "warningCount": 1},
+				{"filePath": "src/file2.ts", "messages": [
+					{"ruleId": "rule3", "severity": 2, "message": "Error 2", "line": 10, "column": 5}
+				], "errorCount": 1, "warningCount": 0}
+			]`),
+			expectedCount: 3,
+			wantErr:       false,
+		},
+		{
+			name: "file with fix suggestion",
+			output: []byte(`[{
+				"filePath": "src/fixable.ts",
+				"messages": [{
+					"ruleId": "semi",
+					"severity": 2,
+					"message": "Missing semicolon",
+					"line": 10,
+					"column": 20,
+					"fix": {
+						"range": [100, 100],
+						"text": ";"
+					}
+				}],
+				"errorCount": 1,
+				"warningCount": 0
+			}]`),
+			expectedCount: 1,
+			wantErr:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			issues, err := analyzer.parseESLintOutput(tt.output)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseESLintOutput() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr && len(issues) != tt.expectedCount {
+				t.Errorf("parseESLintOutput() returned %d issues, want %d", len(issues), tt.expectedCount)
+			}
+		})
+	}
+}
+
+
+func TestESLintAnalyzer_ParseESLintOutput_WithFixSuggestion(t *testing.T) {
+	analyzer := NewESLintAnalyzer(&mockLogger{})
+
+	output := []byte(`[{
+		"filePath": "src/fixable.ts",
+		"messages": [{
+			"ruleId": "semi",
+			"severity": 2,
+			"message": "Missing semicolon",
+			"line": 10,
+			"column": 20,
+			"fix": {
+				"range": [100, 100],
+				"text": ";"
+			}
+		}],
+		"errorCount": 1,
+		"warningCount": 0,
+		"fixableErrorCount": 1,
+		"fixableWarningCount": 0
+	}]`)
+
+	issues, err := analyzer.parseESLintOutput(output)
+	if err != nil {
+		t.Errorf("parseESLintOutput() error = %v", err)
+		return
+	}
+
+	if len(issues) != 1 {
+		t.Errorf("parseESLintOutput() returned %d issues, want 1", len(issues))
+		return
+	}
+
+	if len(issues[0].Suggestions) == 0 {
+		t.Error("issue.Suggestions is empty, want fix suggestion")
+	}
+}
+
+func TestESLintAnalyzer_ParseESLintOutput_EmptyMessages(t *testing.T) {
+	analyzer := NewESLintAnalyzer(&mockLogger{})
+
+	output := []byte(`[{
+		"filePath": "src/clean.ts",
+		"messages": [],
+		"errorCount": 0,
+		"warningCount": 0
+	}]`)
+
+	issues, err := analyzer.parseESLintOutput(output)
+	if err != nil {
+		t.Errorf("parseESLintOutput() error = %v", err)
+		return
+	}
+
+	if len(issues) != 0 {
+		t.Errorf("parseESLintOutput() returned %d issues, want 0", len(issues))
+	}
+}
+
+func TestESLintAnalyzer_ParseESLintOutput_EmptyArray(t *testing.T) {
+	analyzer := NewESLintAnalyzer(&mockLogger{})
+
+	output := []byte(`[]`)
+
+	issues, err := analyzer.parseESLintOutput(output)
+	if err != nil {
+		t.Errorf("parseESLintOutput() error = %v", err)
+		return
+	}
+
+	if len(issues) != 0 {
+		t.Errorf("parseESLintOutput() returned %d issues, want 0", len(issues))
+	}
+}

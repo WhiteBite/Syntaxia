@@ -472,3 +472,316 @@ func TestExtractJSONInt(t *testing.T) {
 		})
 	}
 }
+
+func TestRuffAnalyzer_HasPythonFilePaths(t *testing.T) {
+	analyzer := NewRuffAnalyzer(&mockLogger{})
+
+	// Test with non-existent path
+	result := analyzer.hasPythonFilePaths("/non/existent/path")
+	if result {
+		t.Errorf("hasPythonFilePaths() for non-existent path = true, want false")
+	}
+
+	// Test with current directory (no Python files)
+	result = analyzer.hasPythonFilePaths(".")
+	if result {
+		t.Errorf("hasPythonFilePaths() for current dir = true, want false")
+	}
+}
+
+func TestRuffAnalyzer_GetCategory_AllPrefixes(t *testing.T) {
+	analyzer := NewRuffAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		code     string
+		expected string
+	}{
+		{"E501", "error"},
+		{"E302", "error"},
+		{"E999", "error"},
+		{"W291", "warning"},
+		{"W503", "warning"},
+		{"W605", "warning"},
+		{"F401", "flake8"},
+		{"F841", "flake8"},
+		{"F811", "flake8"},
+		{"I001", "imports"},
+		{"I002", "imports"},
+		{"N802", "naming"},
+		{"N806", "naming"},
+		{"N801", "naming"},
+		{"UP006", "pyupgrade"},
+		{"UP035", "pyupgrade"},
+		{"UP004", "pyupgrade"},
+		{"X001", "other"},
+		{"", "other"},
+		{"UNKNOWN", "other"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.code, func(t *testing.T) {
+			result := analyzer.getCategory(tt.code)
+			if result != tt.expected {
+				t.Errorf("getCategory(%q) = %q, want %q", tt.code, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestRuffAnalyzer_ParseRuffLine_EdgeCases(t *testing.T) {
+	analyzer := NewRuffAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name     string
+		line     string
+		expected *domain.StaticIssue
+	}{
+		{
+			name:     "empty line",
+			line:     "",
+			expected: nil,
+		},
+		{
+			name:     "line without code field",
+			line:     `{"message": "test", "filename": "test.py"}`,
+			expected: nil,
+		},
+		{
+			name:     "line without filename",
+			line:     `{"code": "E501", "message": "test"}`,
+			expected: nil,
+		},
+		{
+			name:     "line with only code",
+			line:     `{"code": "E501"}`,
+			expected: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := analyzer.parseRuffLine(tt.line)
+			if tt.expected == nil {
+				if result != nil {
+					t.Errorf("parseRuffLine(%q) = %+v, want nil", tt.line, result)
+				}
+			}
+		})
+	}
+}
+
+
+func TestRuffAnalyzer_ParseRuffOutput_AllCases(t *testing.T) {
+	analyzer := NewRuffAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name          string
+		output        string
+		expectedCount int
+	}{
+		{
+			name:          "empty output",
+			output:        "",
+			expectedCount: 0,
+		},
+		{
+			name:          "non-json output",
+			output:        "All checks passed!",
+			expectedCount: 0,
+		},
+		{
+			name: "multiple issues",
+			output: `{"code": "E501", "message": "Line too long", "filename": "src/file1.py", "row": 10, "column": 89}
+{"code": "W291", "message": "Trailing whitespace", "filename": "src/file2.py", "row": 20, "column": 5}
+{"code": "F401", "message": "Module imported but unused", "filename": "src/file3.py", "row": 1, "column": 1}`,
+			expectedCount: 3,
+		},
+		{
+			name: "mixed valid and invalid lines",
+			output: `Some header text
+{"code": "E501", "message": "Line too long", "filename": "src/main.py", "row": 10, "column": 89}
+Some footer text`,
+			expectedCount: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			issues, err := analyzer.parseRuffOutput([]byte(tt.output))
+			if err != nil {
+				t.Errorf("parseRuffOutput() error = %v", err)
+				return
+			}
+
+			if len(issues) != tt.expectedCount {
+				t.Errorf("parseRuffOutput() returned %d issues, want %d", len(issues), tt.expectedCount)
+			}
+		})
+	}
+}
+
+func TestExtractJSONString_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		line     string
+		prefix   string
+		expected string
+	}{
+		{
+			name:     "normal extraction",
+			line:     `{"code": "E501", "message": "test"}`,
+			prefix:   `"code": "`,
+			expected: "E501",
+		},
+		{
+			name:     "prefix not found",
+			line:     `{"code": "E501"}`,
+			prefix:   `"missing": "`,
+			expected: "",
+		},
+		{
+			name:     "empty line",
+			line:     "",
+			prefix:   `"code": "`,
+			expected: "",
+		},
+		{
+			name:     "no closing quote",
+			line:     `{"code": "E501`,
+			prefix:   `"code": "`,
+			expected: "",
+		},
+		{
+			name:     "empty value",
+			line:     `{"code": "", "message": "test"}`,
+			prefix:   `"code": "`,
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractJSONString(tt.line, tt.prefix)
+			if result != tt.expected {
+				t.Errorf("extractJSONString(%q, %q) = %q, want %q", tt.line, tt.prefix, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestExtractJSONInt_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		line     string
+		prefix   string
+		expected int
+	}{
+		{
+			name:     "normal extraction with comma",
+			line:     `{"row": 10, "column": 5}`,
+			prefix:   `"row": `,
+			expected: 10,
+		},
+		{
+			name:     "extraction at end with brace",
+			line:     `{"row": 100}`,
+			prefix:   `"row": `,
+			expected: 100,
+		},
+		{
+			name:     "prefix not found",
+			line:     `{"row": 10}`,
+			prefix:   `"missing": `,
+			expected: 0,
+		},
+		{
+			name:     "empty line",
+			line:     "",
+			prefix:   `"row": `,
+			expected: 0,
+		},
+		{
+			name:     "no delimiter after number",
+			line:     `{"row": 50`,
+			prefix:   `"row": `,
+			expected: 0,
+		},
+		{
+			name:     "zero value",
+			line:     `{"row": 0, "column": 5}`,
+			prefix:   `"row": `,
+			expected: 0,
+		},
+		{
+			name:     "large number",
+			line:     `{"row": 999999, "column": 5}`,
+			prefix:   `"row": `,
+			expected: 999999,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractJSONInt(tt.line, tt.prefix)
+			if result != tt.expected {
+				t.Errorf("extractJSONInt(%q, %q) = %d, want %d", tt.line, tt.prefix, result, tt.expected)
+			}
+		})
+	}
+}
+
+
+func TestRuffAnalyzer_ParseRuffLine_WithCategory(t *testing.T) {
+	analyzer := NewRuffAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name             string
+		line             string
+		expectedCategory string
+	}{
+		{
+			name:             "E code - error",
+			line:             `{"code": "E501", "message": "Line too long", "filename": "test.py", "row": 10, "column": 89}`,
+			expectedCategory: "error",
+		},
+		{
+			name:             "W code - warning",
+			line:             `{"code": "W291", "message": "Trailing whitespace", "filename": "test.py", "row": 5, "column": 20}`,
+			expectedCategory: "warning",
+		},
+		{
+			name:             "F code - flake8",
+			line:             `{"code": "F401", "message": "Unused import", "filename": "test.py", "row": 1, "column": 1}`,
+			expectedCategory: "flake8",
+		},
+		{
+			name:             "I code - imports",
+			line:             `{"code": "I001", "message": "Import order", "filename": "test.py", "row": 1, "column": 1}`,
+			expectedCategory: "imports",
+		},
+		{
+			name:             "N code - naming",
+			line:             `{"code": "N802", "message": "Function name", "filename": "test.py", "row": 5, "column": 1}`,
+			expectedCategory: "naming",
+		},
+		{
+			name:             "UP code - pyupgrade",
+			line:             `{"code": "UP006", "message": "Use list", "filename": "test.py", "row": 3, "column": 10}`,
+			expectedCategory: "pyupgrade",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			issue := analyzer.parseRuffLine(tt.line)
+			if issue == nil {
+				t.Error("parseRuffLine() returned nil")
+				return
+			}
+
+			if issue.Category != tt.expectedCategory {
+				t.Errorf("issue.Category = %q, want %q", issue.Category, tt.expectedCategory)
+			}
+		})
+	}
+}

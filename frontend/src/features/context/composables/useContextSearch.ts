@@ -1,24 +1,32 @@
-import { nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch, type Ref } from 'vue'
 
-export interface SearchState {
-    showSearch: boolean
-    searchQuery: string
-    searchResults: number[]
-    currentSearchIndex: number
+interface UseContextSearchOptions {
+    lines: Ref<string[] | undefined>
+    startLine: Ref<number>
+    scrollToLine: (lineNum: number) => void
 }
 
-export function useContextSearch(getLines: () => { lines: string[]; startLine: number } | null) {
+/**
+ * Composable for search functionality in context panel.
+ */
+export function useContextSearch(options: UseContextSearchOptions) {
+    const { lines, startLine, scrollToLine } = options
+
     const showSearch = ref(false)
     const searchQuery = ref('')
     const searchResults = ref<number[]>([])
     const currentSearchIndex = ref(0)
-    const searchInput = ref<HTMLInputElement | null>(null)
-    const lineRefs = ref<Map<number, HTMLElement>>(new Map())
+
+    // Highlighted lines for VirtualCodeView
+    const highlightedLinesSet = computed(() => {
+        if (searchResults.value.length === 0) return new Set<number>()
+        const currentLine = searchResults.value[currentSearchIndex.value]
+        return currentLine !== undefined ? new Set([currentLine]) : new Set<number>()
+    })
 
     // Search when query changes
     watch(searchQuery, (query) => {
-        const chunk = getLines()
-        if (!query || !chunk?.lines) {
+        if (!query || !lines.value) {
             searchResults.value = []
             currentSearchIndex.value = 0
             return
@@ -27,9 +35,9 @@ export function useContextSearch(getLines: () => { lines: string[]; startLine: n
         const results: number[] = []
         const lowerQuery = query.toLowerCase()
 
-        chunk.lines.forEach((line, index) => {
+        lines.value.forEach((line, index) => {
             if (line.toLowerCase().includes(lowerQuery)) {
-                results.push(chunk.startLine + index)
+                results.push(startLine.value + index)
             }
         })
 
@@ -37,49 +45,33 @@ export function useContextSearch(getLines: () => { lines: string[]; startLine: n
         currentSearchIndex.value = 0
 
         if (results.length > 0) {
-            scrollToLine(results[0])
+            doScrollToLine(results[0])
         }
     })
 
-    // Focus input when search opens
+    // Clear search when hidden
     watch(showSearch, (show) => {
-        if (show) {
-            nextTick(() => searchInput.value?.focus())
-        } else {
+        if (!show) {
             searchQuery.value = ''
         }
     })
 
-    function setLineRef(el: Element | null, lineNum: number | null) {
-        if (el && lineNum !== null && lineNum !== undefined) {
-            lineRefs.value.set(lineNum, el as HTMLElement)
-        }
-    }
-
-    function isLineHighlighted(lineNum: number): boolean {
-        return searchResults.value.includes(lineNum) &&
-            searchResults.value[currentSearchIndex.value] === lineNum
-    }
-
-    function scrollToLine(lineNum: number) {
+    function doScrollToLine(lineNum: number) {
         nextTick(() => {
-            const el = lineRefs.value.get(lineNum)
-            if (el) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-            }
+            scrollToLine(lineNum)
         })
     }
 
     function searchNext() {
         if (searchResults.value.length === 0) return
         currentSearchIndex.value = (currentSearchIndex.value + 1) % searchResults.value.length
-        scrollToLine(searchResults.value[currentSearchIndex.value])
+        doScrollToLine(searchResults.value[currentSearchIndex.value])
     }
 
     function searchPrev() {
         if (searchResults.value.length === 0) return
         currentSearchIndex.value = (currentSearchIndex.value - 1 + searchResults.value.length) % searchResults.value.length
-        scrollToLine(searchResults.value[currentSearchIndex.value])
+        doScrollToLine(searchResults.value[currentSearchIndex.value])
     }
 
     function toggleSearch() {
@@ -95,12 +87,10 @@ export function useContextSearch(getLines: () => { lines: string[]; startLine: n
         searchQuery,
         searchResults,
         currentSearchIndex,
-        searchInput,
-        setLineRef,
-        isLineHighlighted,
+        highlightedLinesSet,
         searchNext,
         searchPrev,
         toggleSearch,
-        closeSearch,
+        closeSearch
     }
 }

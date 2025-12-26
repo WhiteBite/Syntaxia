@@ -172,7 +172,7 @@ export class MemoryMonitor {
         };
       }
     } catch (e) {
-      console.warn('[MemoryMonitor] Could not collect store metrics:', e);
+      logger.warn('Could not collect store metrics:', e);
     }
 
     return metrics;
@@ -222,7 +222,7 @@ export class MemoryMonitor {
       import('@/composables/useApiCache').then(({ clearAllCaches }) => {
         clearAllCaches();
       }).catch(e => {
-        console.warn('Could not clear API caches:', e);
+        logger.warn('Could not clear API caches:', e);
       });
 
       // Clear stores
@@ -236,7 +236,7 @@ export class MemoryMonitor {
         fileStore.resetStore();
         contextStore.clearContext();
       }).catch(e => {
-        console.warn('Could not cleanup stores:', e);
+        logger.warn('Could not cleanup stores:', e);
       });
 
       // Clear Vue reactive caches if possible
@@ -250,7 +250,7 @@ export class MemoryMonitor {
           }
         });
       } catch (e) {
-        console.warn('Could not cleanup Vue stores:', e);
+        logger.warn('Could not cleanup Vue stores:', e);
       }
 
       // Force garbage collection multiple times if available
@@ -261,7 +261,7 @@ export class MemoryMonitor {
           setTimeout(() => window.gc?.(), 300);
           logger.debug('Multiple garbage collection cycles triggered');
         } catch (e) {
-          console.warn('Failed to trigger garbage collection', e);
+          logger.warn('Failed to trigger garbage collection', e);
         }
       }
 
@@ -293,7 +293,7 @@ export class MemoryMonitor {
         logger.error('Failed to dump heap snapshot:', e);
       }
     } else {
-      console.warn('Heap snapshot API not available. Run Chrome with --enable-precise-memory-info flag.');
+      logger.warn('Heap snapshot API not available. Run Chrome with --enable-precise-memory-info flag.');
     }
   }
 
@@ -339,7 +339,7 @@ export class MemoryMonitor {
 
     // Check if memory stats are available
     if (!stats) {
-      console.warn('[MemoryMonitor] Memory stats unavailable - performance.memory API not supported in this browser');
+      logger.warn('Memory stats unavailable - performance.memory API not supported in this browser');
       return;
     }
 
@@ -350,7 +350,7 @@ export class MemoryMonitor {
     if (!isFinite(percentage) || percentage < 0) {
       // Only warn for truly invalid values (NaN, Infinity, negative)
       if (import.meta.env.DEV && (isNaN(percentage) || percentage < 0)) {
-        console.warn('[MemoryMonitor] Invalid memory percentage calculated:', percentage);
+        logger.warn('Invalid memory percentage calculated:', percentage);
       }
       return;
     }
@@ -412,7 +412,7 @@ export class MemoryMonitor {
     // Check if we've reached warning threshold or rapid growth
     else if (percentage >= warningPercentage || (memoryTrend > 10 && this.memoryHistory.length >= 5)) {
       if (!this.warningIssued) {
-        console.warn(`WARNING: Memory usage at ${percentage}% (${used}MB / ${total}MB)`);
+        logger.warn(`Memory usage at ${percentage}% (${used}MB / ${total}MB)`);
 
         if (this.options.showToasts) {
           // Get current locale for localized message

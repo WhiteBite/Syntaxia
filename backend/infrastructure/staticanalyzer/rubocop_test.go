@@ -1,6 +1,7 @@
 package staticanalyzer
 
 import (
+	"context"
 	"syntaxia/domain"
 	"testing"
 )
@@ -392,5 +393,366 @@ func TestRuboCopAnalyzer_ValidateConfig_NoRubyFiles(t *testing.T) {
 		t.Log("ValidateConfig() returned nil - Ruby files may exist in current directory")
 	} else if !contains(err.Error(), "no Ruby files found") {
 		t.Errorf("ValidateConfig() error = %q, want to contain 'no Ruby files found'", err.Error())
+	}
+}
+
+
+func TestRuboCopAnalyzer_GetCategory_AllDepartments(t *testing.T) {
+	analyzer := NewRuboCopAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		copName  string
+		expected string
+	}{
+		{"", "other"},
+		{"Layout/LineLength", "formatting"},
+		{"Layout/IndentationWidth", "formatting"},
+		{"Lint/UselessAssignment", "lint"},
+		{"Lint/Debugger", "lint"},
+		{"Metrics/CyclomaticComplexity", "complexity"},
+		{"Metrics/MethodLength", "complexity"},
+		{"Naming/VariableName", "naming"},
+		{"Naming/MethodName", "naming"},
+		{"Security/Eval", "security"},
+		{"Security/Open", "security"},
+		{"Style/StringLiterals", "style"},
+		{"Style/FrozenStringLiteralComment", "style"},
+		{"Performance/Count", "performance"},
+		{"Performance/Detect", "performance"},
+		{"Bundler/DuplicatedGem", "bundler"},
+		{"Bundler/OrderedGems", "bundler"},
+		{"Gemspec/RequiredRubyVersion", "gemspec"},
+		{"Rails/ActiveRecordAliases", "rails"},
+		{"Rails/HttpPositionalArguments", "rails"},
+		{"RSpec/DescribeClass", "rspec"},
+		{"RSpec/ExampleLength", "rspec"},
+		{"CustomDepartment/SomeRule", "customdepartment"},
+		{"UnknownDept/Rule", "unknowndept"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.copName, func(t *testing.T) {
+			result := analyzer.getCategory(tt.copName)
+			if result != tt.expected {
+				t.Errorf("getCategory(%q) = %q, want %q", tt.copName, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestRuboCopAnalyzer_ConvertSeverity_AllCases(t *testing.T) {
+	analyzer := NewRuboCopAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"fatal", "error"},
+		{"FATAL", "error"},
+		{"Fatal", "error"},
+		{"error", "error"},
+		{"ERROR", "error"},
+		{"Error", "error"},
+		{"warning", "warning"},
+		{"WARNING", "warning"},
+		{"Warning", "warning"},
+		{"convention", "info"},
+		{"CONVENTION", "info"},
+		{"Convention", "info"},
+		{"refactor", "info"},
+		{"REFACTOR", "info"},
+		{"Refactor", "info"},
+		{"info", "hint"},
+		{"INFO", "hint"},
+		{"Info", "hint"},
+		{"unknown", "warning"},
+		{"", "warning"},
+		{"other", "warning"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result := analyzer.convertSeverity(tt.input)
+			if result != tt.expected {
+				t.Errorf("convertSeverity(%q) = %q, want %q", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestRuboCopAnalyzer_ParseRuboCopOutput_EdgeCases(t *testing.T) {
+	analyzer := NewRuboCopAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name          string
+		output        []byte
+		expectedCount int
+		wantErr       bool
+	}{
+		{
+			name:          "empty JSON object",
+			output:        []byte(`{"metadata":{},"files":[],"summary":{"offense_count":0}}`),
+			expectedCount: 0,
+			wantErr:       false,
+		},
+		{
+			name:    "completely invalid JSON",
+			output:  []byte(`not json at all`),
+			wantErr: true,
+		},
+		{
+			name: "JSON with text before",
+			output: []byte(`Inspecting 5 files
+{"metadata":{},"files":[],"summary":{"offense_count":0}}`),
+			expectedCount: 0,
+			wantErr:       false,
+		},
+		{
+			name: "JSON with text after",
+			output: []byte(`{"metadata":{},"files":[],"summary":{"offense_count":0}}
+5 files inspected, no offenses detected`),
+			expectedCount: 0,
+			wantErr:       false,
+		},
+		{
+			name: "multiple offenses in single file",
+			output: []byte(`{
+				"metadata":{},
+				"files":[{
+					"path":"app/models/user.rb",
+					"offenses":[
+						{"severity":"warning","message":"Msg1","cop_name":"Style/Cop1","corrected":false,"correctable":false,"location":{"line":1,"column":1}},
+						{"severity":"error","message":"Msg2","cop_name":"Lint/Cop2","corrected":false,"correctable":false,"location":{"line":5,"column":10}},
+						{"severity":"convention","message":"Msg3","cop_name":"Layout/Cop3","corrected":false,"correctable":true,"location":{"line":10,"column":1}}
+					]
+				}],
+				"summary":{"offense_count":3}
+			}`),
+			expectedCount: 3,
+			wantErr:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			issues, err := analyzer.parseRuboCopOutput(tt.output)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseRuboCopOutput() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr && len(issues) != tt.expectedCount {
+				t.Errorf("parseRuboCopOutput() returned %d issues, want %d", len(issues), tt.expectedCount)
+			}
+		})
+	}
+}
+
+
+func TestRuboCopAnalyzer_ParseRuboCopOutput_AllCases(t *testing.T) {
+	analyzer := NewRuboCopAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name          string
+		output        []byte
+		expectedCount int
+		wantErr       bool
+	}{
+		{
+			name:          "empty files",
+			output:        []byte(`{"metadata":{},"files":[],"summary":{"offense_count":0}}`),
+			expectedCount: 0,
+			wantErr:       false,
+		},
+		{
+			name:    "completely invalid JSON",
+			output:  []byte(`not json at all`),
+			wantErr: true,
+		},
+		{
+			name: "JSON with text before and after",
+			output: []byte(`Inspecting 5 files
+{"metadata":{},"files":[],"summary":{"offense_count":0}}
+5 files inspected, no offenses detected`),
+			expectedCount: 0,
+			wantErr:       false,
+		},
+		{
+			name: "multiple files with offenses",
+			output: []byte(`{
+				"metadata":{"rubocop_version":"1.50.0"},
+				"files":[
+					{"path":"file1.rb","offenses":[
+						{"severity":"warning","message":"Msg1","cop_name":"Style/Cop1","corrected":false,"correctable":false,"location":{"line":1,"column":1}},
+						{"severity":"error","message":"Msg2","cop_name":"Lint/Cop2","corrected":false,"correctable":true,"location":{"line":5,"column":10}}
+					]},
+					{"path":"file2.rb","offenses":[
+						{"severity":"convention","message":"Msg3","cop_name":"Layout/Cop3","corrected":false,"correctable":false,"location":{"line":10,"column":1}}
+					]}
+				],
+				"summary":{"offense_count":3}
+			}`),
+			expectedCount: 3,
+			wantErr:       false,
+		},
+		{
+			name: "correctable offense adds suggestion",
+			output: []byte(`{
+				"metadata":{},
+				"files":[{
+					"path":"app/models/user.rb",
+					"offenses":[{
+						"severity":"warning",
+						"message":"Line is too long",
+						"cop_name":"Layout/LineLength",
+						"corrected":false,
+						"correctable":true,
+						"location":{"line":10,"column":1}
+					}]
+				}],
+				"summary":{"offense_count":1}
+			}`),
+			expectedCount: 1,
+			wantErr:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			issues, err := analyzer.parseRuboCopOutput(tt.output)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseRuboCopOutput() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr && len(issues) != tt.expectedCount {
+				t.Errorf("parseRuboCopOutput() returned %d issues, want %d", len(issues), tt.expectedCount)
+			}
+		})
+	}
+}
+
+func TestRuboCopAnalyzer_BuildCommand_AllCases(t *testing.T) {
+	analyzer := NewRuboCopAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name         string
+		config       *domain.StaticAnalyzerConfig
+		expectedArgs []string
+	}{
+		{
+			name: "basic config",
+			config: &domain.StaticAnalyzerConfig{
+				Language:    "ruby",
+				ProjectPath: "/project",
+			},
+			expectedArgs: []string{"--format", "json", "."},
+		},
+		{
+			name: "with specific rules",
+			config: &domain.StaticAnalyzerConfig{
+				Language:    "ruby",
+				ProjectPath: "/project",
+				Rules:       []string{"Style/StringLiterals", "Layout/LineLength"},
+			},
+			expectedArgs: []string{"--format", "json", "--only", "."},
+		},
+		{
+			name: "with excluded rules",
+			config: &domain.StaticAnalyzerConfig{
+				Language:     "ruby",
+				ProjectPath:  "/project",
+				ExcludeRules: []string{"Metrics/MethodLength"},
+			},
+			expectedArgs: []string{"--format", "json", "--except", "."},
+		},
+		{
+			name: "with both rules and excludes",
+			config: &domain.StaticAnalyzerConfig{
+				Language:     "ruby",
+				ProjectPath:  "/project",
+				Rules:        []string{"Style/StringLiterals"},
+				ExcludeRules: []string{"Metrics/MethodLength"},
+			},
+			expectedArgs: []string{"--format", "json", "--only", "--except", "."},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			args := analyzer.buildCommand(tt.config)
+
+			for _, expected := range tt.expectedArgs {
+				found := false
+				for _, arg := range args {
+					if arg == expected {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("buildCommand() missing expected arg %q in %v", expected, args)
+				}
+			}
+		})
+	}
+}
+
+
+func TestRuboCopAnalyzer_Analyze_RuboCopNotInstalled(t *testing.T) {
+	analyzer := NewRuboCopAnalyzer(&mockLogger{})
+	ctx := context.Background()
+
+	config := &domain.StaticAnalyzerConfig{
+		Language:    "ruby",
+		ProjectPath: "/non/existent/path",
+		Analyzer:    domain.StaticAnalyzerTypeRuboCop,
+	}
+
+	result, err := analyzer.Analyze(ctx, config)
+	if err != nil {
+		t.Errorf("Analyze() should not return error, got %v", err)
+		return
+	}
+
+	if result == nil {
+		t.Error("Analyze() should return a result")
+		return
+	}
+
+	t.Logf("Analyze result: Success=%v, Error=%q", result.Success, result.Error)
+}
+
+func TestRuboCopAnalyzer_ParseRuboCopOutput_NonCorrectableIssue(t *testing.T) {
+	analyzer := NewRuboCopAnalyzer(&mockLogger{})
+
+	output := []byte(`{
+		"metadata":{"rubocop_version":"1.50.0"},
+		"files":[{
+			"path":"app/models/user.rb",
+			"offenses":[{
+				"severity":"error",
+				"message":"Syntax error",
+				"cop_name":"Lint/Syntax",
+				"corrected":false,
+				"correctable":false,
+				"location":{"line":10,"column":1}
+			}]
+		}],
+		"summary":{"offense_count":1}
+	}`)
+
+	issues, err := analyzer.parseRuboCopOutput(output)
+	if err != nil {
+		t.Errorf("parseRuboCopOutput() error = %v", err)
+		return
+	}
+
+	if len(issues) != 1 {
+		t.Errorf("parseRuboCopOutput() returned %d issues, want 1", len(issues))
+		return
+	}
+
+	// Non-correctable issue should have no suggestions
+	if len(issues[0].Suggestions) != 0 {
+		t.Errorf("issue.Suggestions has %d items, want 0", len(issues[0].Suggestions))
 	}
 }

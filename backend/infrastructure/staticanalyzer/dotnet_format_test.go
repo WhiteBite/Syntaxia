@@ -1,6 +1,7 @@
 package staticanalyzer
 
 import (
+	"context"
 	"syntaxia/domain"
 	"testing"
 )
@@ -330,6 +331,174 @@ src/Utils.cs(20,1): error CS0001: Error message`,
 			}
 			if len(issues) != tt.expectedCount {
 				t.Errorf("parseDotnetFormatOutput() returned %d issues, want %d", len(issues), tt.expectedCount)
+			}
+		})
+	}
+}
+
+
+func TestDotnetFormatAnalyzer_CategorizeIssue_AllCategories(t *testing.T) {
+	analyzer := NewDotnetFormatAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		code     string
+		expected string
+	}{
+		{"", "other"},
+		{"IDE0001", "style"},
+		{"IDE0055", "style"},
+		{"IDE9999", "style"},
+		{"CS0001", "compiler"},
+		{"CS0103", "compiler"},
+		{"CS9999", "compiler"},
+		{"CA1000", "analysis"},
+		{"CA2000", "analysis"},
+		{"CA9999", "analysis"},
+		{"SA1000", "style"},
+		{"SA1200", "style"},
+		{"SA9999", "style"},
+		{"FORMAT001", "formatting"},
+		{"FORMAT999", "formatting"},
+		{"UNKNOWN001", "other"},
+		{"XYZ123", "other"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.code, func(t *testing.T) {
+			result := analyzer.categorizeIssue(tt.code)
+			if result != tt.expected {
+				t.Errorf("categorizeIssue(%q) = %q, want %q", tt.code, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestDotnetFormatAnalyzer_ParseDotnetFormatOutput_AllFormats(t *testing.T) {
+	analyzer := NewDotnetFormatAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name          string
+		output        string
+		expectedCount int
+	}{
+		{
+			name:          "empty output",
+			output:        "",
+			expectedCount: 0,
+		},
+		{
+			name:          "standard issue format",
+			output:        "src/Program.cs(10,5): warning IDE0001: Simplify name",
+			expectedCount: 1,
+		},
+		{
+			name:          "error issue",
+			output:        "src/Utils.cs(25,10): error CS0103: The name 'x' does not exist",
+			expectedCount: 1,
+		},
+		{
+			name:          "info issue",
+			output:        "src/Helper.cs(5,1): info CA1000: Consider making method static",
+			expectedCount: 1,
+		},
+		{
+			name:          "would format output",
+			output:        "Would format: src/NeedsFormat.cs",
+			expectedCount: 1,
+		},
+		{
+			name: "multiple would format entries",
+			output: `Would format: src/File1.cs
+Would format: src/File2.cs
+Would format: src/File3.cs`,
+			expectedCount: 3,
+		},
+		{
+			name: "mixed standard and would format",
+			output: `src/Program.cs(10,5): warning IDE0001: Simplify name
+Would format: src/Other.cs
+src/Utils.cs(20,1): error CS0001: Error message`,
+			expectedCount: 3,
+		},
+		{
+			name:          "build output without issues",
+			output:        "Build started...\nBuild succeeded.\n0 Warning(s)\n0 Error(s)",
+			expectedCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			issues, err := analyzer.parseDotnetFormatOutput(tt.output)
+			if err != nil {
+				t.Errorf("parseDotnetFormatOutput() error = %v", err)
+				return
+			}
+			if len(issues) != tt.expectedCount {
+				t.Errorf("parseDotnetFormatOutput() returned %d issues, want %d", len(issues), tt.expectedCount)
+			}
+		})
+	}
+}
+
+
+func TestDotnetFormatAnalyzer_Analyze_DotnetNotInstalled(t *testing.T) {
+	analyzer := NewDotnetFormatAnalyzer(&mockLogger{})
+	ctx := context.Background()
+
+	config := &domain.StaticAnalyzerConfig{
+		Language:    "csharp",
+		ProjectPath: "/non/existent/path",
+		Analyzer:    domain.StaticAnalyzerTypeDotnetFormat,
+	}
+
+	_, err := analyzer.Analyze(ctx, config)
+	// Should return error if dotnet is not installed
+	if err != nil {
+		t.Logf("Analyze() returned expected error: %v", err)
+	}
+}
+
+func TestDotnetFormatAnalyzer_ParseDotnetFormatOutput_AllSeverities(t *testing.T) {
+	analyzer := NewDotnetFormatAnalyzer(&mockLogger{})
+
+	tests := []struct {
+		name             string
+		output           string
+		expectedSeverity string
+	}{
+		{
+			name:             "error severity",
+			output:           "src/Program.cs(10,5): error CS0001: Error message",
+			expectedSeverity: "error",
+		},
+		{
+			name:             "warning severity",
+			output:           "src/Program.cs(10,5): warning IDE0001: Warning message",
+			expectedSeverity: "warning",
+		},
+		{
+			name:             "info severity",
+			output:           "src/Program.cs(10,5): info CA1000: Info message",
+			expectedSeverity: "info",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			issues, err := analyzer.parseDotnetFormatOutput(tt.output)
+			if err != nil {
+				t.Errorf("parseDotnetFormatOutput() error = %v", err)
+				return
+			}
+
+			if len(issues) != 1 {
+				t.Errorf("parseDotnetFormatOutput() returned %d issues, want 1", len(issues))
+				return
+			}
+
+			if issues[0].Severity != tt.expectedSeverity {
+				t.Errorf("issue.Severity = %q, want %q", issues[0].Severity, tt.expectedSeverity)
 			}
 		})
 	}

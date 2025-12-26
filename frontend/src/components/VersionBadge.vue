@@ -145,7 +145,7 @@ onMounted(async () => {
         const info = await GetVersionInfo()
         currentVersion.value = info.version
     } catch (e) {
-        console.warn('Failed to get version info:', e)
+        logger.warn('Failed to get version info:', e)
     }
 })
 
