@@ -32,6 +32,30 @@
           </button>
         </div>
 
+        <!-- Search -->
+        <div class="history-search">
+          <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            v-model="searchQuery"
+            type="text"
+            class="search-input"
+            :placeholder="t('chat.history.searchPlaceholder')"
+          />
+          <button
+            v-if="searchQuery"
+            @click="clearSearch"
+            class="search-clear"
+            :title="t('chat.history.clearSearch')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
         <!-- Chat List -->
         <div class="history-list">
           <div v-if="!hasHistory" class="history-empty">
@@ -42,8 +66,17 @@
             <p class="text-gray-500 text-xs">{{ t('chat.history.empty') }}</p>
           </div>
 
+          <!-- No search results -->
+          <div v-else-if="hasHistory && !hasFilteredResults" class="history-empty">
+            <svg class="w-8 h-8 text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <p class="text-gray-500 text-xs">{{ t('chat.history.noResults') }}</p>
+          </div>
+
           <div
-            v-for="chat in chatHistory"
+            v-for="chat in filteredHistory"
             :key="chat.id"
             :class="['history-item', { 'history-item-active': chat.id === currentChatId }]"
             @click="handleLoadChat(chat.id)"
@@ -87,16 +120,19 @@ const { t } = useI18n()
 
 const {
   isOpen,
-  chatHistory,
+  searchQuery,
+  filteredHistory,
   currentChatId,
   historyCount,
   hasHistory,
+  hasFilteredResults,
   formatDate,
   handleNewChat,
   handleLoadChat,
   handleDeleteChat,
   toggleDropdown,
-  closeDropdown
+  closeDropdown,
+  clearSearch
 } = useChatHistory()
 </script>
 
@@ -169,6 +205,53 @@ const {
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.history-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-1);
+}
+
+.search-icon {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  color: var(--text-muted);
+}
+
+.history-search .search-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.25rem 0;
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+.history-search .search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-clear {
+  flex-shrink: 0;
+  padding: 0.125rem;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 150ms ease-out;
+}
+
+.search-clear:hover {
+  color: var(--text-secondary);
+  background: var(--bg-3);
 }
 
 .history-list {

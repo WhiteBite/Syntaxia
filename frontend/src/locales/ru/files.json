@@ -181,5 +181,21 @@
     "filterLabels.tests": "Тесты",
     "filterLabels.config": "Конфиг",
     "filterLabels.docs": "Доки",
-    "filterLabels.styles": "Стили"
+    "filterLabels.styles": "Стили",
+    "fileSearch.placeholder": "Поиск файлов по имени...",
+    "fileSearch.noResults": "Файлы не найдены",
+    "fileSearch.hint": "Начните вводить имя файла для поиска",
+    "fileSearch.navigate": "навигация",
+    "fileSearch.select": "добавить",
+    "fileSearch.close": "закрыть",
+    "fileSearch.inContext": "в контексте",
+    "fileSearch.fileAdded": "Файл добавлен в контекст",
+    "fileSearch.fileAlreadySelected": "Файл уже выбран",
+    "files.favorites.title": "Избранное",
+    "files.favorites.add": "Добавить в избранное",
+    "files.favorites.remove": "Убрать из избранного",
+    "files.favorites.empty": "Нет избранных файлов",
+    "files.favorites.maxReached": "Достигнут лимит избранных (20)",
+    "files.favorites.added": "Добавлено в избранное",
+    "files.favorites.removed": "Удалено из избранного"
 }

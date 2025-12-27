@@ -139,11 +139,31 @@
 }
 
 /* Guide colors by depth - subtle colors */
-.tree-guide-1 { stroke: #60a5fa; } /* blue */
-.tree-guide-2 { stroke: #a78bfa; } /* purple */
-.tree-guide-3 { stroke: #f472b6; } /* pink */
-.tree-guide-4 { stroke: #34d399; } /* green */
-.tree-guide-5 { stroke: #64748b; } /* slate */
+.tree-guide-1 {
+    stroke: #60a5fa;
+}
+
+/* blue */
+.tree-guide-2 {
+    stroke: #a78bfa;
+}
+
+/* purple */
+.tree-guide-3 {
+    stroke: #f472b6;
+}
+
+/* pink */
+.tree-guide-4 {
+    stroke: #34d399;
+}
+
+/* green */
+.tree-guide-5 {
+    stroke: #64748b;
+}
+
+/* slate */
 
 /* ============================================
    TREE ROW COMPONENTS (VirtualTreeRow)
@@ -299,8 +319,15 @@
 }
 
 @keyframes count-bounce {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.15); }
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.15);
+    }
 }
 
 /* File Size */
@@ -440,8 +467,13 @@
 }
 
 @keyframes cb-ripple {
-    0% { box-shadow: 0 0 0 0 var(--accent-indigo-bg); }
-    100% { box-shadow: 0 0 0 8px transparent; }
+    0% {
+        box-shadow: 0 0 0 0 var(--accent-indigo-bg);
+    }
+
+    100% {
+        box-shadow: 0 0 0 8px transparent;
+    }
 }
 
 /* Tree children animation */
@@ -458,6 +490,7 @@
         opacity: 0;
         transform: translateY(-8px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -469,6 +502,7 @@
         opacity: 1;
         transform: translateY(0);
     }
+
     to {
         opacity: 0;
         transform: translateY(-8px);
@@ -485,6 +519,7 @@
         opacity: 0;
         transform: translateX(-4px);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);
@@ -521,10 +556,21 @@
 /* ============================================
    DEPTH BACKGROUNDS - subtle color by level
    ============================================ */
-.tree-depth-1 { background: rgba(99, 102, 241, 0.02); }
-.tree-depth-2 { background: rgba(168, 85, 247, 0.02); }
-.tree-depth-3 { background: rgba(236, 72, 153, 0.02); }
-.tree-depth-4 { background: rgba(56, 189, 248, 0.02); }
+.tree-depth-1 {
+    background: rgba(99, 102, 241, 0.02);
+}
+
+.tree-depth-2 {
+    background: rgba(168, 85, 247, 0.02);
+}
+
+.tree-depth-3 {
+    background: rgba(236, 72, 153, 0.02);
+}
+
+.tree-depth-4 {
+    background: rgba(56, 189, 248, 0.02);
+}
 
 /* ============================================
    GIT STATUS INDICATORS
@@ -581,9 +627,17 @@
 }
 
 @keyframes tree-expand-pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
 
 /* ============================================
@@ -611,4 +665,20 @@
 .tree-row-selected .tree-binary-badge {
     color: #fdba74;
     background: rgba(249, 115, 22, 0.3);
+}
+
+/* ============================================
+   DRAG & DROP STATES
+   ============================================ */
+.tree-row-dragging {
+    opacity: 0.6;
+    cursor: grabbing;
+}
+
+.tree-row[draggable="true"] {
+    cursor: grab;
+}
+
+.tree-row[draggable="true"]:active {
+    cursor: grabbing;
 }

@@ -5,11 +5,15 @@
       isSelected ? 'tree-row-selected' : '',
       hasSelectedChildren && !isSelected ? 'tree-row-has-selected' : '',
       { 'opacity-50': node.isIgnored },
-      animating ? 'tree-stagger' : ''
+      animating ? 'tree-stagger' : '',
+      isDragging ? 'tree-row-dragging' : ''
     ]" :style="{ paddingLeft: `${depth * 16 + 8}px` }" @click="handleClick" @contextmenu.prevent="handleContextMenu"
       :title="node.isIgnored ? `${node.path} (ignored)` : node.path" tabindex="0" @keydown="handleKeydown"
       @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave"
-      :data-path="node.path" :data-is-dir="node.isDir">
+      :data-path="node.path" :data-is-dir="node.isDir"
+      draggable="true"
+      @dragstart="handleDragStart"
+      @dragend="handleDragEnd">
       <!-- Tree guide lines - continuous vertical + L/T connectors -->
       <svg v-if="depth > 0" class="tree-guides" :width="depth * 16 + 16" height="32" :style="{ left: '0' }">
         <!-- Vertical continuation lines for ancestors that have more siblings -->
@@ -143,6 +147,9 @@ const fileStore = useFileStore()
 const ripple = ref(false)
 const countBounce = ref(false)
 const animating = ref(false)
+const isDragging = ref(false)
+
+const DRAG_DATA_TYPE = 'application/x-file-paths'
 
 const isSelected = computed(() => fileStore.selectedPaths.has(props.node.path))
 
@@ -325,4 +332,31 @@ watch(() => props.node.isExpanded, (expanded) => {
     setTimeout(() => { animating.value = false }, 300)
   }
 }, { immediate: false })
+
+function handleDragStart(e: DragEvent) {
+  if (!e.dataTransfer) return
+  
+  isDragging.value = true
+  
+  // Collect paths to drag: if current node is selected, drag all selected; otherwise just this node
+  let pathsToDrag: string[]
+  
+  if (isSelected.value && fileStore.selectedCount > 1) {
+    // Drag all selected files
+    pathsToDrag = fileStore.selectedFilesList || []
+  } else if (props.node.isDir) {
+    // For directories, get all files inside
+    pathsToDrag = fileStore.getAllFilesInNode(props.node)
+  } else {
+    // Single file
+    pathsToDrag = [props.node.path]
+  }
+  
+  e.dataTransfer.setData(DRAG_DATA_TYPE, JSON.stringify(pathsToDrag))
+  e.dataTransfer.effectAllowed = 'copy'
+}
+
+function handleDragEnd() {
+  isDragging.value = false
+}
 </script>

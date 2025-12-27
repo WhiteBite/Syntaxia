@@ -3,7 +3,8 @@
     :class="[
       'tree-row group',
       props.isSelected ? 'tree-row-selected' : '',
-      { 'opacity-50': item.node.isIgnored }
+      { 'opacity-50': item.node.isIgnored },
+      isDragging ? 'tree-row-dragging' : ''
     ]"
     :style="{ paddingLeft: `${item.depth * 16 + 8}px` }"
     @click="handleClick"
@@ -11,6 +12,9 @@
     :title="item.node.isIgnored ? `${item.node.path} (ignored)` : item.node.path"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
+    draggable="true"
+    @dragstart="handleDragStart"
+    @dragend="handleDragEnd"
   >
     <!-- Tree guide lines -->
     <svg v-if="item.depth > 0" class="tree-guides" :width="item.depth * 16 + 16" :height="rowHeight" style="shape-rendering: crispEdges; overflow: visible;">
@@ -165,10 +169,13 @@ import type { FlattenedNode } from '@/composables/useVirtualTree'
 import { TOKEN_THRESHOLDS } from '@/config/constants'
 import { getFileIcon } from '@/utils/fileIcons'
 import { useHoveredFile } from '../composables/useHoveredFile'
+import { useFileStore } from '../model/file.store'
 import type { FileNode } from '../model/file.store'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 const { t } = useI18n()
+
+const DRAG_DATA_TYPE = 'application/x-file-paths'
 
 // Row height for SVG calculations (must match CSS min-height)
 const rowHeight = 26
@@ -234,6 +241,9 @@ const emit = defineEmits<{
 // Use singleton pattern for hovered file state (avoids provide/inject issues with virtual scrolling)
 const { setHovered, clearHovered } = useHoveredFile()
 
+const fileStore = useFileStore()
+const isDragging = ref(false)
+
 function handleClick() {
   if (props.item.node.isDir) {
     emit('toggle-expand', props.item.node.path)
@@ -277,5 +287,32 @@ function formatSize(bytes: number): string {
 function formatTokens(tokens: number): string {
   if (tokens < 1000) return tokens + ''
   return Math.round(tokens / 1000) + 'k'
+}
+
+function handleDragStart(e: DragEvent) {
+  if (!e.dataTransfer) return
+  
+  isDragging.value = true
+  
+  // Collect paths to drag: if current node is selected, drag all selected; otherwise just this node
+  let pathsToDrag: string[]
+  
+  if (props.isSelected && fileStore.selectedCount > 1) {
+    // Drag all selected files
+    pathsToDrag = fileStore.selectedFilesList || []
+  } else if (props.item.node.isDir) {
+    // For directories, get all files inside
+    pathsToDrag = fileStore.getAllFilesInNode(props.item.node)
+  } else {
+    // Single file
+    pathsToDrag = [props.item.node.path]
+  }
+  
+  e.dataTransfer.setData(DRAG_DATA_TYPE, JSON.stringify(pathsToDrag))
+  e.dataTransfer.effectAllowed = 'copy'
+}
+
+function handleDragEnd() {
+  isDragging.value = false
 }
 </script>

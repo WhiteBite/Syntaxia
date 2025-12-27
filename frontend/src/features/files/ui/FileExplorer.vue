@@ -78,6 +78,9 @@
     <!-- Quick Filters -->
     <QuickFiltersBar />
 
+    <!-- Favorites Section -->
+    <FavoritesPanel @select="handleFavoriteSelect" />
+
     <!-- Search -->
     <div class="file-explorer__search">
       <div class="relative group">
@@ -200,6 +203,7 @@ import FileContextMenu from './FileContextMenu.vue'
 import QuickFiltersBar from './QuickFiltersBar.vue'
 import SettingsPopover from './SettingsPopover.vue'
 import VirtualFileTree from './VirtualFileTree.vue'
+import FavoritesPanel from './FavoritesPanel.vue'
 
 const QuickLookModal = defineAsyncComponent(() => import('@/components/QuickLookModal.vue'))
 const IgnoreRulesModal = defineAsyncComponent(() => import('./IgnoreRulesModal.vue'))
@@ -271,6 +275,11 @@ function handleRedoSelection() {
   if (fileStore.redoSelection()) {
     uiStore.addToast(t('files.redoSelection'), 'info')
   }
+}
+
+function handleFavoriteSelect(_path: string) {
+  // File is already added to context in FavoritesPanel
+  // This handler can be used for additional actions if needed
 }
 
 onMounted(async () => {

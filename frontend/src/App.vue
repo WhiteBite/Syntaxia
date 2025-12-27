@@ -108,6 +108,12 @@
     <!-- Settings Modal -->
     <SettingsModal v-model="uiStore.showSettingsModal" />
 
+    <!-- File Search Modal (Ctrl+P) -->
+    <FileSearchModal
+      v-if="projectStore.hasProject"
+      :is-open="uiStore.isFileSearchModalOpen"
+    />
+
     <!-- Confirm Dialog (global) -->
     <ConfirmDialog />
 
@@ -133,6 +139,7 @@ const KeyboardShortcutsModal = defineAsyncComponent(() => import('@/components/K
 const MemoryDashboard = defineAsyncComponent(() => import('@/components/MemoryDashboard.vue'))
 const SettingsModal = defineAsyncComponent(() => import('@/components/SettingsModal.vue'))
 const ConfirmDialog = defineAsyncComponent(() => import('@/components/ConfirmDialog.vue'))
+const FileSearchModal = defineAsyncComponent(() => import('@/features/files/ui/FileSearchModal.vue'))
 
 const { t } = useI18n()
 const projectStore = useProjectStore()
@@ -158,9 +165,9 @@ watch(ctrlK, (v) => {
   if (v) isCommandPaletteOpen.value = !isCommandPaletteOpen.value
 })
 watch(ctrlP, (v) => {
-  if (v) {
-    isCommandPaletteOpen.value = true
-    // Here you might want to pre-fill the command palette with a file search prefix
+  if (v && projectStore.hasProject) {
+    // Prevent default browser behavior
+    uiStore.openFileSearchModal()
   }
 })
 watch(ctrlSlash, (v) => {

@@ -14,6 +14,7 @@ import { computed, ref, watch } from 'vue'
 import { filesApi } from '../api/files.api'
 import { copyToClipboard, getRelativePath } from '../lib/file-utils'
 import { useFileStore, type FileNode } from '../model/file.store'
+import { useFavorites } from './useFavorites'
 import { useFileSearch } from './useFileSearch'
 import { useIgnoreRules } from './useIgnoreRules'
 import { useQuickLook } from './useQuickLook'
@@ -32,6 +33,7 @@ export function useFileExplorer() {
     // Compose smaller composables
     const search = useFileSearch()
     const ignoreRules = useIgnoreRules()
+    const favorites = useFavorites()
 
     // QuickLook - uses injected hoveredFile from parent component
     // NOTE: provideHoveredFile() must be called in the parent component (FileExplorer.vue)
@@ -214,6 +216,16 @@ export function useFileExplorer() {
                     if (node.isDir) {
                         fileStore.collapseRecursive(node.path)
                         uiStore.addToast('Collapsed all folders', 'success')
+                    }
+                    break
+                case 'addToFavorites':
+                    if (!node.isDir) {
+                        favorites.addFavorite(node.path)
+                    }
+                    break
+                case 'removeFromFavorites':
+                    if (!node.isDir) {
+                        favorites.removeFavorite(node.path)
                     }
                     break
             }

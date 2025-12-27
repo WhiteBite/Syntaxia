@@ -159,5 +159,12 @@
     "chat.history.messages": "msgs",
     "chat.history.delete": "Delete chat",
     "chat.history.yesterday": "Yesterday",
-    "chat.history.daysAgo": "days ago"
+    "chat.history.daysAgo": "days ago",
+    "chat.history.searchPlaceholder": "Search history...",
+    "chat.history.noResults": "No results found",
+    "chat.history.clearSearch": "Clear search",
+    "chat.dragDrop.dropHere": "Drop files here",
+    "chat.dragDrop.addToContext": "Files will be added to context",
+    "chat.dragDrop.filesAdded": "Added {count} file(s) to context",
+    "chat.dragDrop.filesAlreadyInContext": "{count} file(s) already in context"
 }

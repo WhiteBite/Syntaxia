@@ -159,5 +159,12 @@
     "chat.history.messages": "сообщ.",
     "chat.history.delete": "Удалить чат",
     "chat.history.yesterday": "Вчера",
-    "chat.history.daysAgo": "дн. назад"
+    "chat.history.daysAgo": "дн. назад",
+    "chat.history.searchPlaceholder": "Поиск в истории...",
+    "chat.history.noResults": "Ничего не найдено",
+    "chat.history.clearSearch": "Очистить поиск",
+    "chat.dragDrop.dropHere": "Перетащите сюда",
+    "chat.dragDrop.addToContext": "Файлы будут добавлены в контекст",
+    "chat.dragDrop.filesAdded": "Добавлено {count} файл(ов) в контекст",
+    "chat.dragDrop.filesAlreadyInContext": "{count} файл(ов) уже в контексте"
 }

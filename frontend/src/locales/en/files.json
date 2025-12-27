@@ -181,5 +181,21 @@
     "filterLabels.tests": "Tests",
     "filterLabels.config": "Config",
     "filterLabels.docs": "Docs",
-    "filterLabels.styles": "Styles"
+    "filterLabels.styles": "Styles",
+    "fileSearch.placeholder": "Search files by name...",
+    "fileSearch.noResults": "No files found",
+    "fileSearch.hint": "Start typing to search for files",
+    "fileSearch.navigate": "navigate",
+    "fileSearch.select": "add",
+    "fileSearch.close": "close",
+    "fileSearch.inContext": "in context",
+    "fileSearch.fileAdded": "File added to context",
+    "fileSearch.fileAlreadySelected": "File already selected",
+    "files.favorites.title": "Favorites",
+    "files.favorites.add": "Add to favorites",
+    "files.favorites.remove": "Remove from favorites",
+    "files.favorites.empty": "No favorite files",
+    "files.favorites.maxReached": "Maximum favorites limit reached (20)",
+    "files.favorites.added": "Added to favorites",
+    "files.favorites.removed": "Removed from favorites"
 }

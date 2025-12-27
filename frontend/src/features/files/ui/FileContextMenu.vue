@@ -52,6 +52,17 @@
           <span class="ml-auto text-xs text-gray-400">Space</span>
         </button>
 
+        <!-- Favorites (files only) -->
+        <button
+          v-if="!node.isDir"
+          @click="handleAction(isNodeFavorite ? 'removeFromFavorites' : 'addToFavorites')"
+          class="w-full px-4 py-2 text-left text-sm text-white hover:bg-gray-700 flex items-center gap-3 transition-colors"
+        >
+          <StarIconSolid v-if="isNodeFavorite" class="w-4 h-4 text-yellow-400" />
+          <StarIconOutline v-else class="w-4 h-4" />
+          {{ isNodeFavorite ? t('files.favorites.remove') : t('files.favorites.add') }}
+        </button>
+
         <div v-if="!node.isDir" class="h-px bg-gray-700 my-1"></div>
 
         <!-- Copy Actions -->
@@ -133,8 +144,13 @@
 <script setup lang="ts">
 import { useI18n } from '@/composables/useI18n'
 import type { FileNode } from '@/features/files/model/file.store'
+import { StarIcon as StarIconOutline } from '@heroicons/vue/24/outline'
+import { StarIcon as StarIconSolid } from '@heroicons/vue/24/solid'
+import { computed } from 'vue'
+import { useFavorites } from '../composables/useFavorites'
 
 const { t } = useI18n()
+const { isFavorite } = useFavorites()
 
 interface Props {
   node: FileNode | null
@@ -143,6 +159,11 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+const isNodeFavorite = computed(() => {
+  if (!props.node || props.node.isDir) return false
+  return isFavorite(props.node.path)
+})
 
 const emit = defineEmits<{
   (e: 'action', payload: { type: string; node: FileNode }): void

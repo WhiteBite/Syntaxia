@@ -4,7 +4,8 @@
  */
 
 import { useI18n } from '@/composables/useI18n'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useChatStore } from '../model/chat.store'
 
 export function useChatHistory() {
@@ -13,12 +14,38 @@ export function useChatHistory() {
 
     // State
     const isOpen = ref(false)
+    const searchQuery = ref('')
+    const debouncedQuery = ref('')
+
+    // Debounce search input (200ms)
+    const updateDebouncedQuery = useDebounceFn((value: string) => {
+        debouncedQuery.value = value
+    }, 200)
+
+    watch(searchQuery, (value) => updateDebouncedQuery(value))
 
     // Computed
     const chatHistory = computed(() => chatStore.chatHistory)
     const currentChatId = computed(() => chatStore.currentChatId)
     const historyCount = computed(() => chatStore.chatHistory.length)
     const hasHistory = computed(() => chatStore.chatHistory.length > 0)
+
+    // Filtered history based on search query
+    const filteredHistory = computed(() => {
+        const query = debouncedQuery.value.toLowerCase().trim()
+        if (!query) return chatStore.chatHistory
+
+        return chatStore.chatHistory.filter(chat => {
+            // Search in title
+            if (chat.title.toLowerCase().includes(query)) return true
+            // Search in first user message
+            const firstUserMsg = chat.messages.find(m => m.role === 'user')
+            if (firstUserMsg?.content.toLowerCase().includes(query)) return true
+            return false
+        })
+    })
+
+    const hasFilteredResults = computed(() => filteredHistory.value.length > 0)
 
     /**
      * Format date for display with relative time
@@ -78,11 +105,23 @@ export function useChatHistory() {
     }
 
     /**
-     * Handle keyboard events (Escape to close)
+     * Clear search query
+     */
+    function clearSearch(): void {
+        searchQuery.value = ''
+        debouncedQuery.value = ''
+    }
+
+    /**
+     * Handle keyboard events (Escape to close/clear search)
      */
     function handleKeydown(e: KeyboardEvent): void {
         if (e.key === 'Escape' && isOpen.value) {
-            isOpen.value = false
+            if (searchQuery.value) {
+                clearSearch()
+            } else {
+                isOpen.value = false
+            }
         }
     }
 
@@ -99,12 +138,15 @@ export function useChatHistory() {
     return {
         // State
         isOpen,
+        searchQuery,
 
         // Computed
         chatHistory,
+        filteredHistory,
         currentChatId,
         historyCount,
         hasHistory,
+        hasFilteredResults,
 
         // Actions
         formatDate,
@@ -112,6 +154,7 @@ export function useChatHistory() {
         handleLoadChat,
         handleDeleteChat,
         toggleDropdown,
-        closeDropdown
+        closeDropdown,
+        clearSearch
     }
 }

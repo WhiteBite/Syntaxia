@@ -1,5 +1,27 @@
 <template>
-  <div class="h-full flex flex-col bg-gray-900">
+  <div 
+    class="h-full flex flex-col bg-gray-900"
+    @dragenter="handleDragEnter"
+    @dragover="handleDragOver"
+    @dragleave="handleDragLeave"
+    @drop="handleDrop"
+  >
+    <!-- Drop Zone Overlay -->
+    <Transition name="fade">
+      <div 
+        v-if="isDragOver" 
+        class="chat-drop-overlay"
+      >
+        <div class="chat-drop-zone">
+          <svg class="w-12 h-12 text-purple-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+          <p class="text-lg font-medium text-white">{{ t('chat.dragDrop.dropHere') }}</p>
+          <p class="text-sm text-gray-400">{{ t('chat.dragDrop.addToContext') }}</p>
+        </div>
+      </div>
+    </Transition>
+
     <!-- Header -->
     <div class="section-header">
       <div class="section-title">
@@ -126,6 +148,7 @@ import { useFileStore } from '@/features/files'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useChatStore } from '../model/chat.store'
 import { useSandboxStore } from '@/stores/sandbox.store'
+import { useChatDragDrop } from '../composables/useChatDragDrop'
 import MessageItem from './MessageItem.vue'
 import ChangePreviewModal from './ChangePreviewModal.vue'
 import ChatModeSelector from './ChatModeSelector.vue'
@@ -137,6 +160,7 @@ const { t } = useI18n()
 const chatStore = useChatStore()
 const sandboxStore = useSandboxStore()
 const fileStore = useFileStore()
+const { isDragOver, handleDragEnter, handleDragOver, handleDragLeave, handleDrop } = useChatDragDrop()
 const inputMessage = ref('')
 const messagesContainer = ref<HTMLElement>()
 const showChangesPanel = ref(false)
@@ -233,5 +257,37 @@ watch(() => chatStore.messages.length, () => {
     flex-direction: column;
     align-items: stretch;
   }
+}
+
+.chat-drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.chat-drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 3rem;
+  border: 2px dashed var(--purple-500);
+  border-radius: 1rem;
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

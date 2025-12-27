@@ -93,8 +93,7 @@ export class CommandService {
         category: 'Files',
         when: () => projectStore.hasProject,
         action: () => {
-          // TODO [Q1-1]: Implement file search modal - see TODO-refactoring.txt
-          uiStore.addToast('File search coming soon!', 'info')
+          uiStore.openFileSearchModal()
         }
       },
       {

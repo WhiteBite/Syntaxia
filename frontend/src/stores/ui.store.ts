@@ -24,6 +24,7 @@ export const useUIStore = defineStore('ui', () => {
   const nextToastId = ref(0)
   const showSettingsModal = ref(false)
   const showKeyboardShortcutsModal = ref(false)
+  const isFileSearchModalOpen = ref(false)
 
   // Actions
   function addToast(message: string, type: Toast['type'] = 'info', duration = 3000, action?: ToastAction) {
@@ -83,16 +84,27 @@ export const useUIStore = defineStore('ui', () => {
     showKeyboardShortcutsModal.value = true
   }
 
+  function openFileSearchModal() {
+    isFileSearchModalOpen.value = true
+  }
+
+  function closeFileSearchModal() {
+    isFileSearchModalOpen.value = false
+  }
+
   return {
     // State
     toasts,
     showSettingsModal,
     showKeyboardShortcutsModal,
+    isFileSearchModalOpen,
     // Actions
     addToast,
     removeToast,
     clearToasts,
     openSettingsModal,
-    openKeyboardShortcutsModal
+    openKeyboardShortcutsModal,
+    openFileSearchModal,
+    closeFileSearchModal
   }
 })
