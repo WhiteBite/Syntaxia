@@ -5,8 +5,9 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"syntaxia/domain"
+	"path/filepath"
 	"strings"
+	"syntaxia/domain"
 )
 
 const (
@@ -60,9 +61,18 @@ func (s *Service) exportClipboard(settings domain.ExportSettings) (domain.Export
 	if format == "" {
 		format = "manifest"
 	}
+
+	// Extract project name from path
+	projectName := ""
+	if settings.ProjectPath != "" {
+		projectName = filepath.Base(settings.ProjectPath)
+	}
+
 	out, err := s.contextFormatter.Format(format, settings.Context, domain.ContextFormatOptions{
 		StripComments:   settings.StripComments,
 		IncludeManifest: settings.IncludeManifest,
+		IncludeFileTree: settings.IncludeFileTree,
+		ProjectName:     projectName,
 	})
 	if err != nil {
 		return domain.ExportResult{}, fmt.Errorf("failed to build clipboard context: %w", err)

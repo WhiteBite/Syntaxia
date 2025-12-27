@@ -1,4 +1,10 @@
 {
+    "languages.count": "{count} языков",
+    "languages.tooltipTitle": "Поддерживаемые языки",
+    "languages.clickToExpand": "Нажмите для подробностей",
+    "languages.panelTitle": "Языки программирования",
+    "languages.panelSubtitle": "Полная поддержка анализа",
+    "languages.ariaLabel": "Поддерживаемые языки программирования",
     "tools.title": "Инструменты",
     "tools.description": "Дополнительные функции и настройки",
     "tools.copyContext": "Копировать контекст",

@@ -20,6 +20,7 @@ export interface ContextSettings {
     trimWhitespace: boolean
     // Export options (previously in useExport)
     includeManifest: boolean
+    includeFileTree: boolean
     includeLineNumbers: boolean
     enableAutoSplit: boolean
     maxTokensPerChunk: number
@@ -79,6 +80,7 @@ const DEFAULT_SETTINGS: AppSettings = {
         trimWhitespace: false,
         // Export options
         includeManifest: true,
+        includeFileTree: false,
         includeLineNumbers: false,
         enableAutoSplit: false,
         maxTokensPerChunk: 32000,

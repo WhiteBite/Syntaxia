@@ -33,6 +33,19 @@
         {{ message.content }}
       </div>
 
+      <!-- Context Used Badge (only for assistant messages with context) -->
+      <div v-if="message.role === 'assistant' && message.contextUsed" class="mt-3">
+        <ContextUsedBadge
+          :context="message.contextUsed"
+          @toggle="contextExpanded = $event"
+        />
+        <ContextUsedDetails
+          v-if="contextExpanded"
+          :context="message.contextUsed"
+          @add-context="$emit('addContext')"
+        />
+      </div>
+
       <!-- Actions -->
       <div class="flex gap-2 mt-2">
         <button @click="copyToClipboard" class="text-xs text-gray-400 hover:text-gray-300 transition-colors"
@@ -69,9 +82,16 @@ import { useI18n } from '@/composables/useI18n'
 import { useUIStore } from '@/stores/ui.store'
 import { onUnmounted, ref } from 'vue'
 import type { Message } from '../model/chat.store'
+import ContextUsedBadge from './ContextUsedBadge.vue'
+import ContextUsedDetails from './ContextUsedDetails.vue'
+import type { ContextUsed } from './types'
+
+interface MessageWithContext extends Message {
+  contextUsed?: ContextUsed
+}
 
 interface Props {
-  message: Message
+  message: MessageWithContext
 }
 
 const props = defineProps<Props>()
@@ -79,11 +99,13 @@ const props = defineProps<Props>()
 defineEmits<{
   (e: 'delete', messageId: string): void
   (e: 'edit', messageId: string, content: string): void
+  (e: 'addContext'): void
 }>()
 
 const uiStore = useUIStore()
 const { t } = useI18n()
 const copied = ref(false)
+const contextExpanded = ref(false)
 let copyTimeoutId: ReturnType<typeof setTimeout> | null = null
 
 // Очистка таймера при размонтировании компонента

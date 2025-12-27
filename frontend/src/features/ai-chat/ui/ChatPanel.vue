@@ -15,6 +15,7 @@
       </div>
       
       <div class="flex items-center gap-2">
+        <ChatHistoryPanel />
         <button
           v-if="sandboxStore.hasChanges"
           @click="showChangesPanel = true"
@@ -32,16 +33,22 @@
       </div>
     </div>
 
+    <!-- Mode Selector & Token Budget Bar -->
+    <div class="chat-toolbar">
+      <ChatModeSelector />
+      <TokenBudgetBar />
+    </div>
+
     <!-- Messages -->
-    <div ref="messagesContainer" class="flex-1 overflow-auto p-4 space-y-4">
+    <div ref="messagesContainer" class="flex-1 overflow-auto p-4 space-y-4 min-h-0">
       <div v-if="!chatStore.hasMessages" class="empty-state h-full">
         <div class="empty-state-icon !w-20 !h-20 !rounded-2xl">
           <svg class="!w-10 !h-10 text-purple-500/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
         </div>
-        <p class="empty-state-title !text-lg">{{ t('chat.comingSoonTitle') }}</p>
-        <p class="empty-state-text mb-4">{{ t('chat.comingSoonDesc') }}</p>
+        <p class="empty-state-title !text-lg">{{ t('chat.emptyTitle') }}</p>
+        <p class="empty-state-text mb-4">{{ t('chat.emptyDesc') }}</p>
         <div class="info-box text-left text-xs space-y-2">
           <p class="font-semibold text-gray-300">{{ t('chat.plannedFeatures') }}</p>
           <ul class="list-disc list-inside text-gray-400 space-y-1">
@@ -73,12 +80,20 @@
       </div>
     </div>
 
+    <!-- Execute Mode Preview Modal -->
+    <ExecutePreviewModal
+      v-if="showExecutePreview"
+      :file-count="previewFileCount"
+      @confirm="confirmExecute"
+      @cancel="cancelExecute"
+    />
+
     <!-- Input -->
     <div class="border-t border-gray-700 p-4">
       <div class="flex gap-2">
         <textarea
           v-model="inputMessage"
-          :placeholder="t('chat.placeholder')"
+          :placeholder="inputPlaceholder"
           class="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 resize-none"
           rows="3"
           @keydown.ctrl.enter="handleSend"
@@ -107,34 +122,81 @@
 
 <script setup lang="ts">
 import { useI18n } from '@/composables/useI18n'
+import { useFileStore } from '@/features/files'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useChatStore } from '../model/chat.store'
 import { useSandboxStore } from '@/stores/sandbox.store'
 import MessageItem from './MessageItem.vue'
 import ChangePreviewModal from './ChangePreviewModal.vue'
+import ChatModeSelector from './ChatModeSelector.vue'
+import ChatHistoryPanel from './ChatHistoryPanel.vue'
+import TokenBudgetBar from './TokenBudgetBar.vue'
+import ExecutePreviewModal from './ExecutePreviewModal.vue'
 
 const { t } = useI18n()
 const chatStore = useChatStore()
 const sandboxStore = useSandboxStore()
+const fileStore = useFileStore()
 const inputMessage = ref('')
 const messagesContainer = ref<HTMLElement>()
 const showChangesPanel = ref(false)
+const showExecutePreview = ref(false)
+const previewFileCount = ref(0)
+const pendingMessage = ref('')
 
 const canSend = computed(() => {
   return inputMessage.value.trim().length > 0 && !chatStore.isStreaming
+})
+
+const inputPlaceholder = computed(() => {
+  return chatStore.chatMode === 'explore' 
+    ? t('chat.placeholder') 
+    : t('chat.placeholderWithContext')
 })
 
 async function handleSend() {
   if (!canSend.value) return
   
   const message = inputMessage.value.trim()
+  
+  // In execute mode, show preview if >5 files selected
+  if (chatStore.chatMode === 'execute') {
+    const selectedCount = fileStore.selectedFilesList?.length || 0
+    if (selectedCount > 5) {
+      pendingMessage.value = message
+      previewFileCount.value = selectedCount
+      showExecutePreview.value = true
+      return
+    }
+  }
+  
+  await sendMessageInternal(message)
+}
+
+async function sendMessageInternal(message: string) {
   inputMessage.value = ''
   
-  await chatStore.sendMessage(message)
+  // TODO: Pass exploreOnly flag to sendMessage when backend supports it
+  // const exploreOnly = chatStore.chatMode === 'explore'
+  
+  await chatStore.sendMessage(message, undefined)
   scrollToBottom()
   
   // Refresh sandbox state after AI response
   await sandboxStore.refresh()
+}
+
+function confirmExecute() {
+  showExecutePreview.value = false
+  if (pendingMessage.value) {
+    sendMessageInternal(pendingMessage.value)
+    pendingMessage.value = ''
+  }
+}
+
+function cancelExecute() {
+  showExecutePreview.value = false
+  pendingMessage.value = ''
 }
 
 function scrollToBottom() {
@@ -153,3 +215,23 @@ watch(() => chatStore.messages.length, () => {
   scrollToBottom()
 })
 </script>
+
+<style scoped>
+.chat-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-1);
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+@media (max-width: 480px) {
+  .chat-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+</style>

@@ -2,6 +2,7 @@ import type { domain } from '#wailsjs/go/models'
 import { useLogger } from '@/composables/useLogger'
 import { useContextStore } from '@/features/context/model/context.store'
 import { apiService } from '@/services/api.service'
+import { useProjectStore } from '@/stores/project.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { computed, ref } from 'vue'
 
@@ -16,6 +17,7 @@ export type ExportMode = 'clipboard' | 'ai' | 'human'
 export function useExport() {
   const contextStore = useContextStore()
   const settingsStore = useSettingsStore()
+  const projectStore = useProjectStore()
 
   const isOpen = ref(false)
   const isExporting = ref(false)
@@ -29,6 +31,7 @@ export function useExport() {
     exportFormat: settingsStore.settings.context.outputFormat === 'xml' ? 'manifest' : 'plain',
     stripComments: settingsStore.settings.context.stripComments,
     includeManifest: settingsStore.settings.context.includeManifest,
+    includeFileTree: settingsStore.settings.context.includeFileTree,
     tokenLimit: settingsStore.settings.context.maxTokens,
     enableAutoSplit: settingsStore.settings.context.enableAutoSplit,
     maxTokensPerChunk: settingsStore.settings.context.maxTokensPerChunk,
@@ -84,10 +87,12 @@ export function useExport() {
       const exportSettingsJson = {
         mode: selectedMode.value,
         context: contextContent,
+        projectPath: projectStore.projectPath,
 
         // Clipboard settings
         stripComments: s.stripComments,
         includeManifest: s.includeManifest,
+        includeFileTree: s.includeFileTree,
         exportFormat: s.exportFormat,
 
         // AI settings

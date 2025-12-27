@@ -12,6 +12,8 @@ import (
 type BuildOptions struct {
 	StripComments   bool
 	IncludeManifest bool
+	IncludeFileTree bool   // Include ASCII file tree before content
+	ProjectName     string // Project name for file tree root
 }
 
 // entry — одна запись контекста
@@ -64,11 +66,20 @@ func stripComments(text string) string {
 
 // Построение ASCII-дерева из путей
 func buildTree(paths []string) string {
+	return buildTreeWithRoot(paths, ".")
+}
+
+// buildTreeWithRoot builds ASCII tree with custom root name
+func buildTreeWithRoot(paths []string, rootName string) string {
+	if len(paths) == 0 {
+		return ""
+	}
+
 	type node struct {
 		name     string
 		children map[string]*node
 	}
-	root := &node{name: ".", children: map[string]*node{}}
+	root := &node{name: rootName, children: map[string]*node{}}
 
 	// Сортируем входные пути для детерминизма
 	sortedPaths := make([]string, len(paths))
@@ -92,15 +103,18 @@ func buildTree(paths []string) string {
 	}
 
 	var b strings.Builder
-	var walk func(n *node, prefix string, isLast bool)
-	walk = func(n *node, prefix string, isLast bool) {
-		if n != root {
+	// Write root name
+	b.WriteString(rootName + "\n")
+
+	var walk func(n *node, prefix string, isLast bool, isRoot bool)
+	walk = func(n *node, prefix string, isLast bool, isRoot bool) {
+		if !isRoot {
 			if isLast {
-				b.WriteString(prefix + "└─ " + n.name + "\n")
-				prefix += "   "
+				b.WriteString(prefix + "└── " + n.name + "\n")
+				prefix += "    "
 			} else {
-				b.WriteString(prefix + "├─ " + n.name + "\n")
-				prefix += "│  "
+				b.WriteString(prefix + "├── " + n.name + "\n")
+				prefix += "│   "
 			}
 		}
 		// детерминированный порядок
@@ -110,16 +124,31 @@ func buildTree(paths []string) string {
 		}
 		sort.Strings(keys)
 		for i, k := range keys {
-			walk(n.children[k], prefix, i == len(keys)-1)
+			walk(n.children[k], prefix, i == len(keys)-1, false)
 		}
 	}
-	walk(root, "", true)
+	walk(root, "", true, true)
 	return b.String()
 }
 
 // buildPlainFormat builds plain text format output
 func buildPlainFormat(entries []entry, opts BuildOptions) string {
 	var b strings.Builder
+
+	// Add file tree if requested
+	if opts.IncludeFileTree {
+		paths := make([]string, 0, len(entries))
+		for _, e := range entries {
+			paths = append(paths, e.Path)
+		}
+		rootName := opts.ProjectName
+		if rootName == "" {
+			rootName = "project"
+		}
+		b.WriteString(buildTreeWithRoot(paths, rootName))
+		b.WriteString("\n")
+	}
+
 	for _, e := range entries {
 		content := e.Content
 		if opts.StripComments {
@@ -138,9 +167,13 @@ func buildManifestFormat(entries []entry, opts BuildOptions) string {
 	for _, e := range entries {
 		paths = append(paths, e.Path)
 	}
+	rootName := opts.ProjectName
+	if rootName == "" {
+		rootName = "."
+	}
 	var b strings.Builder
 	b.WriteString("Manifest:\n")
-	b.WriteString(buildTree(paths))
+	b.WriteString(buildTreeWithRoot(paths, rootName))
 	b.WriteString("\n")
 	for _, e := range entries {
 		content := e.Content
@@ -308,5 +341,7 @@ func (f *ContextFormatterImpl) Format(format string, contextContent string, opts
 	return BuildFromContext(format, contextContent, BuildOptions{
 		StripComments:   opts.StripComments,
 		IncludeManifest: opts.IncludeManifest,
+		IncludeFileTree: opts.IncludeFileTree,
+		ProjectName:     opts.ProjectName,
 	})
 }

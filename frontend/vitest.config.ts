@@ -7,8 +7,9 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
+    // Unit & integration tests only (exclude e2e which use Playwright)
     include: ['tests/**/*.spec.ts', 'tests/**/*.test.ts'],
-    exclude: ['node_modules', 'dist', 'wailsjs'],
+    exclude: ['node_modules', 'dist', 'wailsjs', 'tests/e2e/**', '**/*.e2e.spec.ts'],
     testTimeout: 1000,
     hookTimeout: 10000,
     coverage: {

@@ -1,4 +1,10 @@
 {
+    "languages.count": "{count} languages",
+    "languages.tooltipTitle": "Supported Languages",
+    "languages.clickToExpand": "Click for details",
+    "languages.panelTitle": "Programming Languages",
+    "languages.panelSubtitle": "Full analysis support",
+    "languages.ariaLabel": "Supported programming languages",
     "tools.title": "Tools",
     "tools.description": "Additional functions and settings",
     "tools.copyContext": "Copy Context",

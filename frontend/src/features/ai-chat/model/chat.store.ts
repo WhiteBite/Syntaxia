@@ -36,8 +36,28 @@ export interface ChatHistory {
     updatedAt: string
 }
 
+// Smart context preview for user confirmation
+export interface SmartContextPreview {
+    task: string
+    files: Array<{
+        path: string
+        reason: string
+        relevance: number
+        tokens: number
+    }>
+    totalTokens: number
+    smartContext: SmartContextResult
+}
+
 const CHAT_HISTORY_KEY = 'chat-history'
 const MAX_SAVED_CHATS = 10 // Chat-specific limit, not from CACHE
+
+export type ChatMode = 'explore' | 'execute'
+
+export interface TokenBudget {
+    used: number
+    limit: number
+}
 
 export const useChatStore = defineStore('chat', () => {
     const uiStore = useUIStore()
@@ -51,6 +71,8 @@ export const useChatStore = defineStore('chat', () => {
     const chatHistory = ref<ChatHistory[]>([])
     const currentChatId = ref<string | null>(null)
     const streamingContent = ref<string>('')
+    const chatMode = ref<ChatMode>('explore')
+    const tokenBudget = ref<TokenBudget>({ used: 0, limit: 128000 })
 
     // Computed
     const hasMessages = computed(() => messages.value.length > 0)
@@ -71,6 +93,8 @@ export const useChatStore = defineStore('chat', () => {
         // Collect smart context
         const selectedPaths = fileStore.selectedFilesList
 
+        logger.info(`sendMessage: projectRoot="${projectRoot}", selectedFiles=${selectedPaths.length}`)
+
         let smartContext: SmartContextResult | undefined
         try {
             smartContext = await apiService.collectSmartContext({
@@ -79,7 +103,9 @@ export const useChatStore = defineStore('chat', () => {
                 selectedFiles: selectedPaths.length > 0 ? selectedPaths : undefined,
                 maxTokens: 50000
             })
-        } catch {
+            logger.info(`Smart context collected: ${smartContext?.relevantFiles?.length || 0} files`)
+        } catch (err) {
+            logger.warn('Failed to collect smart context:', err)
             // Continue without smart context
         }
 
@@ -262,6 +288,16 @@ export const useChatStore = defineStore('chat', () => {
         }
     }
 
+    // Set chat mode (explore/execute)
+    function setChatMode(mode: ChatMode): void {
+        chatMode.value = mode
+    }
+
+    // Update token budget
+    function updateTokenBudget(used: number, limit: number): void {
+        tokenBudget.value = { used, limit }
+    }
+
     return {
         // State
         messages,
@@ -270,6 +306,8 @@ export const useChatStore = defineStore('chat', () => {
         chatHistory,
         currentChatId,
         streamingContent,
+        chatMode,
+        tokenBudget,
         // Computed
         hasMessages,
         lastMessage,
@@ -283,6 +321,8 @@ export const useChatStore = defineStore('chat', () => {
         deleteMessage,
         editMessage,
         stopStreaming,
-        deleteChat
+        deleteChat,
+        setChatMode,
+        updateTokenBudget
     }
 })

@@ -17,10 +17,34 @@
 
         <button 
           v-if="hasContext" 
-          class="chip-clear" 
+          class="chip-clear chip-clear--context" 
           @click="clearContext"
+          :title="t('context.clearTooltip')"
         >
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M9 12l6 6m0-6l-6 6" />
+          </svg>
           {{ t('context.clear') }}
+        </button>
+
+        <span v-if="hasContext && hasMessages" class="chip-divider">|</span>
+
+        <button 
+          v-if="hasMessages" 
+          class="chip-clear chip-clear--chat" 
+          @click="confirmClearChat"
+          :title="t('chat.clearTooltip')"
+        >
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M9 9l6 6m0-6l-6 6" />
+          </svg>
+          {{ t('chat.clear') }}
         </button>
       </div>
     </Transition>
@@ -170,6 +194,7 @@ const selectedMentionIndex = ref(0)
 const hasText = computed(() => props.modelValue.trim().length > 0)
 const isDisabled = computed(() => props.isThinking || props.isAnalyzing)
 const hasContext = computed(() => contextStore.hasContext)
+const hasMessages = computed(() => props.hasMessages)
 const fileCount = computed(() => contextStore.fileCount)
 const files = computed(() => contextStore.summary?.files || [])
 const selectedFilesCount = computed(() => fileStore.selectedCount || 0)
@@ -276,6 +301,12 @@ function clearContext() {
   contextStore.clearContext()
 }
 
+function confirmClearChat() {
+  if (confirm(t('chat.clearConfirm'))) {
+    emit('clear')
+  }
+}
+
 function removeFile(file: string) {
   contextStore.removeFileFromContext(file)
 }
@@ -354,18 +385,39 @@ watch(() => props.isThinking, (thinking) => {
 }
 
 .chip-clear {
-  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   padding: 4px 8px;
   font-size: 11px;
   color: #6b7280;
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: color 0.15s ease;
+  transition: all 0.15s ease;
 }
 
-.chip-clear:hover {
+.chip-clear--context {
+  margin-left: auto;
+}
+
+.chip-clear--context:hover {
   color: #f87171;
+}
+
+.chip-divider {
+  color: #4b5563;
+  margin: 0 4px;
+  font-size: 12px;
+  user-select: none;
+}
+
+.chip-clear--chat {
+  color: #9ca3af;
+}
+
+.chip-clear--chat:hover {
+  color: #a78bfa;
 }
 
 /* Context List */
