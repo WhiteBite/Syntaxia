@@ -218,6 +218,10 @@ export function FindContextByTopic(arg1, arg2) {
   return window['go']['main']['App']['FindContextByTopic'](arg1, arg2);
 }
 
+export function FindReferences(arg1, arg2, arg3) {
+  return window['go']['main']['App']['FindReferences'](arg1, arg2, arg3);
+}
+
 export function GenerateAndPublishDiff(arg1, arg2, arg3) {
   return window['go']['main']['App']['GenerateAndPublishDiff'](arg1, arg2, arg3);
 }
@@ -298,6 +302,10 @@ export function GetBudgetPolicies() {
   return window['go']['main']['App']['GetBudgetPolicies']();
 }
 
+export function GetClassHierarchy(arg1, arg2, arg3) {
+  return window['go']['main']['App']['GetClassHierarchy'](arg1, arg2, arg3);
+}
+
 export function GetCommitHistory(arg1, arg2) {
   return window['go']['main']['App']['GetCommitHistory'](arg1, arg2);
 }
@@ -364,6 +372,10 @@ export function GetGuardrailPolicies() {
 
 export function GetImpactPreview(arg1, arg2) {
   return window['go']['main']['App']['GetImpactPreview'](arg1, arg2);
+}
+
+export function GetImports(arg1, arg2) {
+  return window['go']['main']['App']['GetImports'](arg1, arg2);
 }
 
 export function GetMetricsSummary() {
@@ -466,12 +478,20 @@ export function GetSupportedSBOMFormats() {
   return window['go']['main']['App']['GetSupportedSBOMFormats']();
 }
 
+export function GetSymbolDefinition(arg1, arg2, arg3) {
+  return window['go']['main']['App']['GetSymbolDefinition'](arg1, arg2, arg3);
+}
+
 export function GetSymbolDependencies(arg1, arg2, arg3) {
   return window['go']['main']['App']['GetSymbolDependencies'](arg1, arg2, arg3);
 }
 
 export function GetSymbolDependents(arg1, arg2, arg3) {
   return window['go']['main']['App']['GetSymbolDependents'](arg1, arg2, arg3);
+}
+
+export function GetSymbolInfo(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['GetSymbolInfo'](arg1, arg2, arg3, arg4);
 }
 
 export function GetSymbolSuggestions(arg1, arg2, arg3) {
@@ -614,6 +634,10 @@ export function ListReports(arg1) {
   return window['go']['main']['App']['ListReports'](arg1);
 }
 
+export function ListSymbols(arg1, arg2) {
+  return window['go']['main']['App']['ListSymbols'](arg1, arg2);
+}
+
 export function LoadAPIKey(arg1) {
   return window['go']['main']['App']['LoadAPIKey'](arg1);
 }
@@ -748,6 +772,10 @@ export function ScanLicenses(arg1) {
 
 export function ScanVulnerabilities(arg1) {
   return window['go']['main']['App']['ScanVulnerabilities'](arg1);
+}
+
+export function SearchSymbols(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SearchSymbols'](arg1, arg2, arg3);
 }
 
 export function SelectDirectory() {

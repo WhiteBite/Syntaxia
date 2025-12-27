@@ -112,6 +112,8 @@ export function ExportReport(arg1:string,arg2:string):Promise<string>;
 
 export function FindContextByTopic(arg1:string,arg2:string):Promise<Array<main.ContextMemoryEntry>>;
 
+export function FindReferences(arg1:string,arg2:string,arg3:string):Promise<Array<domain.SymbolReference>>;
+
 export function GenerateAndPublishDiff(arg1:string,arg2:string,arg3:domain.DiffFormat):Promise<domain.DiffResult>;
 
 export function GenerateCode(arg1:string,arg2:string):Promise<string>;
@@ -152,6 +154,8 @@ export function GetBranches(arg1:string):Promise<string>;
 
 export function GetBudgetPolicies():Promise<Array<domain.BudgetPolicy>>;
 
+export function GetClassHierarchy(arg1:string,arg2:string,arg3:string):Promise<main.ClassHierarchy>;
+
 export function GetCommitHistory(arg1:string,arg2:number):Promise<string>;
 
 export function GetContext(arg1:string):Promise<string>;
@@ -185,6 +189,8 @@ export function GetGitignoreContentForProject(arg1:string):Promise<string>;
 export function GetGuardrailPolicies():Promise<Array<domain.GuardrailPolicy>>;
 
 export function GetImpactPreview(arg1:string,arg2:Array<string>):Promise<main.ImpactPreviewResult>;
+
+export function GetImports(arg1:string,arg2:string):Promise<main.ImportInfo>;
 
 export function GetMetricsSummary():Promise<Record<string, any>>;
 
@@ -236,9 +242,13 @@ export function GetSupportedAnalyzers():Promise<Array<domain.StaticAnalyzerType>
 
 export function GetSupportedSBOMFormats():Promise<Array<domain.SBOMFormat>>;
 
+export function GetSymbolDefinition(arg1:string,arg2:string,arg3:string):Promise<main.SymbolLocation>;
+
 export function GetSymbolDependencies(arg1:string,arg2:string,arg3:domain.SymbolGraph):Promise<Array<domain.SymbolNode>>;
 
 export function GetSymbolDependents(arg1:string,arg2:string,arg3:domain.SymbolGraph):Promise<Array<domain.SymbolNode>>;
+
+export function GetSymbolInfo(arg1:string,arg2:string,arg3:string,arg4:string):Promise<main.SymbolDetails>;
 
 export function GetSymbolSuggestions(arg1:string,arg2:string,arg3:domain.SymbolGraph):Promise<Array<domain.SymbolNode>>;
 
@@ -310,6 +320,8 @@ export function ListFilesAtRef(arg1:string,arg2:string):Promise<string>;
 
 export function ListReports(arg1:string):Promise<string>;
 
+export function ListSymbols(arg1:string,arg2:string):Promise<Array<main.SymbolInfo>>;
+
 export function LoadAPIKey(arg1:string):Promise<string>;
 
 export function LoadTasks():Promise<Array<domain.Task>>;
@@ -377,6 +389,8 @@ export function SaveWindowState():Promise<void>;
 export function ScanLicenses(arg1:string):Promise<domain.LicenseScanResult>;
 
 export function ScanVulnerabilities(arg1:string):Promise<domain.VulnerabilityScanResult>;
+
+export function SearchSymbols(arg1:string,arg2:string,arg3:string):Promise<Array<main.SymbolInfo>>;
 
 export function SelectDirectory():Promise<string>;
 

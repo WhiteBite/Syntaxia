@@ -335,3 +335,8 @@ func (s *Service) serializeTaskProtocolResult(result *domain.TaskProtocolResult)
 
 	return []byte(content), nil
 }
+
+// NewChatIntegration creates a ChatIntegrationService using the same dependencies
+func (s *Service) NewChatIntegration() *ChatIntegrationService {
+	return NewChatIntegrationService(s.log, s.buildService, s.testService, s.staticAnalyzer)
+}

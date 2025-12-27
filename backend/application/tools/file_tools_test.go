@@ -1348,3 +1348,415 @@ func TestSearchFiles_GlobMatch(t *testing.T) {
 		t.Errorf("should not include test.txt, got: %s", result)
 	}
 }
+
+
+// === Tests for Batch Write Files ===
+
+func TestBatchWriteFiles_AllSuccess(t *testing.T) {
+	tmpDir := t.TempDir()
+	sandbox := NewMockSandboxFS()
+
+	handler := NewFileToolsHandler(nil, nil, sandbox)
+	result, err := handler.Execute("batch_write_files", map[string]any{
+		"files": []interface{}{
+			map[string]interface{}{"path": "file1.txt", "content": "content1"},
+			map[string]interface{}{"path": "file2.txt", "content": "content2"},
+		},
+	}, tmpDir)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(result, "Successfully wrote 2 files") {
+		t.Errorf("expected success message, got: %s", result)
+	}
+	if !strings.Contains(result, "file1.txt") || !strings.Contains(result, "file2.txt") {
+		t.Errorf("expected file names in result, got: %s", result)
+	}
+}
+
+func TestBatchWriteFiles_PartialFailure(t *testing.T) {
+	tmpDir := t.TempDir()
+	sandbox := NewMockSandboxFS()
+	
+	// Set write error to simulate failure
+	sandbox.writeError = fmt.Errorf("simulated write error")
+
+	handler := NewFileToolsHandler(nil, nil, sandbox)
+	result, err := handler.Execute("batch_write_files", map[string]any{
+		"files": []interface{}{
+			map[string]interface{}{"path": "file1.txt", "content": "content1"},
+			map[string]interface{}{"path": "file2.txt", "content": "content2"},
+		},
+	}, tmpDir)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(result, "partially failed") && !strings.Contains(result, "Failed") {
+		t.Errorf("expected failure message, got: %s", result)
+	}
+}
+
+func TestBatchWriteFiles_MissingFiles(t *testing.T) {
+	tmpDir := t.TempDir()
+	handler := NewFileToolsHandler(nil, nil, NewMockSandboxFS())
+
+	_, err := handler.Execute("batch_write_files", map[string]any{}, tmpDir)
+	if err == nil {
+		t.Fatal("expected error for missing files parameter")
+	}
+	if !strings.Contains(err.Error(), "files parameter is required") {
+		t.Errorf("expected 'files parameter is required' error, got: %v", err)
+	}
+}
+
+func TestBatchWriteFiles_EmptyFiles(t *testing.T) {
+	tmpDir := t.TempDir()
+	handler := NewFileToolsHandler(nil, nil, NewMockSandboxFS())
+
+	_, err := handler.Execute("batch_write_files", map[string]any{
+		"files": []interface{}{},
+	}, tmpDir)
+	if err == nil {
+		t.Fatal("expected error for empty files array")
+	}
+	if !strings.Contains(err.Error(), "cannot be empty") {
+		t.Errorf("expected 'cannot be empty' error, got: %v", err)
+	}
+}
+
+func TestBatchWriteFiles_InvalidFileObject(t *testing.T) {
+	tmpDir := t.TempDir()
+	handler := NewFileToolsHandler(nil, nil, NewMockSandboxFS())
+
+	_, err := handler.Execute("batch_write_files", map[string]any{
+		"files": []interface{}{"not an object"},
+	}, tmpDir)
+	if err == nil {
+		t.Fatal("expected error for invalid file object")
+	}
+	if !strings.Contains(err.Error(), "not a valid object") {
+		t.Errorf("expected 'not a valid object' error, got: %v", err)
+	}
+}
+
+func TestBatchWriteFiles_MissingPath(t *testing.T) {
+	tmpDir := t.TempDir()
+	handler := NewFileToolsHandler(nil, nil, NewMockSandboxFS())
+
+	_, err := handler.Execute("batch_write_files", map[string]any{
+		"files": []interface{}{
+			map[string]interface{}{"content": "content"},
+		},
+	}, tmpDir)
+	if err == nil {
+		t.Fatal("expected error for missing path")
+	}
+	if !strings.Contains(err.Error(), "missing 'path'") {
+		t.Errorf("expected 'missing path' error, got: %v", err)
+	}
+}
+
+func TestBatchWriteFiles_MissingContent(t *testing.T) {
+	tmpDir := t.TempDir()
+	handler := NewFileToolsHandler(nil, nil, NewMockSandboxFS())
+
+	_, err := handler.Execute("batch_write_files", map[string]any{
+		"files": []interface{}{
+			map[string]interface{}{"path": "test.txt"},
+		},
+	}, tmpDir)
+	if err == nil {
+		t.Fatal("expected error for missing content")
+	}
+	if !strings.Contains(err.Error(), "missing 'content'") {
+		t.Errorf("expected 'missing content' error, got: %v", err)
+	}
+}
+
+func TestBatchWriteFiles_PathTraversal(t *testing.T) {
+	tmpDir := t.TempDir()
+	handler := NewFileToolsHandler(nil, nil, NewMockSandboxFS())
+
+	_, err := handler.Execute("batch_write_files", map[string]any{
+		"files": []interface{}{
+			map[string]interface{}{"path": "../../../etc/passwd", "content": "malicious"},
+		},
+	}, tmpDir)
+	if err == nil {
+		t.Fatal("expected error for path traversal")
+	}
+	if !strings.Contains(err.Error(), "path traversal") {
+		t.Errorf("expected 'path traversal' error, got: %v", err)
+	}
+}
+
+func TestBatchWriteFiles_ContentTooLarge(t *testing.T) {
+	tmpDir := t.TempDir()
+	handler := NewFileToolsHandler(nil, nil, NewMockSandboxFS())
+
+	largeContent := strings.Repeat("x", MaxFileSize+1)
+	_, err := handler.Execute("batch_write_files", map[string]any{
+		"files": []interface{}{
+			map[string]interface{}{"path": "large.txt", "content": largeContent},
+		},
+	}, tmpDir)
+	if err == nil {
+		t.Fatal("expected error for content too large")
+	}
+	if !strings.Contains(err.Error(), "exceeds maximum size") {
+		t.Errorf("expected 'exceeds maximum size' error, got: %v", err)
+	}
+}
+
+func TestBatchWriteFiles_SandboxNotInitialized(t *testing.T) {
+	tmpDir := t.TempDir()
+	handler := NewFileToolsHandler(nil, nil, nil)
+
+	_, err := handler.Execute("batch_write_files", map[string]any{
+		"files": []interface{}{
+			map[string]interface{}{"path": "test.txt", "content": "content"},
+		},
+	}, tmpDir)
+	if err == nil {
+		t.Fatal("expected error when sandbox not initialized")
+	}
+	if !strings.Contains(err.Error(), "sandbox not initialized") {
+		t.Errorf("expected 'sandbox not initialized' error, got: %v", err)
+	}
+}
+
+// === Tests for Preview Diff ===
+
+func TestPreviewDiff_NewFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	handler := NewFileToolsHandler(nil, nil, nil)
+
+	result, err := handler.Execute("preview_diff", map[string]any{
+		"path":        "new_file.txt",
+		"new_content": "line1\nline2\nline3",
+	}, tmpDir)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(result, "Diff Preview") {
+		t.Errorf("expected diff preview header, got: %s", result)
+	}
+	if !strings.Contains(result, "new_file.txt") {
+		t.Errorf("expected file name in result, got: %s", result)
+	}
+}
+
+func TestPreviewDiff_ExistingFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	os.WriteFile(filepath.Join(tmpDir, "existing.txt"), []byte("old line1\nold line2"), 0644)
+
+	handler := NewFileToolsHandler(nil, nil, nil)
+	result, err := handler.Execute("preview_diff", map[string]any{
+		"path":        "existing.txt",
+		"new_content": "new line1\nold line2\nnew line3",
+	}, tmpDir)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(result, "Lines added") {
+		t.Errorf("expected lines added info, got: %s", result)
+	}
+}
+
+func TestPreviewDiff_NoChanges(t *testing.T) {
+	tmpDir := t.TempDir()
+	content := "line1\nline2\nline3"
+	os.WriteFile(filepath.Join(tmpDir, "same.txt"), []byte(content), 0644)
+
+	handler := NewFileToolsHandler(nil, nil, nil)
+	result, err := handler.Execute("preview_diff", map[string]any{
+		"path":        "same.txt",
+		"new_content": content,
+	}, tmpDir)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(result, "No changes") {
+		t.Errorf("expected 'No changes' message, got: %s", result)
+	}
+}
+
+func TestPreviewDiff_MissingPath(t *testing.T) {
+	tmpDir := t.TempDir()
+	handler := NewFileToolsHandler(nil, nil, nil)
+
+	_, err := handler.Execute("preview_diff", map[string]any{
+		"new_content": "content",
+	}, tmpDir)
+	if err == nil {
+		t.Fatal("expected error for missing path")
+	}
+	if !strings.Contains(err.Error(), "path is required") {
+		t.Errorf("expected 'path is required' error, got: %v", err)
+	}
+}
+
+func TestPreviewDiff_MissingNewContent(t *testing.T) {
+	tmpDir := t.TempDir()
+	handler := NewFileToolsHandler(nil, nil, nil)
+
+	_, err := handler.Execute("preview_diff", map[string]any{
+		"path": "test.txt",
+	}, tmpDir)
+	if err == nil {
+		t.Fatal("expected error for missing new_content")
+	}
+	if !strings.Contains(err.Error(), "new_content is required") {
+		t.Errorf("expected 'new_content is required' error, got: %v", err)
+	}
+}
+
+func TestPreviewDiff_PathTraversal(t *testing.T) {
+	tmpDir := t.TempDir()
+	handler := NewFileToolsHandler(nil, nil, nil)
+
+	_, err := handler.Execute("preview_diff", map[string]any{
+		"path":        "../../../etc/passwd",
+		"new_content": "content",
+	}, tmpDir)
+	if err == nil {
+		t.Fatal("expected error for path traversal")
+	}
+	if !strings.Contains(err.Error(), "path traversal") {
+		t.Errorf("expected 'path traversal' error, got: %v", err)
+	}
+}
+
+func TestPreviewDiff_LongDiff(t *testing.T) {
+	tmpDir := t.TempDir()
+	
+	// Create file with many lines
+	var oldLines []string
+	for i := 0; i < 50; i++ {
+		oldLines = append(oldLines, fmt.Sprintf("old line %d", i))
+	}
+	os.WriteFile(filepath.Join(tmpDir, "long.txt"), []byte(strings.Join(oldLines, "\n")), 0644)
+
+	// Create new content with many changes
+	var newLines []string
+	for i := 0; i < 50; i++ {
+		newLines = append(newLines, fmt.Sprintf("new line %d", i))
+	}
+
+	handler := NewFileToolsHandler(nil, nil, nil)
+	result, err := handler.Execute("preview_diff", map[string]any{
+		"path":        "long.txt",
+		"new_content": strings.Join(newLines, "\n"),
+	}, tmpDir)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(result, "more lines") {
+		t.Errorf("expected truncation message for long diff, got: %s", result)
+	}
+}
+
+// === Tests for Tool Registration ===
+
+func TestFileToolsHandler_CanHandle_NewTools(t *testing.T) {
+	handler := NewFileToolsHandler(nil, nil, nil)
+
+	tests := []struct {
+		toolName string
+		want     bool
+	}{
+		{"batch_write_files", true},
+		{"preview_diff", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.toolName, func(t *testing.T) {
+			if got := handler.CanHandle(tt.toolName); got != tt.want {
+				t.Errorf("CanHandle(%q) = %v, want %v", tt.toolName, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFileToolsHandler_GetTools_IncludesNewTools(t *testing.T) {
+	handler := NewFileToolsHandler(nil, nil, nil)
+	tools := handler.GetTools()
+
+	toolNames := make(map[string]bool)
+	for _, tool := range tools {
+		toolNames[tool.Name] = true
+	}
+
+	expectedNewTools := []string{"batch_write_files", "preview_diff"}
+	for _, expected := range expectedNewTools {
+		if !toolNames[expected] {
+			t.Errorf("expected tool %q not found in GetTools()", expected)
+		}
+	}
+}
+
+// === Tests for Diff Generation ===
+
+func TestGenerateUnifiedDiff_AddedLines(t *testing.T) {
+	diff, added, _ := generateUnifiedDiff("test.txt", "", "line1\nline2")
+	
+	if added < 2 {
+		t.Errorf("expected at least 2 lines added, got %d", added)
+	}
+	if !strings.Contains(diff, "+line1") {
+		t.Errorf("expected '+line1' in diff, got: %s", diff)
+	}
+}
+
+func TestGenerateUnifiedDiff_RemovedLines(t *testing.T) {
+	diff, _, removed := generateUnifiedDiff("test.txt", "line1\nline2", "")
+	
+	if removed < 2 {
+		t.Errorf("expected at least 2 lines removed, got %d", removed)
+	}
+	if !strings.Contains(diff, "-line1") {
+		t.Errorf("expected '-line1' in diff, got: %s", diff)
+	}
+}
+
+func TestGenerateUnifiedDiff_ModifiedLines(t *testing.T) {
+	diff, added, removed := generateUnifiedDiff("test.txt", "old line", "new line")
+	
+	if added == 0 {
+		t.Error("expected some lines added")
+	}
+	if removed == 0 {
+		t.Error("expected some lines removed")
+	}
+	if !strings.Contains(diff, "-old line") || !strings.Contains(diff, "+new line") {
+		t.Errorf("expected old and new lines in diff, got: %s", diff)
+	}
+}
+
+func TestGenerateUnifiedDiff_NoChanges(t *testing.T) {
+	diff, added, removed := generateUnifiedDiff("test.txt", "same", "same")
+	
+	if diff != "" {
+		t.Errorf("expected empty diff for identical content, got: %s", diff)
+	}
+	if added != 0 || removed != 0 {
+		t.Errorf("expected 0 added/removed, got added=%d removed=%d", added, removed)
+	}
+}
+
+func TestGenerateUnifiedDiff_Header(t *testing.T) {
+	diff, _, _ := generateUnifiedDiff("myfile.go", "old", "new")
+	
+	if !strings.Contains(diff, "--- a/myfile.go") {
+		t.Errorf("expected '--- a/myfile.go' header, got: %s", diff)
+	}
+	if !strings.Contains(diff, "+++ b/myfile.go") {
+		t.Errorf("expected '+++ b/myfile.go' header, got: %s", diff)
+	}
+}

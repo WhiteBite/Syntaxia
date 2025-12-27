@@ -2,12 +2,28 @@ package analyzers
 
 import (
 	"context"
+	"crypto/md5" //nolint:gosec // MD5 used for content hashing, not security
+	"encoding/hex"
 	"os"
 	"path/filepath"
-	"syntaxia/domain/analysis"
 	"strings"
 	"sync"
+	"syntaxia/domain/analysis"
+	"time"
 )
+
+// FileModTime tracks file modification times for incremental updates
+type FileModTime struct {
+	Path    string
+	ModTime time.Time
+}
+
+// IncrementalUpdate represents a batch of file changes for incremental indexing
+type IncrementalUpdate struct {
+	AddedFiles    []string // New files to index
+	ModifiedFiles []string // Files that have been modified
+	DeletedFiles  []string // Files that have been deleted
+}
 
 // SymbolIndexImpl implements analysis.SymbolIndex
 type SymbolIndexImpl struct {
@@ -23,16 +39,24 @@ type SymbolIndexImpl struct {
 	indexOnce    sync.Once
 	lastIndexErr error
 	projectRoot  string
+
+	// Incremental update tracking
+	fileModTimes map[string]time.Time
+
+	// Vue cross-file symbol resolution
+	vueComponents map[string]*VueComponentInfo
 }
 
 // NewSymbolIndex creates a new symbol index
 func NewSymbolIndex(registry analysis.AnalyzerRegistry) *SymbolIndexImpl {
 	return &SymbolIndexImpl{
-		symbols:  make([]analysis.Symbol, 0),
-		byName:   make(map[string][]int),
-		byFile:   make(map[string][]int),
-		byKind:   make(map[analysis.SymbolKind][]int),
-		registry: registry,
+		symbols:       make([]analysis.Symbol, 0),
+		byName:        make(map[string][]int),
+		byFile:        make(map[string][]int),
+		byKind:        make(map[analysis.SymbolKind][]int),
+		registry:      registry,
+		fileModTimes:  make(map[string]time.Time),
+		vueComponents: make(map[string]*VueComponentInfo),
 	}
 }
 
@@ -40,7 +64,6 @@ func NewSymbolIndex(registry analysis.AnalyzerRegistry) *SymbolIndexImpl {
 // Subsequent calls return immediately with cached result.
 // Use Invalidate() to force re-indexing.
 func (idx *SymbolIndexImpl) EnsureIndexed(ctx context.Context, projectRoot string) error {
-	// Check if project changed - need to re-index
 	idx.mu.RLock()
 	needsReindex := idx.projectRoot != "" && idx.projectRoot != projectRoot
 	idx.mu.RUnlock()
@@ -67,41 +90,41 @@ func (idx *SymbolIndexImpl) Invalidate() {
 	idx.byFile = make(map[string][]int)
 	idx.byKind = make(map[analysis.SymbolKind][]int)
 	idx.indexed = false
-	idx.indexOnce = sync.Once{} // Reset sync.Once
+	idx.indexOnce = sync.Once{}
 	idx.lastIndexErr = nil
 	idx.projectRoot = ""
+	idx.fileModTimes = make(map[string]time.Time)
+	idx.vueComponents = make(map[string]*VueComponentInfo)
 }
 
-// InvalidateFile removes symbols from a specific file and marks for partial re-index.
-// Useful for incremental updates when a single file changes.
+// InvalidateFile removes symbols from a specific file.
 func (idx *SymbolIndexImpl) InvalidateFile(filePath string) {
 	idx.mu.Lock()
 	defer idx.mu.Unlock()
 
-	// Get indices of symbols in this file
 	fileIndices := idx.byFile[filePath]
 	if len(fileIndices) == 0 {
 		return
 	}
 
-	// Mark symbols as removed (we'll rebuild indices)
 	toRemove := make(map[int]bool)
 	for _, i := range fileIndices {
 		toRemove[i] = true
 	}
 
-	// Rebuild symbols slice without removed ones
 	newSymbols := make([]analysis.Symbol, 0, len(idx.symbols)-len(toRemove))
-	oldToNew := make(map[int]int) // old index -> new index
 	for i, sym := range idx.symbols {
 		if !toRemove[i] {
-			oldToNew[i] = len(newSymbols)
 			newSymbols = append(newSymbols, sym)
 		}
 	}
 	idx.symbols = newSymbols
 
-	// Rebuild all indices
+	idx.rebuildIndices()
+}
+
+// rebuildIndices rebuilds all indices from symbols slice.
+func (idx *SymbolIndexImpl) rebuildIndices() {
 	idx.byName = make(map[string][]int)
 	idx.byFile = make(map[string][]int)
 	idx.byKind = make(map[analysis.SymbolKind][]int)
@@ -121,13 +144,14 @@ func (idx *SymbolIndexImpl) Clear() {
 	idx.byFile = make(map[string][]int)
 	idx.byKind = make(map[analysis.SymbolKind][]int)
 	idx.indexed = false
+	idx.fileModTimes = make(map[string]time.Time)
+	idx.vueComponents = make(map[string]*VueComponentInfo)
 }
 
 func (idx *SymbolIndexImpl) IndexProject(ctx context.Context, projectRoot string) error {
 	idx.mu.Lock()
 	defer idx.mu.Unlock()
 
-	// Clear index while holding the lock to prevent race condition
 	idx.symbols = make([]analysis.Symbol, 0)
 	idx.byName = make(map[string][]int)
 	idx.byFile = make(map[string][]int)
@@ -139,8 +163,7 @@ func (idx *SymbolIndexImpl) IndexProject(ctx context.Context, projectRoot string
 			return nil
 		}
 		if info.IsDir() {
-			name := info.Name()
-			if strings.HasPrefix(name, ".") || name == "node_modules" || name == "vendor" || name == "build" || name == "dist" {
+			if shouldSkipDirectory(info.Name()) {
 				return filepath.SkipDir
 			}
 			return nil
@@ -285,4 +308,269 @@ func (idx *SymbolIndexImpl) IsIndexed() bool {
 	idx.mu.RLock()
 	defer idx.mu.RUnlock()
 	return idx.indexed
+}
+
+// IncrementalUpdate performs incremental indexing - only re-indexes changed files.
+// Returns the number of files that were re-indexed.
+func (idx *SymbolIndexImpl) IncrementalUpdate(ctx context.Context, projectRoot string) (int, error) {
+	idx.mu.Lock()
+	if idx.projectRoot == "" {
+		idx.projectRoot = projectRoot
+	}
+	idx.mu.Unlock()
+
+	changedFiles, deletedFiles := idx.detectChanges(projectRoot)
+
+	for _, relPath := range deletedFiles {
+		idx.InvalidateFile(relPath)
+		idx.mu.Lock()
+		delete(idx.fileModTimes, relPath)
+		delete(idx.vueComponents, relPath)
+		idx.mu.Unlock()
+	}
+
+	for _, relPath := range changedFiles {
+		fullPath := filepath.Join(projectRoot, relPath)
+		_ = idx.reindexFile(ctx, fullPath, relPath)
+	}
+
+	return len(changedFiles) + len(deletedFiles), nil
+}
+
+// UpdateIncremental applies a batch of file changes to the index.
+// This is useful for file watcher integration where changes are batched.
+func (idx *SymbolIndexImpl) UpdateIncremental(ctx context.Context, update IncrementalUpdate) error {
+	idx.mu.RLock()
+	projectRoot := idx.projectRoot
+	idx.mu.RUnlock()
+
+	// Process deleted files first
+	for _, relPath := range update.DeletedFiles {
+		idx.InvalidateFile(relPath)
+		idx.mu.Lock()
+		delete(idx.fileModTimes, relPath)
+		delete(idx.vueComponents, relPath)
+		idx.mu.Unlock()
+	}
+
+	// Process modified files (remove old symbols, then reindex)
+	for _, relPath := range update.ModifiedFiles {
+		fullPath := filepath.Join(projectRoot, relPath)
+		if err := idx.reindexFile(ctx, fullPath, relPath); err != nil {
+			continue // Skip files that fail to reindex
+		}
+	}
+
+	// Process added files
+	for _, relPath := range update.AddedFiles {
+		fullPath := filepath.Join(projectRoot, relPath)
+		if err := idx.reindexFile(ctx, fullPath, relPath); err != nil {
+			continue // Skip files that fail to index
+		}
+	}
+
+	return nil
+}
+
+// GetFileHash returns the content hash for a file (MD5).
+// Returns empty string if file is not tracked.
+func (idx *SymbolIndexImpl) GetFileHash(path string) string {
+	idx.mu.RLock()
+	defer idx.mu.RUnlock()
+
+	if _, exists := idx.fileModTimes[path]; !exists {
+		return ""
+	}
+
+	// Read file and compute hash
+	fullPath := filepath.Join(idx.projectRoot, path)
+	content, err := os.ReadFile(fullPath)
+	if err != nil {
+		return ""
+	}
+
+	return computeFileHash(content)
+}
+
+// SetFileHash is a no-op for SymbolIndexImpl as it uses mod times.
+// Provided for interface compatibility with cached implementations.
+func (idx *SymbolIndexImpl) SetFileHash(path, hash string) {
+	// SymbolIndexImpl uses mod times, not hashes
+	// This method exists for interface compatibility
+}
+
+// computeFileHash computes MD5 hash of content.
+func computeFileHash(content []byte) string {
+	h := md5.Sum(content) //nolint:gosec // MD5 used for content hashing, not security
+	return hex.EncodeToString(h[:])
+}
+
+// detectChanges finds changed and deleted files.
+func (idx *SymbolIndexImpl) detectChanges(projectRoot string) (changed, deleted []string) {
+	_ = filepath.Walk(projectRoot, func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() {
+			if info != nil && info.IsDir() && shouldSkipDirectory(info.Name()) {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		if idx.registry.GetAnalyzer(path) == nil {
+			return nil
+		}
+
+		relPath, _ := filepath.Rel(projectRoot, path)
+
+		idx.mu.RLock()
+		lastMod, exists := idx.fileModTimes[relPath]
+		idx.mu.RUnlock()
+
+		if !exists || info.ModTime().After(lastMod) {
+			changed = append(changed, relPath)
+		}
+		return nil
+	})
+
+	idx.mu.RLock()
+	trackedFiles := make(map[string]bool)
+	for f := range idx.fileModTimes {
+		trackedFiles[f] = true
+	}
+	idx.mu.RUnlock()
+
+	for relPath := range trackedFiles {
+		fullPath := filepath.Join(projectRoot, relPath)
+		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+			deleted = append(deleted, relPath)
+		}
+	}
+
+	return changed, deleted
+}
+
+// reindexFile re-indexes a single file, removing old symbols first.
+func (idx *SymbolIndexImpl) reindexFile(ctx context.Context, fullPath, relPath string) error {
+	content, err := os.ReadFile(fullPath)
+	if err != nil {
+		return err
+	}
+
+	info, err := os.Stat(fullPath)
+	if err != nil {
+		return err
+	}
+
+	analyzer := idx.registry.GetAnalyzer(fullPath)
+	if analyzer == nil {
+		return nil
+	}
+
+	idx.InvalidateFile(relPath)
+
+	symbols, err := analyzer.ExtractSymbols(ctx, relPath, content)
+	if err != nil {
+		return err
+	}
+
+	idx.mu.Lock()
+	defer idx.mu.Unlock()
+
+	for _, sym := range symbols {
+		idx.addSymbolLocked(sym)
+	}
+
+	idx.fileModTimes[relPath] = info.ModTime()
+
+	if strings.HasSuffix(relPath, ".vue") {
+		idx.extractVueComponentInfo(relPath, content)
+	}
+
+	return nil
+}
+
+// UpdateFile updates a single file in the index (for file watcher integration).
+func (idx *SymbolIndexImpl) UpdateFile(ctx context.Context, filePath string, content []byte) error {
+	idx.InvalidateFile(filePath)
+
+	analyzer := idx.registry.GetAnalyzer(filePath)
+	if analyzer == nil {
+		return nil
+	}
+
+	symbols, err := analyzer.ExtractSymbols(ctx, filePath, content)
+	if err != nil {
+		return err
+	}
+
+	idx.mu.Lock()
+	defer idx.mu.Unlock()
+
+	for _, sym := range symbols {
+		idx.addSymbolLocked(sym)
+	}
+
+	idx.fileModTimes[filePath] = time.Now()
+
+	if strings.HasSuffix(filePath, ".vue") {
+		idx.extractVueComponentInfo(filePath, content)
+	}
+
+	return nil
+}
+
+// RemoveFile removes a file from the index.
+func (idx *SymbolIndexImpl) RemoveFile(filePath string) {
+	idx.InvalidateFile(filePath)
+	idx.mu.Lock()
+	delete(idx.fileModTimes, filePath)
+	delete(idx.vueComponents, filePath)
+	idx.mu.Unlock()
+}
+
+// GetChangedFiles returns list of files that have changed since last index.
+func (idx *SymbolIndexImpl) GetChangedFiles(projectRoot string) ([]string, error) {
+	var changed []string
+
+	err := filepath.Walk(projectRoot, func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() {
+			if info != nil && info.IsDir() && shouldSkipDirectory(info.Name()) {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		if idx.registry.GetAnalyzer(path) == nil {
+			return nil
+		}
+
+		relPath, _ := filepath.Rel(projectRoot, path)
+
+		idx.mu.RLock()
+		lastMod, exists := idx.fileModTimes[relPath]
+		idx.mu.RUnlock()
+
+		if !exists || info.ModTime().After(lastMod) {
+			changed = append(changed, relPath)
+		}
+		return nil
+	})
+
+	return changed, err
+}
+
+// shouldSkipDirectory checks if a directory should be skipped during indexing.
+func shouldSkipDirectory(name string) bool {
+	skipDirs := map[string]bool{
+		"node_modules": true,
+		"vendor":       true,
+		"build":        true,
+		"dist":         true,
+		".git":         true,
+		".idea":        true,
+		".vscode":      true,
+		"__pycache__":  true,
+		".next":        true,
+		".nuxt":        true,
+	}
+	return strings.HasPrefix(name, ".") || skipDirs[name]
 }

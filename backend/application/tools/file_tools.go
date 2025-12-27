@@ -39,13 +39,15 @@ func NewFileToolsHandler(logger domain.Logger, fileReader domain.FileContentRead
 }
 
 var fileToolNames = map[string]bool{
-	"search_files":   true,
-	"search_content": true,
-	"read_file":      true,
-	"write_file":     true,
-	"list_directory": true,
-	"get_file_info":  true,
-	"list_functions": true,
+	"search_files":      true,
+	"search_content":    true,
+	"read_file":         true,
+	"write_file":        true,
+	"list_directory":    true,
+	"get_file_info":     true,
+	"list_functions":    true,
+	"batch_write_files": true,
+	"preview_diff":      true,
 }
 
 // CanHandle returns true if this handler can handle the given tool
@@ -140,6 +142,32 @@ func (h *FileToolsHandler) GetTools() []domain.Tool {
 				Required: []string{"path"},
 			},
 		},
+		{
+			Name:        "batch_write_files",
+			Description: "Write multiple files at once. All writes are atomic - if any fails, none are applied.",
+			Parameters: domain.ToolParameters{
+				Type: "object",
+				Properties: map[string]domain.ToolProperty{
+					"files": {
+						Type:        "array",
+						Description: "Array of files to write, each with 'path' and 'content' properties",
+					},
+				},
+				Required: []string{"files"},
+			},
+		},
+		{
+			Name:        "preview_diff",
+			Description: "Preview changes before writing. Shows unified diff between current and new content.",
+			Parameters: domain.ToolParameters{
+				Type: "object",
+				Properties: map[string]domain.ToolProperty{
+					"path":        {Type: "string", Description: "Path to the file (relative to project root)"},
+					"new_content": {Type: "string", Description: "New content to compare against current file"},
+				},
+				Required: []string{"path", "new_content"},
+			},
+		},
 	}
 }
 
@@ -160,6 +188,10 @@ func (h *FileToolsHandler) Execute(toolName string, args map[string]any, project
 		return h.getFileInfo(args, projectRoot)
 	case "list_functions":
 		return h.listFunctions(args, projectRoot)
+	case "batch_write_files":
+		return h.batchWriteFiles(args, projectRoot)
+	case "preview_diff":
+		return h.previewDiff(args, projectRoot)
 	default:
 		return "", fmt.Errorf("unknown file tool: %s", toolName)
 	}
