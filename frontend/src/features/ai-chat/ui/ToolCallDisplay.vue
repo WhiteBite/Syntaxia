@@ -37,8 +37,15 @@
             </div>
         </div>
 
+        <!-- Streaming Diff Preview for write_file -->
+        <StreamingDiffPreview
+            v-if="isWriteFileTool && fileContent"
+            :file-path="filePath"
+            :content="fileContent"
+        />
+
         <div v-if="expanded" class="tool-call-details">
-            <div v-if="Object.keys(args).length > 0" class="tool-call-section">
+            <div v-if="Object.keys(args).length > 0 && !isWriteFileTool" class="tool-call-section">
                 <div class="tool-call-section-title">{{ t('toolCalls.arguments') }}</div>
                 <pre class="tool-call-code">{{ formatArgs(args) }}</pre>
             </div>
@@ -62,6 +69,7 @@
 <script setup lang="ts">
 import { useI18n } from '@/composables/useI18n';
 import { computed, ref } from 'vue';
+import StreamingDiffPreview from './StreamingDiffPreview.vue';
 
 const { t } = useI18n()
 
@@ -70,7 +78,7 @@ const TOOL_CATEGORIES: Record<string, { icon: string; label: string; tools: stri
     file: {
         icon: '📁',
         label: 'File',
-        tools: ['search_files', 'search_content', 'read_file', 'list_directory', 'get_file_info', 'list_functions']
+        tools: ['search_files', 'search_content', 'read_file', 'list_directory', 'get_file_info', 'list_functions', 'write_file', 'create_file', 'delete_file']
     },
     git: {
         icon: '🔀',
@@ -104,6 +112,9 @@ const TOOL_CATEGORIES: Record<string, { icon: string; label: string; tools: stri
     }
 }
 
+// Tools that write files
+const WRITE_FILE_TOOLS = ['write_file', 'create_file']
+
 interface Props {
     toolName: string
     args: Record<string, unknown>
@@ -125,6 +136,19 @@ const statusClass = computed(() => ({
     'tool-call-icon-failed': props.status === 'failed',
 }))
 
+// Check if this is a write_file tool
+const isWriteFileTool = computed(() => WRITE_FILE_TOOLS.includes(props.toolName))
+
+// Extract file path from args
+const filePath = computed(() => {
+    return (props.args.path as string) || (props.args.file_path as string) || (props.args.filePath as string) || ''
+})
+
+// Extract file content from args
+const fileContent = computed(() => {
+    return (props.args.content as string) || (props.args.contents as string) || ''
+})
+
 // Get category for tool
 const category = computed(() => {
     for (const [key, cat] of Object.entries(TOOL_CATEGORIES)) {
@@ -140,6 +164,12 @@ const categoryLabel = computed(() => TOOL_CATEGORIES[category.value]?.label || '
 const briefArgs = computed(() => {
     const keys = Object.keys(props.args)
     if (keys.length === 0) return ''
+    
+    // For write_file, show the file path
+    if (isWriteFileTool.value && filePath.value) {
+        const fileName = filePath.value.split('/').pop() || filePath.value
+        return fileName.length > 30 ? fileName.slice(0, 30) + '...' : fileName
+    }
     
     // Show first meaningful arg value
     const firstKey = keys[0]

@@ -35,12 +35,17 @@ export type {
     SmartContextPreview,
     ToolCallLog as ToolCallInfo
 } from './composables/useChatMessages'
+export { useCodeExplanation } from './composables/useCodeExplanation'
+export type { ExplainCodeOptions } from './composables/useCodeExplanation'
 export { useContextPreview } from './composables/useContextPreview'
 export type { ContextFilePreview } from './composables/useContextPreview'
 export { useMentionAutocomplete } from './composables/useMentionAutocomplete'
 export type { UseMentionAutocompleteOptions } from './composables/useMentionAutocomplete'
 export { useMentions } from './composables/useMentions'
 export type { MentionResult, UseMentionsOptions } from './composables/useMentions'
+
+// UI Components
+export { default as ExplainCodeButton } from './ui/ExplainCodeButton.vue'
 
 // Types
 export { GIT_MENTION_OPTIONS, MENTION_PATTERNS } from './types/mentions'

@@ -2,6 +2,8 @@
   <div 
     ref="containerRef" 
     class="virtual-code-view"
+    @mouseup="handleMouseUp"
+    @mousedown="handleMouseDown"
   >
     <div 
       class="virtual-code-view__spacer"
@@ -32,10 +34,20 @@
         </template>
       </div>
     </div>
+    
+    <!-- Explain Code Button -->
+    <ExplainCodeButton
+      :visible="showExplainButton"
+      :selected-code="selectedCode"
+      :language="detectedLanguage"
+      :position="explainButtonPosition"
+      @explained="hideExplainButton"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import { ExplainCodeButton } from '@/features/ai-chat'
 import { useVirtualizer } from '@tanstack/vue-virtual'
 import { computed, ref, watch } from 'vue'
 
@@ -46,18 +58,24 @@ const props = defineProps<{
   highlightedLines?: Set<number>
   searchQuery?: string
   chunkBoundaries?: Set<number>
-  outputFormat?: string // 'xml' | 'markdown' | 'plain'
+  outputFormat?: string
 }>()
 
 const containerRef = ref<HTMLElement | null>(null)
 const lineCount = computed(() => props.lines.length)
+
+// Selection tracking state
+const selectedCode = ref('')
+const showExplainButton = ref(false)
+const explainButtonPosition = ref({ x: 0, y: 0 })
+const detectedLanguage = ref('text')
 
 // Virtual scroller setup
 const virtualizer = useVirtualizer({
   get count() { return lineCount.value },
   getScrollElement: () => containerRef.value,
   estimateSize: () => LINE_HEIGHT,
-  overscan: 30, // Render extra items above/below viewport for smooth scroll
+  overscan: 30,
 })
 
 const virtualItems = computed(() => virtualizer.value.getVirtualItems())
@@ -80,11 +98,8 @@ function getChunkNumber(lineIndex: number): number {
 
 function highlightLine(line: string): string {
   let result = escapeHtml(line)
-  
-  // Apply syntax highlighting based on format
   result = applySyntaxHighlight(result, props.outputFormat || 'plain')
   
-  // Apply search highlighting on top
   if (props.searchQuery) {
     const query = escapeHtml(props.searchQuery)
     const regex = new RegExp(`(${escapeRegex(query)})`, 'gi')
@@ -137,15 +152,51 @@ function escapeRegex(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-// Scroll to specific line
+// Selection tracking
+function handleMouseDown(): void {
+  hideExplainButton()
+}
+
+function handleMouseUp(): void {
+  const selection = window.getSelection()
+  const text = selection?.toString().trim() || ''
+  
+  if (text.length > 0) {
+    selectedCode.value = text
+    detectedLanguage.value = detectLanguage(text)
+    
+    const rect = selection?.getRangeAt(0).getBoundingClientRect()
+    if (rect) {
+      explainButtonPosition.value = {
+        x: Math.min(rect.right + 8, window.innerWidth - 120),
+        y: rect.top - 32
+      }
+      showExplainButton.value = true
+    }
+  } else {
+    hideExplainButton()
+  }
+}
+
+function hideExplainButton(): void {
+  showExplainButton.value = false
+  selectedCode.value = ''
+}
+
+function detectLanguage(code: string): string {
+  if (code.includes('func ') || code.includes('package ')) return 'go'
+  if (code.includes('const ') || code.includes('let ') || code.includes('=>')) return 'typescript'
+  if (code.includes('def ') || code.includes('import ')) return 'python'
+  if (code.includes('<template>') || code.includes('v-if')) return 'vue'
+  return props.outputFormat || 'text'
+}
+
 function scrollToLine(lineIndex: number) {
   virtualizer.value.scrollToIndex(lineIndex, { align: 'center' })
 }
 
-// Expose for parent component
 defineExpose({ scrollToLine, containerRef })
 
-// Re-measure when lines change
 watch(() => props.lines.length, () => virtualizer.value.measure())
 </script>
 

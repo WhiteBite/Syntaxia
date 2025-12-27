@@ -166,5 +166,18 @@
     "chat.dragDrop.dropHere": "Drop files here",
     "chat.dragDrop.addToContext": "Files will be added to context",
     "chat.dragDrop.filesAdded": "Added {count} file(s) to context",
-    "chat.dragDrop.filesAlreadyInContext": "{count} file(s) already in context"
+    "chat.dragDrop.filesAlreadyInContext": "{count} file(s) already in context",
+    "chat.explain.button": "Explain",
+    "chat.explain.tooltip": "Explain this code",
+    "chat.explain.prompt": "Explain this code:\n{code}",
+    "chat.explain.menuItem": "Explain code",
+    "chat.autoSuggest.title": "Suggested Files",
+    "chat.autoSuggest.hide": "Hide suggestions",
+    "chat.autoSuggest.addSelected": "Add selected",
+    "streamingDiff.moreLines": "{count} more lines...",
+    "streamingDiff.expand": "Expand",
+    "streamingDiff.collapse": "Collapse",
+    "streamingDiff.newFile": "New file",
+    "streamingDiff.modified": "Modified",
+    "streamingDiff.deleted": "Deleted"
 }

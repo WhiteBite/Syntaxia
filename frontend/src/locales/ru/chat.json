@@ -166,5 +166,18 @@
     "chat.dragDrop.dropHere": "Перетащите сюда",
     "chat.dragDrop.addToContext": "Файлы будут добавлены в контекст",
     "chat.dragDrop.filesAdded": "Добавлено {count} файл(ов) в контекст",
-    "chat.dragDrop.filesAlreadyInContext": "{count} файл(ов) уже в контексте"
+    "chat.dragDrop.filesAlreadyInContext": "{count} файл(ов) уже в контексте",
+    "chat.explain.button": "Объяснить",
+    "chat.explain.tooltip": "Объяснить этот код",
+    "chat.explain.prompt": "Объясни этот код на русском языке:\n{code}",
+    "chat.explain.menuItem": "Объяснить код",
+    "chat.autoSuggest.title": "Рекомендуемые файлы",
+    "chat.autoSuggest.hide": "Скрыть подсказки",
+    "chat.autoSuggest.addSelected": "Добавить выбранные",
+    "streamingDiff.moreLines": "ещё {count} строк...",
+    "streamingDiff.expand": "Развернуть",
+    "streamingDiff.collapse": "Свернуть",
+    "streamingDiff.newFile": "Новый файл",
+    "streamingDiff.modified": "Изменён",
+    "streamingDiff.deleted": "Удалён"
 }

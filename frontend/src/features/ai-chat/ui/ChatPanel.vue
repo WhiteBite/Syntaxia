@@ -112,6 +112,21 @@
 
     <!-- Input -->
     <div class="border-t border-gray-700 p-4">
+      <!-- Auto-suggest Panel -->
+      <AutoSuggestPanel
+        :visible="autoSuggest.shouldShow.value"
+        :suggestions="autoSuggest.suggestions.value"
+        :selected-paths="autoSuggest.selectedPaths.value"
+        :get-file-name="autoSuggest.getFileName"
+        :get-file-path="autoSuggest.getFilePath"
+        :get-source-badge-class="autoSuggest.getSourceBadgeClass"
+        :get-source-label="autoSuggest.getSourceLabel"
+        :get-relevance-percent="autoSuggest.getRelevancePercent"
+        @toggle="autoSuggest.toggleSelect"
+        @add="handleAddSuggestedFiles"
+        @hide="autoSuggest.hide"
+      />
+
       <div class="flex gap-2">
         <textarea
           v-model="inputMessage"
@@ -149,12 +164,14 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { useChatStore } from '../model/chat.store'
 import { useSandboxStore } from '@/stores/sandbox.store'
 import { useChatDragDrop } from '../composables/useChatDragDrop'
+import { useAutoSuggest } from '../composables/useAutoSuggest'
 import MessageItem from './MessageItem.vue'
 import ChangePreviewModal from './ChangePreviewModal.vue'
 import ChatModeSelector from './ChatModeSelector.vue'
 import ChatHistoryPanel from './ChatHistoryPanel.vue'
 import TokenBudgetBar from './TokenBudgetBar.vue'
 import ExecutePreviewModal from './ExecutePreviewModal.vue'
+import AutoSuggestPanel from './AutoSuggestPanel.vue'
 
 const { t } = useI18n()
 const chatStore = useChatStore()
@@ -167,6 +184,20 @@ const showChangesPanel = ref(false)
 const showExecutePreview = ref(false)
 const previewFileCount = ref(0)
 const pendingMessage = ref('')
+
+// Auto-suggest composable
+const selectedFilesList = computed(() => fileStore.selectedFilesList || [])
+const autoSuggest = useAutoSuggest({
+  inputText: inputMessage,
+  currentFiles: selectedFilesList,
+  onAddFiles: (files) => {
+    files.forEach(path => fileStore.selectPath(path))
+  }
+})
+
+function handleAddSuggestedFiles() {
+  autoSuggest.addSelected()
+}
 
 const canSend = computed(() => {
   return inputMessage.value.trim().length > 0 && !chatStore.isStreaming
