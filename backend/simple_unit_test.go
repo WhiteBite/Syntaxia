@@ -165,13 +165,13 @@ func TestTokenEstimation_SimpleAlgorithm(t *testing.T) {
 func TestContextBuildOptions_Validation(t *testing.T) {
 	// Test ContextBuildOptions structure
 	options := domain.ContextBuildOptions{
-		IncludeManifest: true,
+		IncludeFileTree: true,
 		StripComments:   false,
 		MaxTokens:       10000,
 	}
 
 	// Validate boolean options
-	assert.IsType(t, true, options.IncludeManifest)
+	assert.IsType(t, true, options.IncludeFileTree)
 	assert.IsType(t, false, options.StripComments)
 
 	// Validate numeric constraints
@@ -187,7 +187,7 @@ func TestContextBuildOptions_Validation(t *testing.T) {
 	var deserializedOptions domain.ContextBuildOptions
 	err = json.Unmarshal(jsonData, &deserializedOptions)
 	assert.NoError(t, err)
-	assert.Equal(t, options.IncludeManifest, deserializedOptions.IncludeManifest)
+	assert.Equal(t, options.IncludeFileTree, deserializedOptions.IncludeFileTree)
 	assert.Equal(t, options.StripComments, deserializedOptions.StripComments)
 	assert.Equal(t, options.MaxTokens, deserializedOptions.MaxTokens)
 }

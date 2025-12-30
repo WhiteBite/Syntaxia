@@ -14,6 +14,15 @@ export interface AIProvider {
     description: string
 }
 
+export interface QwenCLISettings {
+    approvalMode: string
+    outputFormat: string
+    yoloMode: boolean
+    sandboxMode: boolean
+    maxSessionTurns: number
+    debugMode: boolean
+}
+
 export interface AISettingsState {
     selectedProvider: string
     openAIAPIKey: string
@@ -23,6 +32,7 @@ export interface AISettingsState {
     localAIAPIKey: string
     localAIHost: string
     qwenHost: string
+    qwenCLISettings: QwenCLISettings
     selectedModels: Record<string, string>
     availableModels: Record<string, string[]>
 }
@@ -50,6 +60,14 @@ export function useAISettings() {
         localAIAPIKey: '',
         localAIHost: 'http://localhost:8080',
         qwenHost: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+        qwenCLISettings: {
+            approvalMode: 'yolo',
+            outputFormat: 'text',
+            yoloMode: true,
+            sandboxMode: false,
+            maxSessionTurns: 0,
+            debugMode: false
+        },
         selectedModels: {},
         availableModels: {}
     })
@@ -166,6 +184,14 @@ export function useAISettings() {
             settings.localAIAPIKey = dto.localAIAPIKey || ''
             settings.localAIHost = dto.localAIHost || 'http://localhost:8080'
             settings.qwenHost = dto.qwenHost || 'https://dashscope.aliyuncs.com/compatible-mode/v1'
+            settings.qwenCLISettings = dto.qwenCLISettings || {
+                approvalMode: 'yolo',
+                outputFormat: 'text',
+                yoloMode: true,
+                sandboxMode: false,
+                maxSessionTurns: 0,
+                debugMode: false
+            }
             settings.selectedModels = dto.selectedModels || {}
             settings.availableModels = dto.availableModels || {}
         } catch (e) {
@@ -188,6 +214,7 @@ export function useAISettings() {
             dto.localAIAPIKey = settings.localAIAPIKey
             dto.localAIHost = settings.localAIHost
             dto.qwenHost = settings.qwenHost
+            dto.qwenCLISettings = settings.qwenCLISettings
             dto.selectedModels = settings.selectedModels
 
             await apiService.saveSettings(JSON.stringify(dto))
@@ -208,6 +235,10 @@ export function useAISettings() {
         } finally {
             isSaving.value = false
         }
+    }
+
+    function updateQwenCLISettings(key: string, value: string | boolean | number) {
+        (settings.qwenCLISettings as Record<string, string | boolean | number>)[key] = value
     }
 
     return {
@@ -236,6 +267,7 @@ export function useAISettings() {
         updateHost,
         toggleShowApiKey,
         loadSettings,
-        saveSettings
+        saveSettings,
+        updateQwenCLISettings
     }
 }

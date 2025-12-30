@@ -46,7 +46,47 @@
       </div>
     </div>
 
-    <!-- Error state -->
+    <!-- Token Limit Error state -->
+    <div v-else-if="tokenLimitError" class="flex items-center justify-center h-full">
+      <div class="text-center max-w-md mx-auto px-4">
+        <div class="w-16 h-16 mx-auto mb-4 bg-red-500/20 rounded-2xl flex items-center justify-center border border-red-500/30">
+          <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+          </svg>
+        </div>
+        <p class="text-lg font-semibold text-red-400 mb-2">{{ t('error.tokenLimitTitle') }}</p>
+        
+        <div class="token-limit-stats mb-4">
+          <div class="flex items-center justify-center gap-4">
+            <div class="stat-item">
+              <span class="stat-value text-red-400">{{ formatTokens(tokenLimitError.actual) }}</span>
+              <span class="stat-label">{{ t('error.tokenLimitActual') }}</span>
+            </div>
+            <span class="text-gray-500">/</span>
+            <div class="stat-item">
+              <span class="stat-value text-gray-400">{{ formatTokens(tokenLimitError.limit) }}</span>
+              <span class="stat-label">{{ t('error.tokenLimitMax') }}</span>
+            </div>
+          </div>
+          <div class="token-bar mt-3">
+            <div class="token-bar-fill" :style="{ width: Math.min(tokenLimitError.percent, 100) + '%' }"></div>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">{{ t('error.tokenLimitOverBy', { amount: formatTokens(tokenLimitError.actual - tokenLimitError.limit) }) }}</p>
+        </div>
+
+        <div class="info-box text-left">
+          <p class="text-sm font-medium text-gray-300 mb-2">{{ t('error.tokenLimitSuggestions') }}:</p>
+          <ul class="text-sm text-gray-400 space-y-1.5">
+            <li>• {{ t('error.tokenLimitReduceFiles') }}</li>
+            <li>• {{ t('error.tokenLimitIncreaseLimit') }}</li>
+            <li>• {{ t('error.tokenLimitDisableLimit') }}</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Generic Error state -->
     <div v-else-if="error" class="flex items-center justify-center h-full">
       <div class="text-center max-w-md">
         <div class="w-16 h-16 mx-auto mb-4 bg-red-500/20 rounded-2xl flex items-center justify-center border border-red-500/30">
@@ -147,10 +187,10 @@ import { useI18n } from '@/composables/useI18n'
 import { TemplatePreviewBlock } from '@/features/templates'
 import SkeletonLoader from './SkeletonLoader.vue'
 import VirtualCodeView from './VirtualCodeView.vue'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type { OutputFormat } from '@/stores/settings.store'
 
-defineProps<{
+const props = defineProps<{
   isBuilding: boolean
   buildProgress: number
   statusText: string
@@ -171,6 +211,25 @@ defineProps<{
 const { t } = useI18n()
 const virtualCodeRef = ref<InstanceType<typeof VirtualCodeView> | null>(null)
 const exportModalRef = ref<InstanceType<typeof ExportModal> | null>(null)
+
+// Parse TOKEN_LIMIT_EXCEEDED error
+const tokenLimitError = computed(() => {
+  if (!props.error?.startsWith('TOKEN_LIMIT_EXCEEDED:')) return null
+  const parts = props.error.split(':')
+  const actual = Number(parts[1]) || 0
+  const limit = Number(parts[2]) || 0
+  return {
+    actual,
+    limit,
+    percent: limit > 0 ? (actual / limit) * 100 : 100
+  }
+})
+
+function formatTokens(count: number): string {
+  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`
+  if (count >= 1000) return `${Math.round(count / 1000)}K`
+  return String(count)
+}
 
 // Expose methods for parent
 function scrollToLine(lineNum: number) {
@@ -201,5 +260,34 @@ defineExpose({
   @apply rounded-lg p-4 font-mono text-sm;
   background: var(--bg-1);
   color: var(--text-secondary);
+}
+
+/* Token limit error styles */
+.token-limit-stats {
+  @apply p-4 rounded-lg;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.stat-item {
+  @apply flex flex-col items-center;
+}
+
+.stat-value {
+  @apply text-xl font-bold;
+}
+
+.stat-label {
+  @apply text-xs text-gray-500;
+}
+
+.token-bar {
+  @apply h-2 rounded-full overflow-hidden;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.token-bar-fill {
+  @apply h-full rounded-full;
+  background: linear-gradient(90deg, #ef4444, #f87171);
 }
 </style>

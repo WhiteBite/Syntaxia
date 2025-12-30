@@ -339,7 +339,6 @@ type ContextBuilder interface {
 // ContextFormatOptions options for context formatting
 type ContextFormatOptions struct {
 	StripComments   bool   `json:"stripComments"`
-	IncludeManifest bool   `json:"includeManifest"`
 	IncludeFileTree bool   `json:"includeFileTree"` // Include ASCII file tree before content
 	ProjectName     string `json:"projectName"`     // Project name for file tree root
 }

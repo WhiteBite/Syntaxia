@@ -85,3 +85,59 @@ defineEmits<{
 
 const { t } = useI18n()
 </script>
+
+<style scoped>
+/* User messages - right aligned */
+.message-user {
+  display: flex;
+  justify-content: flex-end;
+  padding: 4px 0;
+}
+
+.message-user .flex {
+  flex-direction: row-reverse;
+  max-width: 85%;
+}
+
+.message-user .flex-1 {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.2) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 16px 16px 4px 16px;
+  padding: 10px 14px;
+}
+
+.message-user .text-xs {
+  color: #e0e7ff;
+}
+
+/* Assistant messages - left aligned */
+.message-assistant {
+  display: flex;
+  justify-content: flex-start;
+  padding: 4px 0;
+}
+
+.message-assistant .flex {
+  max-width: 90%;
+}
+
+.message-assistant .flex-1 {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 4px 16px 16px 16px;
+  padding: 10px 14px;
+}
+
+/* Avatar styling */
+.message-avatar {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(99, 102, 241, 0.1) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 50%;
+}
+</style>

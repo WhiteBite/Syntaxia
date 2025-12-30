@@ -681,9 +681,10 @@ export namespace domain {
 	
 	export class ContextBuildOptions {
 	    stripComments: boolean;
-	    includeManifest: boolean;
+	    includeFileTree: boolean;
 	    includeLineNumbers: boolean;
 	    maxTokens: number;
+	    enforceTokenLimit: boolean;
 	    maxMemoryMB: number;
 	    includeTests: boolean;
 	    splitStrategy: string;
@@ -704,9 +705,10 @@ export namespace domain {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.stripComments = source["stripComments"];
-	        this.includeManifest = source["includeManifest"];
+	        this.includeFileTree = source["includeFileTree"];
 	        this.includeLineNumbers = source["includeLineNumbers"];
 	        this.maxTokens = source["maxTokens"];
+	        this.enforceTokenLimit = source["enforceTokenLimit"];
 	        this.maxMemoryMB = source["maxMemoryMB"];
 	        this.includeTests = source["includeTests"];
 	        this.splitStrategy = source["splitStrategy"];
@@ -1817,6 +1819,28 @@ export namespace domain {
 		    return a;
 		}
 	}
+	export class QwenCLISettings {
+	    approvalMode: string;
+	    outputFormat: string;
+	    yoloMode: boolean;
+	    sandboxMode: boolean;
+	    maxSessionTurns: number;
+	    debugMode: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new QwenCLISettings(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.approvalMode = source["approvalMode"];
+	        this.outputFormat = source["outputFormat"];
+	        this.yoloMode = source["yoloMode"];
+	        this.sandboxMode = source["sandboxMode"];
+	        this.maxSessionTurns = source["maxSessionTurns"];
+	        this.debugMode = source["debugMode"];
+	    }
+	}
 	export class RecentProjectInfo {
 	    path: string;
 	    name: string;
@@ -1895,6 +1919,7 @@ export namespace domain {
 	    localAIModelName: string;
 	    qwenAPIKey: string;
 	    qwenHost: string;
+	    qwenCLISettings: QwenCLISettings;
 	    selectedProvider: string;
 	    selectedModels: Record<string, string>;
 	    availableModels: Record<string, Array<string>>;
@@ -1918,6 +1943,7 @@ export namespace domain {
 	        this.localAIModelName = source["localAIModelName"];
 	        this.qwenAPIKey = source["qwenAPIKey"];
 	        this.qwenHost = source["qwenHost"];
+	        this.qwenCLISettings = this.convertValues(source["qwenCLISettings"], QwenCLISettings);
 	        this.selectedProvider = source["selectedProvider"];
 	        this.selectedModels = source["selectedModels"];
 	        this.availableModels = source["availableModels"];

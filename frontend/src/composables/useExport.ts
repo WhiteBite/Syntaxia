@@ -30,7 +30,6 @@ export function useExport() {
     // From settingsStore.context
     exportFormat: settingsStore.settings.context.outputFormat === 'xml' ? 'manifest' : 'plain',
     stripComments: settingsStore.settings.context.stripComments,
-    includeManifest: settingsStore.settings.context.includeManifest,
     includeFileTree: settingsStore.settings.context.includeFileTree,
     tokenLimit: settingsStore.settings.context.maxTokens,
     enableAutoSplit: settingsStore.settings.context.enableAutoSplit,
@@ -91,7 +90,6 @@ export function useExport() {
 
         // Clipboard settings
         stripComments: s.stripComments,
-        includeManifest: s.includeManifest,
         includeFileTree: s.includeFileTree,
         exportFormat: s.exportFormat,
 

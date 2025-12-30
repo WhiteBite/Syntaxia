@@ -132,9 +132,10 @@ type GenericReport struct {
 // ContextBuildOptions опции для построения контекста
 type ContextBuildOptions struct {
 	StripComments        bool   `json:"stripComments"`
-	IncludeManifest      bool   `json:"includeManifest"`
+	IncludeFileTree      bool   `json:"includeFileTree"`      // Include ASCII file tree before content
 	IncludeLineNumbers   bool   `json:"includeLineNumbers"`
 	MaxTokens            int    `json:"maxTokens"`
+	EnforceTokenLimit    bool   `json:"enforceTokenLimit"`    // Whether to enforce token limit or just warn
 	MaxMemoryMB          int    `json:"maxMemoryMB"`
 	IncludeTests         bool   `json:"includeTests"`
 	SplitStrategy        string `json:"splitStrategy"`

@@ -8,6 +8,7 @@ export type OutputFormat = 'markdown' | 'xml' | 'plain'
 
 export interface ContextSettings {
     maxTokens: number
+    enforceTokenLimit: boolean // Whether to enforce token limit or just warn
     stripComments: boolean
     includeTests: boolean
     splitStrategy: 'smart' | 'file' | 'token'
@@ -19,7 +20,6 @@ export interface ContextSettings {
     compactDataFiles: boolean
     trimWhitespace: boolean
     // Export options (previously in useExport)
-    includeManifest: boolean
     includeFileTree: boolean
     includeLineNumbers: boolean
     enableAutoSplit: boolean
@@ -68,6 +68,7 @@ export interface AppSettings {
 const DEFAULT_SETTINGS: AppSettings = {
     context: {
         maxTokens: 100000, // 100K tokens by default (reasonable for most projects)
+        enforceTokenLimit: true, // Enforce limit by default
         stripComments: false,
         includeTests: true,
         splitStrategy: 'smart',
@@ -79,7 +80,6 @@ const DEFAULT_SETTINGS: AppSettings = {
         compactDataFiles: false,
         trimWhitespace: false,
         // Export options
-        includeManifest: true,
         includeFileTree: false,
         includeLineNumbers: false,
         enableAutoSplit: false,

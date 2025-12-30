@@ -129,9 +129,10 @@ func (s *Service) convertBuildOptions(opts *domain.ContextBuildOptions) *BuildOp
 
 	return &BuildOptions{
 		MaxTokens:            opts.MaxTokens,
+		EnforceTokenLimit:    opts.EnforceTokenLimit,
 		MaxMemoryMB:          opts.MaxMemoryMB,
 		StripComments:        opts.StripComments,
-		IncludeManifest:      opts.IncludeManifest,
+		IncludeFileTree:      opts.IncludeFileTree,
 		IncludeLineNumbers:   opts.IncludeLineNumbers,
 		ForceStream:          true,
 		EnableProgressEvents: true,

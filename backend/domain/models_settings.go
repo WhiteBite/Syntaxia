@@ -13,12 +13,35 @@ type SettingsDTO struct {
 	LocalAIModelName  string              `json:"localAIModelName"`
 	QwenAPIKey        string              `json:"qwenAPIKey"`
 	QwenHost          string              `json:"qwenHost"` // Default: https://dashscope.aliyuncs.com/compatible-mode/v1
+	QwenCLISettings   QwenCLISettings     `json:"qwenCLISettings"`
 	SelectedProvider  string              `json:"selectedProvider"`
 	SelectedModels    map[string]string   `json:"selectedModels"`  // provider -> selected model
 	AvailableModels   map[string][]string `json:"availableModels"` // provider -> available models
 	UseGitignore      bool                `json:"useGitignore"`
 	UseCustomIgnore   bool                `json:"useCustomIgnore"`
 	RecentProjects    []RecentProjectInfo `json:"recentProjects,omitempty"`
+}
+
+// QwenCLISettings contains settings specific to Qwen CLI provider
+type QwenCLISettings struct {
+	ApprovalMode    string `json:"approvalMode"`    // "plan", "default", "auto-edit", "yolo"
+	OutputFormat    string `json:"outputFormat"`    // "text", "json", "stream-json"
+	YoloMode        bool   `json:"yoloMode"`        // Auto-approve all actions
+	SandboxMode     bool   `json:"sandboxMode"`     // Run in sandbox (safe mode)
+	MaxSessionTurns int    `json:"maxSessionTurns"` // Max turns per session (0 = unlimited)
+	DebugMode       bool   `json:"debugMode"`       // Enable debug output
+}
+
+// DefaultQwenCLISettings returns default settings for Qwen CLI
+func DefaultQwenCLISettings() QwenCLISettings {
+	return QwenCLISettings{
+		ApprovalMode:    "yolo",
+		OutputFormat:    "text",
+		YoloMode:        true,
+		SandboxMode:     false,
+		MaxSessionTurns: 0,
+		DebugMode:       false,
+	}
 }
 
 // RecentProjectInfo stores information about a recently opened project

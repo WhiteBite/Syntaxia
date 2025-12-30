@@ -266,7 +266,6 @@ async function handleBuildContext() {
       splitStrategy: settingsStore.settings.context.splitStrategy,
       outputFormat: settingsStore.settings.context.outputFormat,
       // Output options
-      includeManifest: settingsStore.settings.context.includeManifest,
       includeLineNumbers: settingsStore.settings.context.includeLineNumbers,
       // Content optimization options
       excludeTests: settingsStore.settings.context.excludeTests,

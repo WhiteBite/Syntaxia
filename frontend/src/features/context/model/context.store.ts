@@ -183,10 +183,11 @@ export const useContextStore = defineStore('context', () => {
 
         return {
             maxTokens: options?.maxTokens || contextSettings.maxTokens,
+            enforceTokenLimit: options?.enforceTokenLimit ?? contextSettings.enforceTokenLimit,
             maxMemoryMB: options?.maxMemoryMB || 50,
             stripComments: options?.stripComments ?? contextSettings.stripComments,
-            includeManifest: options?.includeManifest ?? true,
-            includeLineNumbers: options?.includeLineNumbers ?? false,
+            includeFileTree: options?.includeFileTree ?? contextSettings.includeFileTree,
+            includeLineNumbers: options?.includeLineNumbers ?? contextSettings.includeLineNumbers,
             includeTests: options?.includeTests ?? true,
             splitStrategy: options?.splitStrategy || 'smart',
             forceStream: true,

@@ -11,7 +11,6 @@ import (
 
 type BuildOptions struct {
 	StripComments   bool
-	IncludeManifest bool
 	IncludeFileTree bool   // Include ASCII file tree before content
 	ProjectName     string // Project name for file tree root
 }
@@ -340,7 +339,6 @@ func NewContextFormatter() *ContextFormatterImpl {
 func (f *ContextFormatterImpl) Format(format string, contextContent string, opts domain.ContextFormatOptions) (string, error) {
 	return BuildFromContext(format, contextContent, BuildOptions{
 		StripComments:   opts.StripComments,
-		IncludeManifest: opts.IncludeManifest,
 		IncludeFileTree: opts.IncludeFileTree,
 		ProjectName:     opts.ProjectName,
 	})

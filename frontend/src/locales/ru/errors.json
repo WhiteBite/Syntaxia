@@ -25,6 +25,14 @@
     "error.emptyContext": "Контекст построен, но пуст",
     "error.tokenLimitExceeded": "Контекст превышает лимит токенов: {actual}K (лимит: {limit}K). Уменьшите выбор файлов или увеличьте лимит в настройках.",
     "error.tokenLimitGeneric": "Контекст превышает лимит токенов. Уменьшите выбор файлов или увеличьте лимит в настройках.",
+    "error.tokenLimitTitle": "Превышен лимит токенов",
+    "error.tokenLimitActual": "выбрано",
+    "error.tokenLimitMax": "лимит",
+    "error.tokenLimitOverBy": "Превышение на {amount}",
+    "error.tokenLimitSuggestions": "Что можно сделать",
+    "error.tokenLimitReduceFiles": "Уменьшите количество выбранных файлов",
+    "error.tokenLimitIncreaseLimit": "Увеличьте лимит токенов в настройках",
+    "error.tokenLimitDisableLimit": "Отключите проверку лимита в настройках",
     "error.analysisFailed": "Ошибка анализа",
     "error.notConfigured": "Не настроено"
 }

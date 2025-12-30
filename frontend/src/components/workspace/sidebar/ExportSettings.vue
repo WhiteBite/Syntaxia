@@ -26,10 +26,10 @@
       <!-- Output Options -->
       <div class="inspector-section">
         <div class="section-header">OUTPUT</div>
-        <ToggleItem v-model="settings.applyTemplateOnCopy" :label="t('export.applyTemplate')" @update:model-value="update('applyTemplateOnCopy', $event)" />
-        <ToggleItem v-model="settings.includeManifest" :label="t('export.includeManifest')" @update:model-value="update('includeManifest', $event)" />
-        <ToggleItem v-model="settings.includeLineNumbers" :label="t('export.includeLineNumbers')" @update:model-value="update('includeLineNumbers', $event)" />
-        <ToggleItem v-model="settings.stripComments" :label="t('export.stripComments')" @update:model-value="update('stripComments', $event)" />
+        <ToggleItem v-model="settings.applyTemplateOnCopy" :label="t('export.applyTemplate')" :hint="t('export.hint.applyTemplate')" @update:model-value="update('applyTemplateOnCopy', $event)" />
+        <ToggleItem v-model="settings.includeFileTree" :label="t('export.includeFileTree')" :hint="t('export.hint.includeFileTree')" @update:model-value="update('includeFileTree', $event)" />
+        <ToggleItem v-model="settings.includeLineNumbers" :label="t('export.includeLineNumbers')" :hint="t('export.hint.includeLineNumbers')" @update:model-value="update('includeLineNumbers', $event)" />
+        <ToggleItem v-model="settings.stripComments" :label="t('export.stripComments')" :hint="t('export.hint.stripComments')" @update:model-value="update('stripComments', $event)" />
       </div>
 
       <div class="inspector-divider" />
@@ -37,11 +37,11 @@
       <!-- Optimization -->
       <div class="inspector-section">
         <div class="section-header">OPTIMIZATION</div>
-        <ToggleItem v-model="settings.excludeTests" :label="t('export.excludeTests')" @update:model-value="update('excludeTests', $event)" />
-        <ToggleItem v-model="settings.stripLicense" :label="t('export.stripLicense')" @update:model-value="update('stripLicense', $event)" />
-        <ToggleItem v-model="settings.compactDataFiles" :label="t('export.compactDataFiles')" @update:model-value="update('compactDataFiles', $event)" />
-        <ToggleItem v-model="settings.trimWhitespace" :label="t('export.trimWhitespace')" @update:model-value="update('trimWhitespace', $event)" />
-        <ToggleItem v-model="settings.collapseEmptyLines" :label="t('export.collapseEmptyLines')" @update:model-value="update('collapseEmptyLines', $event)" />
+        <ToggleItem v-model="settings.excludeTests" :label="t('export.excludeTests')" :hint="t('export.hint.excludeTests')" @update:model-value="update('excludeTests', $event)" />
+        <ToggleItem v-model="settings.stripLicense" :label="t('export.stripLicense')" :hint="t('export.hint.stripLicense')" @update:model-value="update('stripLicense', $event)" />
+        <ToggleItem v-model="settings.compactDataFiles" :label="t('export.compactDataFiles')" :hint="t('export.hint.compactDataFiles')" @update:model-value="update('compactDataFiles', $event)" />
+        <ToggleItem v-model="settings.trimWhitespace" :label="t('export.trimWhitespace')" :hint="t('export.hint.trimWhitespace')" @update:model-value="update('trimWhitespace', $event)" />
+        <ToggleItem v-model="settings.collapseEmptyLines" :label="t('export.collapseEmptyLines')" :hint="t('export.hint.collapseEmptyLines')" @update:model-value="update('collapseEmptyLines', $event)" />
       </div>
 
       <div class="inspector-divider" />
@@ -115,6 +115,19 @@
             </div>
           </div>
         </Transition>
+      </div>
+
+      <div class="inspector-divider" />
+
+      <!-- Token Limit Section -->
+      <div class="inspector-section">
+        <div class="section-header">{{ t('export.tokenLimitSection') }}</div>
+        <ToggleItem 
+          v-model="settings.enforceTokenLimit" 
+          :label="t('export.enforceTokenLimit')" 
+          :hint="t('export.hint.enforceTokenLimit')" 
+          @update:model-value="update('enforceTokenLimit', $event)" 
+        />
       </div>
     </div>
 

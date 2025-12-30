@@ -58,9 +58,10 @@ type TokenCounter interface {
 // BuildOptions controls how context is built
 type BuildOptions struct {
 	MaxTokens            int          `json:"maxTokens,omitempty"`
+	EnforceTokenLimit    bool         `json:"enforceTokenLimit,omitempty"`
 	MaxMemoryMB          int          `json:"maxMemoryMB,omitempty"`
 	StripComments        bool         `json:"stripComments,omitempty"`
-	IncludeManifest      bool         `json:"includeManifest,omitempty"`
+	IncludeFileTree      bool         `json:"includeFileTree,omitempty"`
 	IncludeLineNumbers   bool         `json:"includeLineNumbers,omitempty"`
 	ForceStream          bool         `json:"forceStream,omitempty"`
 	EnableProgressEvents bool         `json:"enableProgressEvents,omitempty"`

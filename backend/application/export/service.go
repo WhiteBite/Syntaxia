@@ -70,7 +70,6 @@ func (s *Service) exportClipboard(settings domain.ExportSettings) (domain.Export
 
 	out, err := s.contextFormatter.Format(format, settings.Context, domain.ContextFormatOptions{
 		StripComments:   settings.StripComments,
-		IncludeManifest: settings.IncludeManifest,
 		IncludeFileTree: settings.IncludeFileTree,
 		ProjectName:     projectName,
 	})

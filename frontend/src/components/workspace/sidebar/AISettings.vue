@@ -34,7 +34,11 @@
       />
 
       <!-- Qwen CLI Info -->
-      <QwenCliInfo v-if="settings.selectedProvider === 'qwen-cli'" />
+      <QwenCliInfo 
+        v-if="settings.selectedProvider === 'qwen-cli'" 
+        :settings="settings"
+        @update:settings="updateQwenCLISettings"
+      />
 
       <!-- Model Selection -->
       <ModelSelector
@@ -109,7 +113,8 @@ const {
   updateHost,
   toggleShowApiKey,
   loadSettings,
-  saveSettings
+  saveSettings,
+  updateQwenCLISettings
 } = useAISettings()
 
 onMounted(() => {

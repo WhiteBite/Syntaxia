@@ -42,7 +42,6 @@ vi.mock('@/stores/settings.store', () => ({
             context: {
                 outputFormat: 'xml',
                 stripComments: false,
-                includeManifest: true,
                 includeFileTree: true,
                 maxTokens: 100000,
                 enableAutoSplit: false,
@@ -106,12 +105,6 @@ describe('useExport', () => {
         const { settings } = useExport()
         expect(settings.value).toHaveProperty('includeFileTree')
         expect(settings.value.includeFileTree).toBe(true)
-    })
-
-    it('should have includeManifest in settings', () => {
-        const { settings } = useExport()
-        expect(settings.value).toHaveProperty('includeManifest')
-        expect(settings.value.includeManifest).toBe(true)
     })
 
     it('should have stripComments in settings', () => {

@@ -7,12 +7,6 @@
       @update:model-value="$emit('update:applyTemplate', $event)"
     />
     <SettingsToggle
-      :model-value="includeManifest"
-      :label="t('export.includeMetadata')"
-      :hint="t('export.hint.includeMetadata')"
-      @update:model-value="$emit('update:includeManifest', $event)"
-    />
-    <SettingsToggle
       :model-value="includeLineNumbers"
       :label="t('export.includeLineNumbers')"
       :hint="t('export.hint.includeLineNumbers')"
@@ -35,14 +29,12 @@ const { t } = useI18n()
 
 defineProps<{
   applyTemplate: boolean
-  includeManifest: boolean
   includeLineNumbers: boolean
   stripComments: boolean
 }>()
 
 defineEmits<{
   'update:applyTemplate': [value: boolean]
-  'update:includeManifest': [value: boolean]
   'update:includeLineNumbers': [value: boolean]
   'update:stripComments': [value: boolean]
 }>()

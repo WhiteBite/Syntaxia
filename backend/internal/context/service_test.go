@@ -108,7 +108,6 @@ func TestService_BuildContext(t *testing.T) {
 	// Execute
 	ctx := context.Background()
 	options := &BuildOptions{
-		IncludeManifest: true,
 		StripComments:   false,
 		MaxTokens:       1000,
 	}
@@ -171,7 +170,8 @@ func TestService_BuildContext_TokenLimitExceeded(t *testing.T) {
 	// Execute
 	ctx := context.Background()
 	options := &BuildOptions{
-		MaxTokens: 1000, // Set limit lower than returned count
+		MaxTokens:         1000, // Set limit lower than returned count
+		EnforceTokenLimit: true, // Enable enforcement
 	}
 
 	result, err := service.BuildContext(ctx, projectPath, includedPaths, options)

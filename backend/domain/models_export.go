@@ -21,7 +21,6 @@ type ExportSettings struct {
 
 	// Clipboard
 	StripComments   bool   `json:"stripComments"`
-	IncludeManifest bool   `json:"includeManifest"`
 	IncludeFileTree bool   `json:"includeFileTree"` // Include ASCII file tree before content
 	ExportFormat    string `json:"exportFormat"`    // "plain" | "manifest" | "json"
 

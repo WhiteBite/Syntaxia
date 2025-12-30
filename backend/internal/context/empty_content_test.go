@@ -79,7 +79,7 @@ func TestService_BuildContext_EmptyContentDueToPathTraversal(t *testing.T) {
 	result, err := svc.BuildContext(ctx, projectPath, requestedFiles, &BuildOptions{
 		MaxTokens:       1000,
 		StripComments:   false,
-		IncludeManifest: false,
+		IncludeFileTree: false,
 	})
 
 	// Assertions
@@ -179,7 +179,7 @@ func TestService_BuildContext_PartialContentDueToPathTraversal(t *testing.T) {
 	result, err := svc.BuildContext(ctx, projectPath, requestedFiles, &BuildOptions{
 		MaxTokens:       1000,
 		StripComments:   false,
-		IncludeManifest: false,
+		IncludeFileTree: false,
 	})
 
 	assert.NoError(t, err)

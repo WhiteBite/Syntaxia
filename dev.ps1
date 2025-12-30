@@ -1,7 +1,7 @@
 # Syntaxia - Development Script
 param(
     [switch]$Verbose,
-    [int]$NodeMemory = 512  # MB, достаточно после фикса утечки памяти
+    [int]$NodeMemory = 2048  # MB, увеличено для стабильной сборки
 )
 
 Write-Host "🚀 Запуск Syntaxia..." -ForegroundColor Green

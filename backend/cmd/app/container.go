@@ -900,7 +900,19 @@ func createProviderRegistry(log domain.Logger, settingsService *settings.Service
 		}
 	}
 
-	return ai.NewAIProviderFactoryRegistry(log, openRouterHost, resolveHost)
+	registry := ai.NewAIProviderFactoryRegistry(log, openRouterHost, resolveHost)
+
+	// Override qwen-cli factory to pass settings
+	registry["qwen-cli"] = func(_, _ string) (domain.AIProvider, error) {
+		dto, err := settingsService.GetSettingsDTO()
+		if err != nil {
+			// Use defaults if settings unavailable
+			return ai.NewQwenCLI(log)
+		}
+		return ai.NewQwenCLIWithSettings(log, dto.QwenCLISettings)
+	}
+
+	return registry
 }
 
 // FilePathProvider implements domain.PathProvider using standard filepath functions

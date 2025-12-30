@@ -69,12 +69,6 @@
               </label>
 
               <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
-                <input v-model="settings.includeManifest" type="checkbox"
-                  class="w-4 h-4 rounded border-gray-600 bg-gray-800 text-blue-500 focus:ring-0" />
-                Включить манифест файлов
-              </label>
-
-              <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
                 <input v-model="settings.includeFileTree" type="checkbox"
                   class="w-4 h-4 rounded border-gray-600 bg-gray-800 text-blue-500 focus:ring-0" />
                 Включить дерево файлов

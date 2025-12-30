@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -55,17 +56,90 @@ func (s *Service) createProgressCallback(ctx context.Context, options *BuildOpti
 	}
 }
 
-// writeStreamHeader writes the manifest header if requested
-func (s *Service) writeStreamHeader(writer *bufio.Writer, projectPath string, options *BuildOptions, state *streamWriteState) error {
-	if !options.IncludeManifest {
+// buildFileTree generates ASCII tree from file paths
+func buildFileTree(paths []string, rootName string) string {
+	if len(paths) == 0 {
+		return ""
+	}
+	if rootName == "" {
+		rootName = "project"
+	}
+
+	type node struct {
+		name     string
+		children map[string]*node
+	}
+	root := &node{name: rootName, children: map[string]*node{}}
+
+	sortedPaths := make([]string, len(paths))
+	copy(sortedPaths, paths)
+	sort.Strings(sortedPaths)
+
+	for _, p := range sortedPaths {
+		pp := strings.ReplaceAll(p, "\\", "/")
+		parts := strings.Split(pp, "/")
+		cur := root
+		for _, part := range parts {
+			if part == "" || part == "." {
+				continue
+			}
+			if cur.children[part] == nil {
+				cur.children[part] = &node{name: part, children: map[string]*node{}}
+			}
+			cur = cur.children[part]
+		}
+	}
+
+	var b strings.Builder
+	b.WriteString(rootName + "\n")
+
+	var walk func(n *node, prefix string, isLast bool, isRoot bool)
+	walk = func(n *node, prefix string, isLast bool, isRoot bool) {
+		if !isRoot {
+			if isLast {
+				b.WriteString(prefix + "└── " + n.name + "\n")
+				prefix += "    "
+			} else {
+				b.WriteString(prefix + "├── " + n.name + "\n")
+				prefix += "│   "
+			}
+		}
+		keys := make([]string, 0, len(n.children))
+		for k := range n.children {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for i, k := range keys {
+			walk(n.children[k], prefix, i == len(keys)-1, false)
+		}
+	}
+	walk(root, "", true, true)
+
+	return strings.TrimSpace(b.String())
+}
+
+// writeStreamHeader writes the manifest header and file tree if requested
+func (s *Service) writeStreamHeader(writer *bufio.Writer, projectPath string, filePaths []string, options *BuildOptions, state *streamWriteState) error {
+	var header strings.Builder
+
+	if options.IncludeFileTree && len(filePaths) > 0 {
+		projectName := filepath.Base(projectPath)
+		tree := buildFileTree(filePaths, projectName)
+		header.WriteString("## File Tree\n```\n")
+		header.WriteString(tree)
+		header.WriteString("\n```\n\n")
+	}
+
+	if header.Len() == 0 {
 		return nil
 	}
-	header := fmt.Sprintf("# Streaming Context\nProject Path: %s\nGenerated: %s\n\n", projectPath, time.Now().Format(time.RFC3339))
-	if _, err := writer.WriteString(header); err != nil {
+
+	headerStr := header.String()
+	if _, err := writer.WriteString(headerStr); err != nil {
 		return fmt.Errorf("failed to write header: %w", err)
 	}
-	state.totalLines += int64(strings.Count(header, "\n"))
-	state.totalChars += int64(len(header))
+	state.totalLines += int64(strings.Count(headerStr, "\n"))
+	state.totalChars += int64(len(headerStr))
 	return nil
 }
 
@@ -82,7 +156,8 @@ func (s *Service) writeFileToStream(writer *bufio.Writer, filePath, content stri
 	fileTokens := s.tokenCounter.CountTokens(content)
 	state.tokenCount += fileTokens
 
-	if options.MaxTokens > 0 && state.tokenCount > options.MaxTokens {
+	// Only enforce token limit if EnforceTokenLimit is true
+	if options.EnforceTokenLimit && options.MaxTokens > 0 && state.tokenCount > options.MaxTokens {
 		return fmt.Errorf("context would exceed token limit: %d > %d", state.tokenCount, options.MaxTokens)
 	}
 
@@ -167,7 +242,7 @@ func (s *Service) CreateStream(ctx context.Context, projectPath string, included
 
 	state := &streamWriteState{files: make([]string, 0, len(includedPaths))}
 
-	if err := s.writeStreamHeader(writer, projectPath, options, state); err != nil {
+	if err := s.writeStreamHeader(writer, projectPath, includedPaths, options, state); err != nil {
 		return nil, err
 	}
 

@@ -1,5 +1,6 @@
 import { useContextStore } from '@/features/context'
 import { apiService } from '@/services/api.service'
+import type { SmartContextResult } from '@/services/types'
 import { useProjectStore } from '@/stores/project.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useUIStore } from '@/stores/ui.store'
@@ -166,6 +167,7 @@ export function useChatMessages() {
             content,
             timestamp: new Date().toISOString(),
             contextAttached: contextStore.hasContext,
+            tokenCount: contextStore.tokenCount,
         }
         messages.value.push(userMessage)
         scrollToBottom()
@@ -175,7 +177,29 @@ export function useChatMessages() {
 
         try {
             const projectRoot = projectStore.currentPath || ''
-            const response = await apiService.agenticChat(content, projectRoot)
+
+            // Build smart context from current context if available
+            let smartContext: SmartContextResult | undefined
+            if (contextStore.hasContext && contextStore.summary?.files) {
+                try {
+                    const fullContent = await contextStore.getFullContextContent()
+                    smartContext = {
+                        projectStructure: '',
+                        relevantFiles: [{
+                            path: 'context',
+                            content: fullContent,
+                            tokens: contextStore.tokenCount,
+                            reason: 'User selected files'
+                        }],
+                        totalTokens: contextStore.tokenCount,
+                        strategy: 'user-selected'
+                    }
+                } catch (err) {
+                    // Continue without context if loading fails
+                }
+            }
+
+            const response = await apiService.agenticChat(content, projectRoot, smartContext)
 
             const assistantMessage: Message = {
                 id: `msg-${Date.now()}-ai`,

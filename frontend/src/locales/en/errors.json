@@ -25,6 +25,14 @@
     "error.emptyContext": "Context built but empty",
     "error.tokenLimitExceeded": "Context exceeds token limit: {actual}K (limit: {limit}K). Reduce file selection or increase limit in settings.",
     "error.tokenLimitGeneric": "Context exceeds token limit. Reduce file selection or increase limit in settings.",
+    "error.tokenLimitTitle": "Token limit exceeded",
+    "error.tokenLimitActual": "selected",
+    "error.tokenLimitMax": "limit",
+    "error.tokenLimitOverBy": "Over by {amount}",
+    "error.tokenLimitSuggestions": "What you can do",
+    "error.tokenLimitReduceFiles": "Reduce the number of selected files",
+    "error.tokenLimitIncreaseLimit": "Increase token limit in settings",
+    "error.tokenLimitDisableLimit": "Disable limit check in settings",
     "error.analysisFailed": "Analysis failed",
     "error.notConfigured": "Not configured"
 }

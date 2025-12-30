@@ -2,7 +2,7 @@
   <div class="tooltip-wrapper" @mouseenter="show = true" @mouseleave="show = false">
     <slot />
     <Transition name="tooltip">
-      <div v-if="show" class="tooltip" :class="[`tooltip--${position}`]">
+      <div v-if="show" class="tooltip" :class="[`tooltip--${position}`, { 'tooltip--multiline': multiline }]">
         {{ text }}
       </div>
     </Transition>
@@ -12,10 +12,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-defineProps<{
+withDefaults(defineProps<{
   text: string
   position?: 'top' | 'bottom' | 'left' | 'right'
-}>()
+  multiline?: boolean
+}>(), {
+  position: 'top',
+  multiline: false
+})
 
 const show = ref(false)
 </script>
@@ -39,6 +43,20 @@ const show = ref(false)
   white-space: nowrap;
   pointer-events: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.tooltip--multiline {
+  white-space: normal;
+  max-width: min(280px, 50vw);
+  text-align: left;
+  line-height: 1.4;
+}
+
+.tooltip--multiline {
+  white-space: normal;
+  max-width: min(280px, 40vw);
+  text-align: left;
+  line-height: 1.4;
 }
 
 .tooltip--top {

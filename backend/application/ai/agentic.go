@@ -68,28 +68,31 @@ func (s *AgenticChatService) Chat(ctx context.Context, req AgenticChatRequest) (
 		contextSection = s.readContextFiles(req.Context, req.ProjectRoot)
 	}
 
-	systemPrompt := fmt.Sprintf(`You are an expert code assistant. You have access to tools to explore and analyze the codebase.
+	systemPrompt := fmt.Sprintf(`You are an expert code assistant helping with a software project. Your primary goal is to ANSWER USER QUESTIONS directly and helpfully.
 
 AVAILABLE TOOLS:
 %s
 
-INSTRUCTIONS:
-1. When you need information about the codebase, use tools by responding with JSON in this format:
+HOW TO RESPOND:
+1. ALWAYS answer the user's question directly. Don't just say you're ready to help - actually help!
+
+2. If the user asks about files, code, or the project:
+   - If context is provided below, use it to answer
+   - If you need more information, use tools to get it
+
+3. To use tools, respond with JSON:
    {"tool_calls": [{"name": "tool_name", "arguments": {"arg1": "value1"}}]}
 
-2. You can call multiple tools at once.
+4. After getting tool results, provide a clear answer based on what you learned.
 
-3. After receiving tool results, analyze them and either:
-   - Call more tools if you need more information
-   - Provide your final answer
+5. Use write_file tool to create or modify files. Changes go to sandbox for user review.
 
-4. When you have enough information, provide your answer WITHOUT any tool_calls.
-
-5. Be thorough but efficient - don't read files unnecessarily.
-
-6. Use write_file tool to create or modify files. Changes go to sandbox for user review.
-
-IMPORTANT: Always respond in the user's language (Russian if they write in Russian).%s`, toolsJSON, contextSection)
+CRITICAL RULES:
+- NEVER respond with generic phrases like "I'm ready to help" or "What would you like me to do?"
+- ALWAYS provide substantive answers based on the context or tool results
+- If you don't have enough information, use tools to get it, then answer
+- Respond in the user's language (Russian if they write in Russian)
+%s`, toolsJSON, contextSection)
 
 	messages := []domain.ChatMessage{
 		{Role: domain.RoleSystem, Content: systemPrompt},
