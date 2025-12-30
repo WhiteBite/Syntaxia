@@ -68,31 +68,32 @@ func (s *AgenticChatService) Chat(ctx context.Context, req AgenticChatRequest) (
 		contextSection = s.readContextFiles(req.Context, req.ProjectRoot)
 	}
 
-	systemPrompt := fmt.Sprintf(`You are an expert code assistant helping with a software project. Your primary goal is to ANSWER USER QUESTIONS directly and helpfully.
+	// Determine if we have pre-loaded context
+	hasContext := req.SmartContext != nil || len(req.Context) > 0
+
+	contextInstruction := ""
+	if hasContext {
+		contextInstruction = `
+IMPORTANT: File context is ALREADY PROVIDED below. You have all the code you need.
+- DO NOT use read_file tool unless you need a file NOT in the context
+- Answer the question using the provided context
+- Only use tools if you need to MODIFY files or get ADDITIONAL information`
+	}
+
+	systemPrompt := fmt.Sprintf(`You are an expert code assistant. Answer questions directly and helpfully.
 
 AVAILABLE TOOLS:
 %s
+%s
+RESPONSE FORMAT:
+- To use tools: {"tool_calls": [{"name": "tool_name", "arguments": {...}}]}
+- To give final answer: Just write your response (no JSON)
 
-HOW TO RESPOND:
-1. ALWAYS answer the user's question directly. Don't just say you're ready to help - actually help!
-
-2. If the user asks about files, code, or the project:
-   - If context is provided below, use it to answer
-   - If you need more information, use tools to get it
-
-3. To use tools, respond with JSON:
-   {"tool_calls": [{"name": "tool_name", "arguments": {"arg1": "value1"}}]}
-
-4. After getting tool results, provide a clear answer based on what you learned.
-
-5. Use write_file tool to create or modify files. Changes go to sandbox for user review.
-
-CRITICAL RULES:
-- NEVER respond with generic phrases like "I'm ready to help" or "What would you like me to do?"
-- ALWAYS provide substantive answers based on the context or tool results
-- If you don't have enough information, use tools to get it, then answer
-- Respond in the user's language (Russian if they write in Russian)
-%s`, toolsJSON, contextSection)
+RULES:
+1. Answer in user's language (Russian if they write in Russian)
+2. Be concise and direct
+3. Use write_file to modify files (changes go to sandbox)
+%s`, toolsJSON, contextInstruction, contextSection)
 
 	messages := []domain.ChatMessage{
 		{Role: domain.RoleSystem, Content: systemPrompt},

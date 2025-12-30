@@ -27,18 +27,36 @@ func (s *AgenticChatService) ChatStream(ctx context.Context, req AgenticChatRequ
 	tools := s.toolExecutor.GetAvailableTools()
 	toolsJSON := s.formatToolsForPrompt(tools)
 
-	systemPrompt := fmt.Sprintf(`You are an expert code assistant with access to tools.
+	// Build context section
+	contextSection := ""
+	if req.SmartContext != nil {
+		contextSection = s.formatSmartContext(req.SmartContext)
+	} else if len(req.Context) > 0 {
+		contextSection = s.readContextFiles(req.Context, req.ProjectRoot)
+	}
+
+	hasContext := req.SmartContext != nil || len(req.Context) > 0
+	contextInstruction := ""
+	if hasContext {
+		contextInstruction = `
+IMPORTANT: File context is ALREADY PROVIDED below. 
+- DO NOT use read_file unless you need files NOT in context
+- Answer using the provided context`
+	}
+
+	systemPrompt := fmt.Sprintf(`You are an expert code assistant.
 
 AVAILABLE TOOLS:
 %s
+%s
+RESPONSE FORMAT:
+- To use tools: {"tool_calls": [{"name": "tool_name", "arguments": {...}}]}
+- To give final answer: Just write your response (no JSON)
 
-INSTRUCTIONS:
-1. Use tools by responding with JSON: {"tool_calls": [{"name": "tool_name", "arguments": {...}}]}
-2. After receiving results, either call more tools or provide your final answer
-3. When done, provide answer WITHOUT tool_calls
-4. Respond in user's language
-
-Be thorough but efficient.`, toolsJSON)
+RULES:
+1. Answer in user's language
+2. Be concise and direct
+%s`, toolsJSON, contextInstruction, contextSection)
 
 	messages := []domain.ChatMessage{
 		{Role: domain.RoleSystem, Content: systemPrompt},
