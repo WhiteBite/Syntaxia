@@ -5,18 +5,24 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
-	"syntaxia/domain"
 	"strings"
+	"syntaxia/domain"
 	"time"
 )
 
 // QwenCLIProviderImpl implements domain.AIProvider for Qwen Code CLI
 type QwenCLIProviderImpl struct {
-	log domain.Logger
+	log      domain.Logger
+	settings domain.QwenCLISettings
 }
 
 // NewQwenCLI creates a new Qwen CLI provider instance
 func NewQwenCLI(log domain.Logger) (domain.AIProvider, error) {
+	return NewQwenCLIWithSettings(log, domain.DefaultQwenCLISettings())
+}
+
+// NewQwenCLIWithSettings creates a new Qwen CLI provider with custom settings
+func NewQwenCLIWithSettings(log domain.Logger, settings domain.QwenCLISettings) (domain.AIProvider, error) {
 	// Check if qwen-coder-cli is available
 	_, err := exec.LookPath("qwen-coder")
 	if err != nil {
@@ -28,7 +34,8 @@ func NewQwenCLI(log domain.Logger) (domain.AIProvider, error) {
 	}
 
 	return &QwenCLIProviderImpl{
-		log: log,
+		log:      log,
+		settings: settings,
 	}, nil
 }
 
@@ -62,27 +69,19 @@ func (p *QwenCLIProviderImpl) Generate(ctx context.Context, req domain.AIRequest
 		prompt = fmt.Sprintf("System: %s\n\nUser: %s", req.SystemPrompt, req.UserPrompt)
 	}
 
-	// Build command arguments
-	cmdName := p.getQwenCommand()
-	args := []string{
-		"--model", req.Model,
-		"--prompt", prompt,
-	}
-
-	// Add optional parameters
-	if req.MaxTokens > 0 {
-		args = append(args, "--max-tokens", fmt.Sprintf("%d", req.MaxTokens))
-	}
-	if req.Temperature > 0 {
-		args = append(args, "--temperature", fmt.Sprintf("%.2f", req.Temperature))
-	}
+	// Build command arguments using settings
+	args := p.buildArgs(req.Model)
 
 	// Create command with context
+	cmdName := p.getQwenCommand()
 	cmd := exec.CommandContext(ctx, cmdName, args...)
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
+
+	// Always pass prompt via stdin to avoid Windows command line length limits
+	cmd.Stdin = strings.NewReader(prompt)
 
 	// Run the command
 	err := cmd.Run()
@@ -109,6 +108,46 @@ func (p *QwenCLIProviderImpl) Generate(ctx context.Context, req domain.AIRequest
 		FinishReason:   "stop",
 		Confidence:     0.9,
 	}, nil
+}
+
+// buildArgs constructs CLI arguments from settings
+func (p *QwenCLIProviderImpl) buildArgs(model string) []string {
+	args := []string{
+		"--model", model,
+		"--input-format", "text",
+	}
+
+	// Output format from settings
+	outputFormat := p.settings.OutputFormat
+	if outputFormat == "" {
+		outputFormat = "text"
+	}
+	args = append(args, "--output-format", outputFormat)
+
+	// YOLO mode and approval mode are mutually exclusive
+	// --yolo is shorthand for --approval-mode=yolo, cannot use both
+	if p.settings.YoloMode {
+		args = append(args, "--approval-mode", "yolo")
+	} else if p.settings.ApprovalMode != "" {
+		args = append(args, "--approval-mode", p.settings.ApprovalMode)
+	}
+
+	// Sandbox mode (safe execution)
+	if p.settings.SandboxMode {
+		args = append(args, "--sandbox")
+	}
+
+	// Max session turns limit
+	if p.settings.MaxSessionTurns > 0 {
+		args = append(args, "--max-session-turns", fmt.Sprintf("%d", p.settings.MaxSessionTurns))
+	}
+
+	// Debug mode
+	if p.settings.DebugMode {
+		args = append(args, "--debug")
+	}
+
+	return args
 }
 
 // GetProviderInfo returns information about the Qwen CLI provider
