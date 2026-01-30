@@ -65,7 +65,10 @@
   "settings.modal.themeAuto": "Auto",
   "settings.modal.filterSettings": "File Filtering",
   "settings.modal.displaySettings": "Display",
+  "settings.modal.uiScaling": "UI Scaling",
+  "settings.modal.uiScalingHint": "Changes the size of all interface elements",
   "settings.modal.tourHint": "Take a tour to learn all features",
+
   "export.format": "Format",
   "export.markdown": "Markdown",
   "export.plainText": "Plain text",

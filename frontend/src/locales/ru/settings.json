@@ -65,7 +65,10 @@
   "settings.modal.themeAuto": "Авто",
   "settings.modal.filterSettings": "Фильтрация файлов",
   "settings.modal.displaySettings": "Отображение",
+  "settings.modal.uiScaling": "Масштаб интерфейса",
+  "settings.modal.uiScalingHint": "Изменяет размер всех элементов интерфейса",
   "settings.modal.tourHint": "Пройдите обучение, чтобы узнать все возможности",
+
   "export.format": "Формат",
   "export.markdown": "Markdown",
   "export.plainText": "Простой текст",

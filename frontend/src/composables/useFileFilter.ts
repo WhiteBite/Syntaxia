@@ -44,7 +44,7 @@ function sortFoldersFirst(nodes: FileNode[]): FileNode[] {
         : nodes
 
     // Recursively sort children only if they have children
-    return sorted.map(node => {
+    const withSortedChildren = sorted.map(node => {
         if (node.isDir && node.children && node.children.length > 1) {
             const sortedChildren = sortFoldersFirst(node.children)
             // Only create new object if children actually changed
@@ -54,7 +54,12 @@ function sortFoldersFirst(nodes: FileNode[]): FileNode[] {
         }
         return node
     })
+
+    // Avoid returning a new array if nothing changed
+    const anyChildChanged = withSortedChildren.some((node, i) => node !== sorted[i])
+    return anyChildChanged ? withSortedChildren : sorted
 }
+
 
 export function useFileFilter(options: UseFileFilterOptions) {
     const { nodes } = options

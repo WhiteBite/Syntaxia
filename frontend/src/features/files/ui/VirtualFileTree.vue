@@ -1,10 +1,9 @@
 <template>
   <div class="virtual-tree-wrapper">
     <RecycleScroller
-      v-if="flattenedNodes.length > 0"
       class="virtual-tree-scroller"
       :items="flattenedNodes"
-      :item-size="26"
+      :item-size="rowHeight"
       key-field="id"
       v-slot="{ item }"
     >
@@ -16,22 +15,25 @@
         :file-count="getFileCount(item.node)"
         :selected-tokens="getSelectedTokens(item.node)"
         :allow-select-binary="allowSelectBinary"
-        @toggle-select="$emit('toggle-select', $event)"
+        @toggle-select="handleToggleSelect"
         @toggle-expand="$emit('toggle-expand', $event)"
         @contextmenu="(node, event) => $emit('contextmenu', node, event)"
         @quicklook="$emit('quicklook', $event)"
       />
     </RecycleScroller>
-    <div v-else class="empty-state">
+    <div v-if="flattenedNodes.length === 0" class="empty-state">
       <p class="empty-state-text">{{ t('files.noFiles') }}</p>
     </div>
   </div>
+
 </template>
 
 <script setup lang="ts">
 import { useI18n } from '@/composables/useI18n'
 import { useVirtualTree } from '@/composables/useVirtualTree'
+import { useSettingsStore } from '@/stores/settings.store'
 import { computed, toRef } from 'vue'
+
 import { RecycleScroller } from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 import { useFileStore, type FileNode } from '../model/file.store'
@@ -39,6 +41,10 @@ import VirtualTreeRow from './VirtualTreeRow.vue'
 
 const { t } = useI18n()
 const fileStore = useFileStore()
+const settingsStore = useSettingsStore()
+
+const rowHeight = computed(() => 26 * settingsStore.settings.uiScale)
+
 
 interface Props {
   nodes: FileNode[]
@@ -62,6 +68,32 @@ const nodesRef = toRef(props, 'nodes')
 const { flattenedVisibleNodes } = useVirtualTree({ nodes: nodesRef })
 
 const flattenedNodes = computed(() => flattenedVisibleNodes.value)
+
+function handleToggleSelect(payload: { path: string, shiftKey: boolean }) {
+  const { path, shiftKey } = payload
+  
+  if (shiftKey && fileStore.lastSelectedPath && fileStore.lastSelectedPath !== path) {
+    const lastIndex = flattenedNodes.value.findIndex(n => n.id === fileStore.lastSelectedPath)
+    const currentIndex = flattenedNodes.value.findIndex(n => n.id === path)
+    
+    if (lastIndex !== -1 && currentIndex !== -1) {
+      const start = Math.min(lastIndex, currentIndex)
+      const end = Math.max(lastIndex, currentIndex)
+      
+      const pathsToSelect = flattenedNodes.value
+        .slice(start, end + 1)
+        .filter(n => !n.node.isDir)
+        .map(n => n.id)
+      
+      fileStore.selectMultiple(pathsToSelect)
+      fileStore.lastSelectedPath = path
+      return
+    }
+  }
+  
+  fileStore.toggleSelect(path)
+}
+
 
 // Selection helpers - computed at parent level for better performance
 function isNodeSelected(node: FileNode): boolean {

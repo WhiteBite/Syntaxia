@@ -3,13 +3,16 @@
     <!-- MAGIC CONTROL BAR -->
     <div class="magic-bar">
       <!-- LEFT: Token Limit Selector -->
-      <div class="limit-section" @click="toggleDropdown" ref="limitRef">
-        <div class="limit-main">
+      <div class="limit-section" ref="limitRef">
+        <BaseButton 
+          variant="ghost" 
+          size="sm" 
+          class="limit-trigger"
+          @click="toggleDropdown"
+        >
           <span class="limit-value">{{ formatTokens(settings.maxTokens) }}</span>
-          <svg class="limit-chevron" :class="{ open: showDropdown }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
+          <ChevronDown class="limit-chevron" :class="{ open: showDropdown }" />
+        </BaseButton>
         
         <!-- Dropdown -->
         <Transition name="dropdown">
@@ -40,15 +43,16 @@
                 @blur="isCustomFocused = false"
               />
               <span class="limit-custom-suffix">K</span>
-              <button 
+              <BaseButton 
                 v-if="customTokenValue"
+                variant="success"
+                size="xs"
+                icon-only
                 class="limit-custom-apply"
                 @click.stop="applyCustomLimit"
               >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-              </button>
+                <Check class="w-3.5 h-3.5" />
+              </BaseButton>
             </div>
           </div>
         </Transition>
@@ -78,9 +82,7 @@
         
         <!-- Content -->
         <div class="build-content">
-          <svg v-if="!isBuilding" class="build-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
+          <Zap v-if="!isBuilding" class="build-icon" />
           <svg v-else class="build-spinner" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
@@ -92,19 +94,23 @@
 
     <!-- File Counter -->
     <div v-if="selectedCount > 0" class="file-counter">
-      {{ t('commandBar.selected') }}: <span class="file-count">{{ selectedCount }}</span> 
+      {{ t('commandBar.selected') }}: 
+      <BaseBadge variant="primary" size="xs" class="mx-1">
+        {{ selectedCount }}
+      </BaseBadge>
       <span class="token-estimate">~{{ estimatedTokens }}k tokens</span>
-      <button 
-        class="clear-btn"
+      <BaseButton 
+        variant="ghost" 
+        size="xs" 
+        class="clear-btn ml-2"
         @click="handleClear"
         :title="t('files.clearSelection')"
       >
-        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
+        <template #icon><X class="w-3 h-3" /></template>
         {{ t('files.clear') }}
-      </button>
+      </BaseButton>
     </div>
+
   </div>
 </template>
 
@@ -112,7 +118,10 @@
 import { useI18n } from '@/composables/useI18n'
 import { useFileStore } from '@/features/files/model/file.store'
 import { useSettingsStore } from '@/stores/settings.store'
+import { BaseButton, BaseBadge } from '@/components/ui'
+import { Check, ChevronDown, Zap, X } from 'lucide-vue-next'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+
 
 const props = defineProps<{
   selectedCount: number
@@ -205,10 +214,10 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 /* MAGIC BAR */
 .magic-bar {
   display: flex;
-  height: 56px;
+  height: calc(56px * var(--ui-scale));
   background: #1c1f2e;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   padding: 4px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
@@ -220,41 +229,29 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: all 0.15s;
-  padding: 0 12px;
+  padding: 0 var(--space-3);
 }
 
-.limit-main {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.limit-section:hover .limit-value {
-  color: white;
+.limit-trigger {
+  width: 100%;
+  gap: var(--space-2);
 }
 
 .limit-value {
-  font-size: 20px;
+  font-size: var(--font-size-lg);
   font-family: ui-monospace, monospace;
   font-weight: 700;
   color: #e5e7eb;
-  transition: color 0.15s;
   line-height: 1;
 }
 
 .limit-chevron {
-  width: 14px;
-  height: 14px;
+  width: calc(14px * var(--ui-scale));
+  height: calc(14px * var(--ui-scale));
   color: #6b7280;
   transition: all 0.2s;
-  flex-shrink: 0;
 }
 
-.limit-section:hover .limit-chevron {
-  color: #9ca3af;
-}
 
 .limit-chevron.open {
   transform: rotate(180deg);
@@ -375,7 +372,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   position: relative;
   flex: 1;
   margin-left: 4px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: none;
   cursor: pointer;
   overflow: hidden;
@@ -383,77 +380,6 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   box-shadow: 0 4px 20px rgba(147, 51, 234, 0.35);
 }
 
-.build-section:hover:not(:disabled) {
-  box-shadow: 0 6px 28px rgba(147, 51, 234, 0.5);
-}
-
-.build-section:active:not(:disabled) {
-  transform: scale(0.98);
-}
-
-.build-section:focus {
-  outline: none;
-}
-
-.build-section.disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.build-section.disabled .build-bg {
-  filter: grayscale(0.6);
-}
-
-.build-section.disabled .build-glow,
-.build-section.disabled .build-shimmer {
-  display: none;
-}
-
-/* Loading state - keep gradient with pulse animation, text stays white */
-.build-section.loading {
-  cursor: wait;
-  opacity: 1 !important;
-  animation: btn-pulse 2s ease-in-out infinite;
-}
-
-.build-section.loading .build-bg {
-  opacity: 1;
-  filter: none;
-}
-
-.build-section.loading .build-content {
-  color: white;
-  opacity: 1;
-}
-
-.build-section.loading .build-text {
-  color: white;
-}
-
-.build-section.loading .build-shimmer {
-  animation: shimmer 1s infinite;
-}
-
-.build-section.loading .build-glow {
-  opacity: 0.6;
-  animation: pulse-glow 1.5s ease-in-out infinite;
-}
-
-@keyframes btn-pulse {
-  0%, 100% { 
-    box-shadow: 0 4px 20px rgba(147, 51, 234, 0.35);
-  }
-  50% { 
-    box-shadow: 0 4px 32px rgba(147, 51, 234, 0.6), 0 0 20px rgba(219, 39, 119, 0.3);
-  }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 0.9; }
-}
-
-/* Gradient Background - Pink to Purple */
 .build-bg {
   position: absolute;
   inset: 0;
@@ -469,20 +395,20 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 .build-ring {
   position: absolute;
   inset: 0;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 /* Bottom Glow */
 .build-glow {
   position: absolute;
-  bottom: -10px;
+  bottom: calc(-10px * var(--ui-scale));
   left: 50%;
   transform: translateX(-50%);
   width: 70%;
-  height: 24px;
+  height: calc(24px * var(--ui-scale));
   background: linear-gradient(90deg, #db2777, #9333ea);
-  filter: blur(20px);
+  filter: blur(calc(20px * var(--ui-scale)));
   opacity: 0.6;
   transition: opacity 0.15s ease-out;
 }
@@ -491,45 +417,32 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   opacity: 0.9;
 }
 
-/* Shimmer */
-.build-shimmer {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.25) 50%, transparent 100%);
-  transform: translateX(-100%) skewX(-12deg);
-  animation: shimmer 3s infinite;
-}
-
-.build-section:hover:not(:disabled) .build-shimmer {
-  animation-duration: 1.5s;
-}
-
 /* Content */
 .build-content {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-2);
   height: 100%;
   color: white;
   z-index: 1;
 }
 
 .build-icon {
-  width: 20px;
-  height: 20px;
+  width: calc(20px * var(--ui-scale));
+  height: calc(20px * var(--ui-scale));
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .build-spinner {
-  width: 20px;
-  height: 20px;
+  width: calc(20px * var(--ui-scale));
+  height: calc(20px * var(--ui-scale));
   animation: spin 1s linear infinite;
 }
 
 .build-text {
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 700;
   letter-spacing: 0.05em;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -537,20 +450,18 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 
 /* FILE COUNTER */
 .file-counter {
-  text-align: center;
-  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
   color: #6b7280;
-}
-
-.file-count {
-  color: #9ca3af;
-  font-weight: 600;
 }
 
 .token-estimate {
   color: #6b7280;
-  margin-left: 4px;
+  margin-left: var(--space-2);
 }
+
 
 .clear-btn {
   display: inline-flex;

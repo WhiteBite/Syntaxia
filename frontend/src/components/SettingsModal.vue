@@ -56,6 +56,28 @@
 
               <div class="settings-group">
                 <div class="settings-group-header">
+                  <Maximize class="w-4 h-4 text-emerald-400" />
+                  <span>{{ t('settings.modal.uiScaling') }}</span>
+                </div>
+                <div class="flex items-center gap-4">
+                  <input
+                    type="range"
+                    v-model.number="settingsStore.settings.uiScale"
+                    min="0.75"
+                    max="1.25"
+                    step="0.05"
+                    class="settings-slider"
+                  />
+                  <span class="settings-scale-value">{{ Math.round(settingsStore.settings.uiScale * 100) }}%</span>
+                </div>
+                <p class="settings-hint">{{ t('settings.modal.uiScalingHint') }}</p>
+              </div>
+
+              <div class="settings-divider"></div>
+
+
+              <div class="settings-group">
+                <div class="settings-group-header">
                   <HelpCircle class="w-4 h-4 text-purple-400" />
                   <span>{{ t('onboarding.startTour') }}</span>
                 </div>
@@ -190,7 +212,8 @@ import ShellIntegrationSettings from '@/components/ShellIntegrationSettings.vue'
 import { useI18n } from '@/composables/useI18n'
 import { useOnboarding } from '@/composables/useOnboarding'
 import { useSettingsStore } from '@/stores/settings.store'
-import { FileText, Filter, FolderTree, Globe, HelpCircle, Lightbulb, Monitor, Settings, Sparkles, X } from 'lucide-vue-next'
+import { FileText, Filter, FolderTree, Globe, HelpCircle, Lightbulb, Maximize, Monitor, Settings, Sparkles, X } from 'lucide-vue-next'
+
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
 const props = defineProps<{
@@ -426,7 +449,41 @@ onUnmounted(() => {
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
+.settings-slider {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-3);
+  border-radius: 3px;
+  appearance: none;
+  outline: none;
+}
+
+.settings-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--accent-indigo);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+  border: 2px solid white;
+}
+
+.settings-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+}
+
+.settings-scale-value {
+  min-width: 3rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--accent-indigo);
+  font-family: var(--font-mono);
+}
+
 .settings-action-btn {
+
   display: flex;
   align-items: center;
   justify-content: center;

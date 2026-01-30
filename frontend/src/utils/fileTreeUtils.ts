@@ -206,26 +206,39 @@ export function countTotalFiles(nodes: FileNode[]): number {
  * @param tree - Root nodes array
  * @param maxDepth - Maximum depth to expand
  * @param currentDepth - Current depth (internal)
+ * @param state - Current expansion state to limit total expanded nodes
  */
 export function autoExpandToFiles(
     tree: FileNode[],
-    maxDepth: number = 3,
-    currentDepth: number = 0
+    maxDepth: number = 2,
+    currentDepth: number = 0,
+    state: { expandedCount: number } = { expandedCount: 0 }
 ): void {
-    if (currentDepth >= maxDepth) return
+    if (currentDepth >= maxDepth || state.expandedCount > 30) return
 
     for (const node of tree) {
         if (node.isDir && node.children && node.children.length > 0) {
-            const hasFiles = node.children.some((child) => !child.isDir)
-            const hasOnlyFolders = node.children.every((child) => child.isDir)
+            // Root level folders always expanded if they have children
+            if (currentDepth === 0) {
+                node.isExpanded = true
+                state.expandedCount++
+                autoExpandToFiles(node.children, maxDepth, currentDepth + 1, state)
+                continue
+            }
 
-            if (hasFiles || (hasOnlyFolders && currentDepth < maxDepth - 1)) {
+            // For deeper levels, expand only if:
+            // 1. It has direct files and not too many children (avoid cluttering)
+            // 2. OR it has only one child which is also a directory (chain)
+            const hasFiles = node.children.some((child) => !child.isDir)
+            const childCount = node.children.length
+
+            if ((hasFiles && childCount < 15 && state.expandedCount < 25) ||
+                (childCount === 1 && node.children[0].isDir)) {
                 node.isExpanded = true
-                autoExpandToFiles(node.children, maxDepth, currentDepth + 1)
-            } else if (currentDepth === 0) {
-                node.isExpanded = true
-                autoExpandToFiles(node.children, maxDepth, currentDepth + 1)
+                state.expandedCount++
+                autoExpandToFiles(node.children, maxDepth, currentDepth + 1, state)
             }
         }
     }
 }
+

@@ -48,8 +48,12 @@ export const useFileStore = defineStore('file', () => {
         findNode: tree.findNode,
     })
 
+    // State for range selection
+    const lastSelectedPath = ref<string | null>(null)
+
     // Additional state
     const isLoading = ref(false)
+
     const error = ref<string | null>(null)
 
     // Settings
@@ -114,11 +118,13 @@ export const useFileStore = defineStore('file', () => {
 
     function toggleSelect(path: string) {
         selection.toggleSelect(path)
+        lastSelectedPath.value = path
 
         if (autoSaveSelection.value) {
             persistence.debouncedSaveSelection()
         }
     }
+
 
     function clearSelection() {
         selection.clearSelection()
@@ -238,8 +244,10 @@ export const useFileStore = defineStore('file', () => {
         // State (from filter)
         filterExtensions: filter.filterExtensions,
         excludeExtensions: filter.excludeExtensions,
+        lastSelectedPath,
 
         // Computed (from tree)
+
         projectName: tree.projectName,
         breadcrumbs: tree.breadcrumbs,
         flattenedNodes: tree.flattenedNodes,

@@ -27,11 +27,12 @@
       </template>
       <!-- Current level: vertical line (full or half) + horizontal connector -->
       <line :x1="8 + item.depth * 16 + 0.5" y1="-4" 
-            :x2="8 + item.depth * 16 + 0.5" :y2="item.isLast ? 13 : rowHeight + 4"
+            :x2="8 + item.depth * 16 + 0.5" :y2="item.isLast ? rowHeight / 2 : rowHeight + 4"
             class="tree-guide-line" :class="`tree-guide-${Math.min(item.depth, 5)}`" />
-      <line :x1="8 + item.depth * 16" y1="13" 
-            :x2="8 + item.depth * 16 + 10" y2="13"
+      <line :x1="8 + item.depth * 16" y1="rowHeight / 2" 
+            :x2="8 + item.depth * 16 + 10" :y2="rowHeight / 2"
             class="tree-guide-line" :class="`tree-guide-${Math.min(item.depth, 5)}`" />
+
     </svg>
 
     <!-- Expand/Collapse Icon -->
@@ -93,7 +94,8 @@
     </div>
 
     <!-- Name -->
-    <span class="tree-name">{{ item.node.name }}</span>
+    <span class="tree-name">{{ item.displayName || item.node.name }}</span>
+
 
     <!-- Folder: file count + selected tokens weight -->
     <template v-if="item.node.isDir">
@@ -174,11 +176,14 @@ import type { FileNode } from '../model/file.store'
 import { computed, ref } from 'vue'
 
 const { t } = useI18n()
+const hoveredFile = useHoveredFile()
+const settingsStore = useSettingsStore()
 
 const DRAG_DATA_TYPE = 'application/x-file-paths'
 
 // Row height for SVG calculations (must match CSS min-height)
-const rowHeight = 26
+const rowHeight = computed(() => 26 * settingsStore.settings.uiScale)
+
 
 interface Props {
   item: FlattenedNode
@@ -232,11 +237,12 @@ const fileWeightLevel = computed((): WeightLevel => {
 })
 
 const emit = defineEmits<{
-  (e: 'toggle-select', path: string): void
+  (e: 'toggle-select', payload: { path: string, shiftKey: boolean }): void
   (e: 'toggle-expand', path: string): void
   (e: 'contextmenu', node: FileNode, event: MouseEvent): void
   (e: 'quicklook', path: string): void
 }>()
+
 
 // Use singleton pattern for hovered file state (avoids provide/inject issues with virtual scrolling)
 const { setHovered, clearHovered } = useHoveredFile()
@@ -244,12 +250,12 @@ const { setHovered, clearHovered } = useHoveredFile()
 const fileStore = useFileStore()
 const isDragging = ref(false)
 
-function handleClick() {
+function handleClick(event: MouseEvent) {
   if (props.item.node.isDir) {
     emit('toggle-expand', props.item.node.path)
   } else {
     // Clicking on a file row toggles its selection
-    emit('toggle-select', props.item.node.path)
+    emit('toggle-select', { path: props.item.node.path, shiftKey: event.shiftKey })
   }
 }
 
@@ -257,10 +263,11 @@ function handleExpand() {
   emit('toggle-expand', props.item.node.path)
 }
 
-function handleToggleSelect() {
+function handleToggleSelect(event: MouseEvent) {
   if (isSelectionDisabled.value) return
-  emit('toggle-select', props.item.node.path)
+  emit('toggle-select', { path: props.item.node.path, shiftKey: event.shiftKey })
 }
+
 
 function handleContextMenu(event: MouseEvent) {
   emit('contextmenu', props.item.node, event)

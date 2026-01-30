@@ -1,0 +1,19 @@
+name: SyntaxiaWB
+outputfilename: SyntaxiaWB
+root: .
+frontend:
+  dir: ../frontend
+  install: npm install
+  build: npm run build
+  dev:
+    watcher: npm run dev
+    serverUrl: auto
+  build_dir: ../frontend/dist
+author:
+  name: WhiteBite
+info:
+  company_name: WhiteBite
+  product_name: Syntaxia Code
+  product_version: 1.0.0
+  copyright: Copyright © 2024 WhiteBite
+  comments: AI-powered code context builder

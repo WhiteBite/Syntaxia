@@ -17,33 +17,36 @@
           <!-- Selection Stats -->
           <div class="flex items-center gap-2 text-xs mr-2">
             <div class="relative group">
-              <span class="chip-unified chip-unified-accent cursor-help">
+              <BaseBadge variant="accent" class="cursor-help">
                 {{ fileStore.selectedCount }}
-              </span>
+              </BaseBadge>
               <!-- Tooltip with stats -->
-              <div class="absolute right-0 top-full mt-2 hidden group-hover:block z-50 px-4 py-3 bg-gray-800/95 backdrop-blur-sm border border-gray-700/50 rounded-xl shadow-2xl whitespace-nowrap">
-                <div class="text-xs space-y-1.5">
-                  <div class="text-white font-semibold mb-2">Selection Stats</div>
-                  <div class="text-gray-400">Files: <span class="text-white">{{ fileStore.selectedCount }}</span></div>
-                  <div class="text-gray-400">Total: <span class="text-white">{{ explorer.totalFileCount.value }}</span> files</div>
-                  <div class="text-gray-400">Progress: <span class="text-indigo-400">{{ explorer.selectionProgress.value }}%</span></div>
-                  <div class="text-gray-400">Est. Size: <span class="text-white">{{ Math.round(fileStore.estimatedContextSize * 100) / 100 }}MB</span></div>
-                  <div class="text-gray-400">Est. Tokens: <span class="text-emerald-400">~{{ Math.round(fileStore.estimatedTokenCount / 1000) }}K</span></div>
-                </div>
+              <div class="absolute right-0 top-full mt-2 hidden group-hover:block z-50">
+                <BaseCard glass class="shadow-2xl">
+                  <div class="text-xs space-y-1.5 whitespace-nowrap">
+                    <div class="text-white font-semibold mb-2">Selection Stats</div>
+                    <div class="text-gray-400">Files: <span class="text-white">{{ fileStore.selectedCount }}</span></div>
+                    <div class="text-gray-400">Total: <span class="text-white">{{ explorer.totalFileCount.value }}</span> files</div>
+                    <div class="text-gray-400">Progress: <span class="text-indigo-400">{{ explorer.selectionProgress.value }}%</span></div>
+                    <div class="text-gray-400">Est. Size: <span class="text-white">{{ Math.round(fileStore.estimatedContextSize * 100) / 100 }}MB</span></div>
+                    <div class="text-gray-400">Est. Tokens: <span class="text-emerald-400">~{{ Math.round(fileStore.estimatedTokenCount / 1000) }}K</span></div>
+                  </div>
+                </BaseCard>
               </div>
             </div>
             <span class="text-gray-400">{{ t('files.selected') }}</span>
             <!-- Clear selection button -->
-            <button 
+            <BaseButton
               v-if="fileStore.selectedCount > 0"
+              variant="ghost"
+              size="xs"
+              icon-only
               @click="fileStore.clearSelection"
-              class="p-1 rounded hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-colors"
+              class="text-gray-500 hover:text-red-400"
               :title="t('files.clearSelection')"
             >
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+              <X class="w-3.5 h-3.5" />
+            </BaseButton>
           </div>
 
           <!-- Settings Popover -->
@@ -53,15 +56,17 @@
           />
 
           <!-- Refresh Button -->
-          <button @click="explorer.handleRefresh"
-            class="p-2 rounded-lg hover:bg-gray-700/50 text-gray-400 hover:text-white transition-colors"
-            :title="t('files.refresh')" :aria-label="t('files.refresh')">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </button>
+          <BaseButton
+            variant="ghost"
+            size="sm"
+            icon-only
+            @click="explorer.handleRefresh"
+            :title="t('files.refresh')"
+          >
+            <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': fileStore.isLoading }" />
+          </BaseButton>
         </div>
+
       </div>
 
       <!-- Breadcrumbs -->
@@ -83,34 +88,28 @@
 
     <!-- Search -->
     <div class="file-explorer__search">
-      <div class="relative group">
-        <input 
-          ref="searchInputRef"
-          v-model="explorer.searchQuery.value" 
-          type="text" 
-          :placeholder="t('files.searchShort')" 
-          :aria-label="t('files.searchShort')"
-          class="search-input pr-8"
-          :class="{ 'search-input-active': explorer.searchQuery.value }"
-          @input="explorer.handleSearch" 
-          @keydown.escape="clearSearch"
-        />
-        <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        <button 
-          v-if="explorer.searchQuery.value"
-          @click="clearSearch"
-          class="search-clear-btn"
-          :title="t('files.clear')"
-        >
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
+      <BaseInput 
+        ref="searchInputRef"
+        v-model="explorer.searchQuery.value" 
+        :placeholder="t('files.searchShort')" 
+        @input="explorer.handleSearch" 
+        @keydown.escape="clearSearch"
+      >
+        <template #prefix>
+          <SearchIcon class="w-4 h-4" />
+        </template>
+        <template #suffix v-if="explorer.searchQuery.value">
+          <button 
+            @click="clearSearch"
+            class="p-1 rounded hover:bg-gray-700/50 text-gray-400 hover:text-white transition-colors"
+            :title="t('files.clear')"
+          >
+            <X class="w-3.5 h-3.5" />
+          </button>
+        </template>
+      </BaseInput>
     </div>
+
 
     <!-- File Tree - MAIN SCROLLABLE AREA -->
     <div class="file-explorer__tree" data-tour="file-tree">
@@ -192,7 +191,10 @@ import { useContextStore } from '@/features/context'
 import { useProjectStore } from '@/stores/project.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useUIStore } from '@/stores/ui.store'
+import { BaseBadge, BaseButton, BaseCard } from '@/components/ui'
+import { RefreshCw, Search as SearchIcon, X } from 'lucide-vue-next'
 import { defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
+
 import { useFileExplorer } from '../composables/useFileExplorer'
 import { provideHoveredFile } from '../composables/useHoveredFile'
 import { useFileStore, type FileNode } from '../model/file.store'

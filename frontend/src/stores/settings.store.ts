@@ -63,6 +63,7 @@ export interface AppSettings {
     fileExplorer: FileExplorerSettings
     aiModel: string
     theme: 'dark' | 'light' | 'auto'
+    uiScale: number
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -111,8 +112,10 @@ const DEFAULT_SETTINGS: AppSettings = {
         ]
     },
     aiModel: 'gpt-4',
-    theme: 'dark'
+    theme: 'dark',
+    uiScale: 1.0
 }
+
 
 export const useSettingsStore = defineStore('settings', () => {
     const settings = ref<AppSettings>(loadSettings())
@@ -201,6 +204,11 @@ export const useSettingsStore = defineStore('settings', () => {
         settings.value.theme = theme
     }
 
+    function updateUIScale(scale: number) {
+        settings.value.uiScale = scale
+    }
+
+
     function updateFileExplorerSettings(updates: Partial<FileExplorerSettings>) {
         settings.value.fileExplorer = {
             ...settings.value.fileExplorer,
@@ -230,7 +238,9 @@ export const useSettingsStore = defineStore('settings', () => {
         updateContextStorageSettings,
         updateAIModel,
         updateTheme,
+        updateUIScale,
         updateFileExplorerSettings,
+
         getCustomIgnoreRules,
         setCustomIgnoreRules
     }

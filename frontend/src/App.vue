@@ -127,10 +127,11 @@ import { useI18n } from '@/composables/useI18n'
 import { useMemoryMonitor } from '@/composables/useMemoryMonitor'
 import { useOnboarding } from '@/composables/useOnboarding'
 import { useProjectStore } from '@/stores/project.store'
+import { useSettingsStore } from '@/stores/settings.store'
 import { useUIStore } from '@/stores/ui.store'
 import { shellApi } from '@/services/api/shell.api'
 import { useMagicKeys } from '@vueuse/core'
-import { defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
+import { defineAsyncComponent, onMounted, onUnmounted, ref, watch, watchEffect } from 'vue'
 
 // Lazy load heavy components
 const CommandPalette = defineAsyncComponent(() => import('@/components/CommandPalette.vue'))
@@ -144,10 +145,18 @@ const FileSearchModal = defineAsyncComponent(() => import('@/features/files/ui/F
 const { t } = useI18n()
 const projectStore = useProjectStore()
 const uiStore = useUIStore()
+const settingsStore = useSettingsStore()
 const globalError = ref<string | null>(null)
 const isCommandPaletteOpen = ref(false)
 const isShortcutsModalOpen = ref(false)
 const showMemoryDashboard = ref(false)
+
+// Apply UI scale to root element
+watchEffect(() => {
+  const scale = settingsStore.settings.uiScale || 1.0
+  document.documentElement.style.setProperty('--ui-scale', scale.toString())
+})
+
 
 // Keyboard shortcuts
 const keys = useMagicKeys()

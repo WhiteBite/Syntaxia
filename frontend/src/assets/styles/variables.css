@@ -3,7 +3,13 @@
    ============================================ */
 
 :root {
+    /* === SCALING SYSTEM === */
+    --base-unit: 4px;
+    --ui-scale: 1.0; /* Глобальный коэффициент масштаба (0.75 - 1.25) */
+    --scaled-unit: calc(var(--base-unit) * var(--ui-scale));
+
     /* === HIERARCHICAL BACKGROUND COLORS === */
+
     --bg-0: #0a0e1a;
     --bg-1: #111827;
     --bg-2: #1e2842;
@@ -94,33 +100,34 @@
     --shadow-glow-orange: 0 4px 15px -3px rgba(249, 115, 22, 0.45);
     
     /* === RADIUS === */
-    --radius-sm: 6px;
-    --radius-md: 10px;
-    --radius-lg: 12px;
-    --radius-xl: 14px;
-    --radius-2xl: 16px;
+    --radius-sm: calc(6px * var(--ui-scale));
+    --radius-md: calc(10px * var(--ui-scale));
+    --radius-lg: calc(12px * var(--ui-scale));
+    --radius-xl: calc(14px * var(--ui-scale));
+    --radius-2xl: calc(16px * var(--ui-scale));
     --radius-full: 9999px;
     
     /* === SPACING === */
-    --space-1: 4px;
-    --space-2: 8px;
-    --space-3: 12px;
-    --space-4: 16px;
-    --space-5: 20px;
-    --space-6: 24px;
-    --space-8: 32px;
+    --space-1: var(--scaled-unit);
+    --space-2: calc(var(--scaled-unit) * 2);
+    --space-3: calc(var(--scaled-unit) * 3);
+    --space-4: calc(var(--scaled-unit) * 4);
+    --space-5: calc(var(--scaled-unit) * 5);
+    --space-6: calc(var(--scaled-unit) * 6);
+    --space-8: calc(var(--scaled-unit) * 8);
     
     /* === TYPOGRAPHY === */
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-    --font-size-xs: 11px;
-    --font-size-sm: 13px;
-    --font-size-md: 14px;
-    --font-size-lg: 16px;
-    --font-size-xl: 18px;
-    --font-size-2xl: 20px;
-    --font-size-3xl: 24px;
+    --font-size-xs: calc(11px * var(--ui-scale));
+    --font-size-sm: calc(13px * var(--ui-scale));
+    --font-size-md: calc(14px * var(--ui-scale));
+    --font-size-lg: calc(16px * var(--ui-scale));
+    --font-size-xl: calc(18px * var(--ui-scale));
+    --font-size-2xl: calc(20px * var(--ui-scale));
+    --font-size-3xl: calc(24px * var(--ui-scale));
     --font-weight-normal: 400;
+
     --font-weight-medium: 500;
     --font-weight-semibold: 600;
     --font-weight-bold: 700;
@@ -134,10 +141,11 @@
     
     /* === LAYOUT === */
     /* Note: Use viewport-relative values for responsive design */
-    --app-header-height: 48px;
-    --app-sidebar-width: min(320px, 35vw);
-    --app-sidebar-min-width: min(280px, 30vw);
-    --app-panel-max-width: min(480px, 40vw);
+    --app-header-height: calc(48px * var(--ui-scale));
+    --app-sidebar-width: min(calc(320px * var(--ui-scale)), 35vw);
+    --app-sidebar-min-width: min(calc(280px * var(--ui-scale)), 30vw);
+    --app-panel-max-width: min(calc(480px * var(--ui-scale)), 40vw);
+
     
     /* === Z-INDEX === */
     --z-dropdown: 100;
@@ -148,9 +156,10 @@
     --z-toast: 700;
 
     /* === TREE VARIABLES === */
-    --tree-indent: 16px;
-    --tree-row-height: 32px;
+    --tree-indent: var(--space-4);
+    --tree-row-height: calc(26px * var(--ui-scale));
     --tree-row-gap: 1px;
+
     --tree-line-width: 1.5px;
     --tree-expand-size: 1.5rem;
     --tree-checkbox-size: 1rem;

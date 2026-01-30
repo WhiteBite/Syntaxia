@@ -91,10 +91,11 @@
     user-select: none;
     position: relative;
     color: var(--text-secondary);
-    height: 26px;
-    min-height: 26px;
-    max-height: 26px;
+    height: var(--tree-row-height);
+    min-height: var(--tree-row-height);
+    max-height: var(--tree-row-height);
     margin: 0;
+
     box-sizing: border-box;
 }
 
@@ -121,9 +122,10 @@
     overflow: visible;
     z-index: 0;
     /* Ensure SVG is not clipped and covers full row height */
-    height: 26px !important;
+    height: var(--tree-row-height) !important;
     display: block;
 }
+
 
 .tree-guide-line {
     fill: none;
