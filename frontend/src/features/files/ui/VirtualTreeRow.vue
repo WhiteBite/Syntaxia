@@ -3,11 +3,10 @@
     :class="[
       'tree-row group',
       props.isSelected ? 'tree-row-selected' : '',
-      { 'opacity-50': item.node.isIgnored },
       isDragging ? 'tree-row-dragging' : ''
     ]"
     :style="{ paddingLeft: `${item.depth * 16 + 8}px` }"
-    @click="handleClick"
+    @click="handleClick($event)"
     @contextmenu.prevent="handleContextMenu"
     :title="item.node.isIgnored ? `${item.node.path} (ignored)` : item.node.path"
     @mouseenter="handleMouseEnter"
@@ -32,7 +31,6 @@
       <line :x1="8 + item.depth * 16" y1="rowHeight / 2" 
             :x2="8 + item.depth * 16 + 10" :y2="rowHeight / 2"
             class="tree-guide-line" :class="`tree-guide-${Math.min(item.depth, 5)}`" />
-
     </svg>
 
     <!-- Expand/Collapse Icon -->
@@ -41,13 +39,7 @@
       :class="['tree-expand', item.node.isExpanded ? 'tree-expand-open' : '']"
       @click.stop="handleExpand"
     >
-      <svg class="tree-expand-icon" fill="currentColor" viewBox="0 0 20 20">
-        <path
-          fill-rule="evenodd"
-          d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-          clip-rule="evenodd"
-        />
-      </svg>
+      <ChevronIcon />
     </div>
     <div v-else class="w-5"></div>
 
@@ -59,21 +51,10 @@
         props.checkboxState === 'partial' ? 'tree-cb-partial' : '',
         isSelectionDisabled ? 'tree-cb-disabled' : ''
       ]"
-      @click.stop="handleToggleSelect"
+      @click.stop="handleToggleSelect($event)"
       :title="isSelectionDisabled ? t('files.binaryFile') : undefined"
     >
-      <svg
-        v-if="props.checkboxState === 'full'"
-        class="tree-cb-icon"
-        fill="currentColor"
-        viewBox="0 0 20 20"
-      >
-        <path
-          fill-rule="evenodd"
-          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-          clip-rule="evenodd"
-        />
-      </svg>
+      <CheckIcon v-if="props.checkboxState === 'full'" />
       <div
         v-else-if="props.checkboxState === 'partial'"
         class="w-2 h-0.5 bg-white rounded-full"
@@ -82,20 +63,13 @@
 
     <!-- File/Folder Icon -->
     <div class="tree-icon">
-      <svg
-        v-if="item.node.isDir"
-        class="tree-folder-icon"
-        fill="currentColor"
-        viewBox="0 0 20 20"
-      >
-        <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-      </svg>
+      <FolderOpenIcon v-if="item.node.isDir && item.node.isExpanded" />
+      <FolderIcon v-else-if="item.node.isDir" />
       <span v-else class="tree-file-icon">{{ getFileIcon(item.node.name) }}</span>
     </div>
 
     <!-- Name -->
     <span class="tree-name">{{ item.displayName || item.node.name }}</span>
-
 
     <!-- Folder: file count + selected tokens weight -->
     <template v-if="item.node.isDir">
@@ -105,7 +79,6 @@
         :title="t('files.fileCountTooltip').replace('{count}', String(props.fileCount))">
         {{ props.fileCount }}
       </span>
-      <!-- Bubble-up: show selected tokens inside folder -->
       <span 
         v-if="props.selectedTokens > 0"
         class="tree-weight"
@@ -118,7 +91,6 @@
 
     <!-- File indicators -->
     <template v-else>
-      <!-- Binary indicator -->
       <span 
         v-if="item.node.contentType === 'binary'" 
         class="tree-binary-badge"
@@ -126,7 +98,6 @@
       >
         BIN
       </span>
-      <!-- Heavy file badge (only for heavy files) -->
       <span 
         v-else-if="fileWeightLevel !== 'none'"
         class="tree-token-badge"
@@ -135,7 +106,6 @@
       >
         {{ formatTokens(fileTokens) }}
       </span>
-      <!-- Normal file size (for light files) -->
       <span v-else-if="item.node.size" class="tree-size">
         {{ formatSize(item.node.size) }}
       </span>
@@ -147,20 +117,7 @@
       class="tree-preview"
       @click.stop="handleQuickLook"
     >
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-        />
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-        />
-      </svg>
+      <EyeIcon />
     </button>
   </div>
 </template>
@@ -171,8 +128,9 @@ import type { FlattenedNode } from '@/composables/useVirtualTree'
 import { TOKEN_THRESHOLDS } from '@/config/constants'
 import { getFileIcon } from '@/utils/fileIcons'
 import { useHoveredFile } from '../composables/useHoveredFile'
-import { useFileStore } from '../model/file.store'
-import type { FileNode } from '../model/file.store'
+import { useFileStore, type FileNode } from '../model/file.store'
+import { useSettingsStore } from '@/stores/settings.store'
+import { CheckIcon, ChevronIcon, EyeIcon, FolderIcon, FolderOpenIcon } from '@/components/icons'
 import { computed, ref } from 'vue'
 
 const { t } = useI18n()
@@ -183,7 +141,6 @@ const DRAG_DATA_TYPE = 'application/x-file-paths'
 
 // Row height for SVG calculations (must match CSS min-height)
 const rowHeight = computed(() => 26 * settingsStore.settings.uiScale)
-
 
 interface Props {
   item: FlattenedNode
@@ -204,14 +161,12 @@ const props = withDefaults(defineProps<Props>(), {
   allowSelectBinary: false
 })
 
-// Check if selection is disabled for this item
 const isSelectionDisabled = computed(() => {
   if (props.item.node.isDir) return false
   if (props.item.node.contentType !== 'binary') return false
   return !props.allowSelectBinary
 })
 
-// Weight level for visual indicators
 type WeightLevel = 'none' | 'medium' | 'heavy' | 'critical'
 
 const weightLevel = computed((): WeightLevel => {
@@ -222,7 +177,6 @@ const weightLevel = computed((): WeightLevel => {
   return 'none'
 })
 
-// File's own token count (for files only)
 const fileTokens = computed(() => {
   if (props.item.node.isDir || !props.item.node.size) return 0
   return Math.round(props.item.node.size / TOKEN_THRESHOLDS.BYTES_PER_TOKEN)
@@ -243,10 +197,6 @@ const emit = defineEmits<{
   (e: 'quicklook', path: string): void
 }>()
 
-
-// Use singleton pattern for hovered file state (avoids provide/inject issues with virtual scrolling)
-const { setHovered, clearHovered } = useHoveredFile()
-
 const fileStore = useFileStore()
 const isDragging = ref(false)
 
@@ -254,7 +204,6 @@ function handleClick(event: MouseEvent) {
   if (props.item.node.isDir) {
     emit('toggle-expand', props.item.node.path)
   } else {
-    // Clicking on a file row toggles its selection
     emit('toggle-select', { path: props.item.node.path, shiftKey: event.shiftKey })
   }
 }
@@ -268,7 +217,6 @@ function handleToggleSelect(event: MouseEvent) {
   emit('toggle-select', { path: props.item.node.path, shiftKey: event.shiftKey })
 }
 
-
 function handleContextMenu(event: MouseEvent) {
   emit('contextmenu', props.item.node, event)
 }
@@ -278,11 +226,11 @@ function handleQuickLook() {
 }
 
 function handleMouseEnter() {
-  setHovered(props.item.node.path, props.item.node.isDir)
+  hoveredFile.setHovered(props.item.node.path, props.item.node.isDir)
 }
 
 function handleMouseLeave() {
-  clearHovered(props.item.node.path)
+  hoveredFile.clearHovered(props.item.node.path)
 }
 
 function formatSize(bytes: number): string {
@@ -298,23 +246,15 @@ function formatTokens(tokens: number): string {
 
 function handleDragStart(e: DragEvent) {
   if (!e.dataTransfer) return
-  
   isDragging.value = true
-  
-  // Collect paths to drag: if current node is selected, drag all selected; otherwise just this node
   let pathsToDrag: string[]
-  
   if (props.isSelected && fileStore.selectedCount > 1) {
-    // Drag all selected files
     pathsToDrag = fileStore.selectedFilesList || []
   } else if (props.item.node.isDir) {
-    // For directories, get all files inside
     pathsToDrag = fileStore.getAllFilesInNode(props.item.node)
   } else {
-    // Single file
     pathsToDrag = [props.item.node.path]
   }
-  
   e.dataTransfer.setData(DRAG_DATA_TYPE, JSON.stringify(pathsToDrag))
   e.dataTransfer.effectAllowed = 'copy'
 }
@@ -323,3 +263,234 @@ function handleDragEnd() {
   isDragging.value = false
 }
 </script>
+
+<style scoped>
+.tree-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0;
+    border-radius: 0;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    color: var(--text-secondary);
+    height: var(--tree-row-height);
+    min-height: var(--tree-row-height);
+    max-height: var(--tree-row-height);
+    margin: 0;
+    box-sizing: border-box;
+}
+
+.tree-row:hover {
+    background: var(--tree-hover-bg);
+    color: var(--text-primary);
+}
+
+.tree-row-selected {
+    background: rgba(99, 102, 241, 0.18) !important;
+    color: white !important;
+}
+
+.tree-row-selected:hover {
+    background: rgba(99, 102, 241, 0.25) !important;
+}
+
+.tree-guides {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    overflow: visible;
+    z-index: 0;
+    height: var(--tree-row-height) !important;
+    display: block;
+}
+
+.tree-guide-line {
+    fill: none;
+    stroke-width: 1px;
+    stroke-linecap: square;
+    stroke-linejoin: miter;
+    opacity: 0.5;
+    transition: opacity var(--transition-fast);
+    stroke: var(--border-subtle);
+}
+
+.tree-row:hover .tree-guide-line {
+    opacity: 0.8;
+}
+
+.tree-expand {
+    flex-shrink: 0;
+    width: var(--tree-expand-size);
+    height: var(--tree-expand-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+    color: #94a3b8;
+}
+
+.tree-row:hover .tree-expand {
+    color: #cbd5e1;
+}
+
+.tree-expand:hover {
+    color: #f1f5f9;
+    background: rgba(148, 163, 184, 0.15);
+}
+
+.tree-expand-icon {
+    width: 1.125rem;
+    height: 1.125rem;
+    transition: transform var(--transition-fast);
+}
+
+.tree-expand-open .tree-expand-icon {
+    transform: rotate(90deg);
+}
+
+.tree-cb {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid #64748b;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background: transparent;
+}
+
+.tree-row:hover .tree-cb {
+    border-color: #818cf8;
+    background: rgba(99, 102, 241, 0.08);
+}
+
+.tree-cb:hover {
+    border-color: #818cf8;
+    background: rgba(99, 102, 241, 0.12);
+}
+
+.tree-cb-checked {
+    background: #6366f1;
+    border-color: #6366f1;
+    box-shadow: 0 0 4px rgba(99, 102, 241, 0.4);
+}
+
+.tree-cb-partial {
+    background: rgba(99, 102, 241, 0.35);
+    border-color: #818cf8;
+}
+
+.tree-cb-icon {
+    width: 0.75rem;
+    height: 0.75rem;
+    color: white;
+}
+
+.tree-cb-disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    border-color: #475569;
+    background: rgba(71, 85, 105, 0.2);
+}
+
+.tree-icon {
+    flex-shrink: 0;
+    width: var(--tree-icon-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tree-folder-icon {
+    width: 18px;
+    height: 18px;
+    color: var(--tree-folder-color);
+    transition: all var(--transition-fast);
+}
+
+.tree-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+}
+
+.tree-count {
+    font-size: 10px;
+    margin-left: auto;
+    margin-right: var(--space-2);
+    padding: 2px 6px;
+    border-radius: var(--radius-md);
+    color: #94a3b8;
+    background: rgba(100, 116, 139, 0.25);
+    font-weight: var(--font-weight-medium);
+    min-width: 1.25rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.tree-size {
+    font-size: 11px;
+    margin-left: auto;
+    margin-right: var(--space-2);
+    color: #94a3b8;
+    font-weight: var(--font-weight-medium);
+    font-variant-numeric: tabular-nums;
+}
+
+.tree-weight, .tree-token-badge {
+    font-size: 10px;
+    margin-right: var(--space-2);
+    padding: 2px 6px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, monospace;
+}
+
+.tree-weight--medium, .tree-token-badge--medium {
+    color: #fcd34d;
+    background: rgba(252, 211, 77, 0.15);
+    border: 1px solid rgba(252, 211, 77, 0.25);
+}
+
+.tree-weight--heavy, .tree-token-badge--heavy {
+    color: #fb923c;
+    background: rgba(251, 146, 60, 0.15);
+    border: 1px solid rgba(251, 146, 60, 0.25);
+}
+
+.tree-weight--critical, .tree-token-badge--critical {
+    color: #f87171;
+    background: rgba(248, 113, 113, 0.15);
+    border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+.tree-preview {
+    opacity: 0;
+    margin-left: auto;
+    margin-right: var(--space-1);
+    padding: var(--space-1);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    transition: all var(--transition-fast);
+}
+
+.tree-row:hover .tree-preview {
+    opacity: 1;
+}
+
+.tree-row-dragging {
+    opacity: 0.6;
+    cursor: grabbing;
+}
+</style>

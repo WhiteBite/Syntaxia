@@ -57,7 +57,7 @@ const props = withDefaults(defineProps<Props>(), {
   allowSelectBinary: false,
 })
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'toggle-select', path: string): void
   (e: 'toggle-expand', path: string): void
   (e: 'contextmenu', node: FileNode, event: MouseEvent): void
@@ -93,7 +93,6 @@ function handleToggleSelect(payload: { path: string, shiftKey: boolean }) {
   
   fileStore.toggleSelect(path)
 }
-
 
 // Selection helpers - computed at parent level for better performance
 function isNodeSelected(node: FileNode): boolean {
