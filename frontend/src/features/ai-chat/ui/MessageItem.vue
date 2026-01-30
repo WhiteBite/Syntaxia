@@ -48,34 +48,45 @@
 
       <!-- Actions -->
       <div class="flex gap-2 mt-2">
-        <button @click="copyToClipboard" class="text-xs text-gray-400 hover:text-gray-300 transition-colors"
-          :title="t('chat.copy')">
-          <svg v-if="!copied" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
-          <svg v-else class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>
-        </button>
-        <button v-if="message.role === 'user'" @click="$emit('edit', message.id, message.content)"
-          class="text-xs text-gray-400 hover:text-gray-300 transition-colors" title="Edit">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-          </svg>
-        </button>
-        <button @click="$emit('delete', message.id)" class="text-xs text-gray-400 hover:text-red-400 transition-colors"
-          title="Delete">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        </button>
+        <BaseButton
+          variant="ghost"
+          size="xs"
+          icon-only
+          @click="copyToClipboard"
+          :title="t('chat.copy')"
+          class="h-7 w-7"
+        >
+          <Copy v-if="!copied" class="w-3.5 h-3.5" />
+          <Check v-else class="w-3.5 h-3.5 text-green-500" />
+        </BaseButton>
+        
+        <BaseButton
+          v-if="message.role === 'user'"
+          variant="ghost"
+          size="xs"
+          icon-only
+          @click="$emit('edit', message.id, message.content)"
+          title="Edit"
+          class="h-7 w-7"
+        >
+          <Pencil class="w-3.5 h-3.5" />
+        </BaseButton>
+
+        <BaseButton
+          variant="ghost"
+          size="xs"
+          icon-only
+          @click="$emit('delete', message.id)"
+          title="Delete"
+          class="text-gray-400 hover:text-red-400 h-7 w-7"
+        >
+          <Trash2 class="w-3.5 h-3.5" />
+        </BaseButton>
       </div>
     </div>
   </div>
 </template>
+
 
 <script setup lang="ts">
 import { useI18n } from '@/composables/useI18n'
@@ -84,7 +95,10 @@ import { onUnmounted, ref } from 'vue'
 import type { Message } from '../model/chat.store'
 import ContextUsedBadge from './ContextUsedBadge.vue'
 import ContextUsedDetails from './ContextUsedDetails.vue'
+import { BaseButton } from '@/components/ui'
+import { Copy, Check, Pencil, Trash2 } from 'lucide-vue-next'
 import type { ContextUsed } from './types'
+
 
 interface MessageWithContext extends Message {
   contextUsed?: ContextUsed

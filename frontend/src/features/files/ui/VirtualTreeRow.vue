@@ -69,7 +69,9 @@
     </div>
 
     <!-- Name -->
-    <span class="tree-name">{{ item.displayName || item.node.name }}</span>
+    <span class="tree-name" :style="heatmapColor ? { color: heatmapColor, fontWeight: 600 } : {}">
+      {{ item.displayName || item.node.name }}
+    </span>
 
     <!-- Folder: file count + selected tokens weight -->
     <template v-if="item.node.isDir">
@@ -180,6 +182,19 @@ const weightLevel = computed((): WeightLevel => {
 const fileTokens = computed(() => {
   if (props.item.node.isDir || !props.item.node.size) return 0
   return Math.round(props.item.node.size / TOKEN_THRESHOLDS.BYTES_PER_TOKEN)
+})
+
+const heatmapColor = computed(() => {
+  if (props.item.node.isDir) {
+    if (props.selectedTokens >= TOKEN_THRESHOLDS.CRITICAL) return 'var(--color-danger)'
+    if (props.selectedTokens >= TOKEN_THRESHOLDS.HEAVY) return 'var(--color-warning)'
+    if (props.selectedTokens >= TOKEN_THRESHOLDS.MEDIUM) return 'var(--accent-amber, #fbbf24)'
+    return null
+  }
+  if (fileTokens.value >= TOKEN_THRESHOLDS.CRITICAL) return 'var(--color-danger)'
+  if (fileTokens.value >= TOKEN_THRESHOLDS.HEAVY) return 'var(--color-warning)'
+  if (fileTokens.value >= TOKEN_THRESHOLDS.MEDIUM) return 'var(--accent-amber, #fbbf24)'
+  return null
 })
 
 const fileWeightLevel = computed((): WeightLevel => {

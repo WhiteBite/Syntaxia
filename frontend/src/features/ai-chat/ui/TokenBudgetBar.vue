@@ -62,19 +62,19 @@ const tooltipText = computed(() => {
 .token-budget-bar {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.375rem 0.75rem;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
   background: var(--bg-2);
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-full);
   color: var(--text-muted);
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
   cursor: default;
 }
 
 .token-progress-container {
-  width: 4rem;
-  height: 0.375rem;
+  width: calc(4rem * var(--ui-scale));
+  height: calc(0.375rem * var(--ui-scale));
   background: var(--bg-3);
   border-radius: var(--radius-full);
   overflow: hidden;
@@ -85,6 +85,7 @@ const tooltipText = computed(() => {
   border-radius: var(--radius-full);
   transition: width 300ms ease-out, background-color 300ms ease-out;
 }
+
 
 .progress-green {
   background: var(--color-success);

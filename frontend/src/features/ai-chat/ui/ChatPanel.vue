@@ -26,34 +26,37 @@
     <div class="section-header">
       <div class="section-title">
         <div class="section-icon section-icon-purple">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-          </svg>
+          <MessageSquare class="w-4 h-4" />
         </div>
         <span class="section-title-text">{{ t('chat.title') }}</span>
-        <span v-if="sandboxStore.hasChanges" class="badge badge-warning">
+        <BaseBadge v-if="sandboxStore.hasChanges" variant="warning" size="xs">
           {{ sandboxStore.changeCount }} {{ t('chat.pendingChanges') }}
-        </span>
+        </BaseBadge>
       </div>
       
       <div class="flex items-center gap-2">
         <ChatHistoryPanel />
-        <button
+        <BaseButton
           v-if="sandboxStore.hasChanges"
+          variant="primary"
+          size="xs"
           @click="showChangesPanel = true"
-          class="btn btn-primary btn-xs"
         >
           {{ t('chat.reviewChanges') }}
-        </button>
-        <button
-          @click="chatStore.clearChat"
+        </BaseButton>
+        <BaseButton
+          variant="ghost"
+          size="xs"
+          icon-only
           :disabled="!chatStore.hasMessages"
-          class="btn btn-secondary btn-xs"
+          @click="chatStore.clearChat"
+          :title="t('chat.clear')"
         >
-          {{ t('chat.clear') }}
-        </button>
+          <Trash2 class="w-3.5 h-3.5" />
+        </BaseButton>
       </div>
     </div>
+
 
     <!-- Mode Selector & Token Budget Bar -->
     <div class="chat-toolbar">
@@ -165,7 +168,10 @@ import { useChatStore } from '../model/chat.store'
 import { useSandboxStore } from '@/stores/sandbox.store'
 import { useChatDragDrop } from '../composables/useChatDragDrop'
 import { useAutoSuggest } from '../composables/useAutoSuggest'
+import { BaseButton, BaseBadge } from '@/components/ui'
+import { MessageSquare, RefreshCw, Trash2 } from 'lucide-vue-next'
 import MessageItem from './MessageItem.vue'
+
 import ChangePreviewModal from './ChangePreviewModal.vue'
 import ChatModeSelector from './ChatModeSelector.vue'
 import ChatHistoryPanel from './ChatHistoryPanel.vue'
@@ -306,11 +312,12 @@ watch(() => chatStore.messages.length, () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem 3rem;
-  border: 2px dashed var(--purple-500);
-  border-radius: 1rem;
+  padding: var(--space-8) var(--space-11);
+  border: 2px dashed var(--accent-purple);
+  border-radius: var(--radius-xl);
   background: rgba(139, 92, 246, 0.1);
 }
+
 
 .fade-enter-active,
 .fade-leave-active {

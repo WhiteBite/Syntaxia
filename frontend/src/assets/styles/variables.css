@@ -115,6 +115,7 @@
     --space-5: calc(var(--scaled-unit) * 5);
     --space-6: calc(var(--scaled-unit) * 6);
     --space-8: calc(var(--scaled-unit) * 8);
+    --space-11: calc(var(--scaled-unit) * 11);
     
     /* === TYPOGRAPHY === */
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
