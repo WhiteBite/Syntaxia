@@ -3,4 +3,5 @@ export { default as ChevronIcon } from './ChevronIcon.vue'
 export { default as EyeIcon } from './EyeIcon.vue'
 export { default as FolderIcon } from './FolderIcon.vue'
 export { default as FolderOpenIcon } from './FolderOpenIcon.vue'
+export { default as WandIcon } from './WandIcon.vue'
 

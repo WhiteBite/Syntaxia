@@ -25,6 +25,8 @@
     "files.undoSelection": "Undo selection (Ctrl+Z)",
     "files.redoSelection": "Redo selection (Ctrl+Y)",
     "files.clearSelection": "Clear selection",
+    "files.zenMode": "Zen Mode - Focus on selected files",
+    "files.selectedOnlyMode": "Selected Only - Show only selected files",
     "files.clearConfirmTitle": "Clear selection?",
     "files.clearConfirmMessage": "Are you sure you want to deselect {count} files?",
     "files.undo": "Undo selection",
@@ -197,5 +199,13 @@
     "files.favorites.empty": "No favorite files",
     "files.favorites.maxReached": "Maximum favorites limit reached (20)",
     "files.favorites.added": "Added to favorites",
-    "files.favorites.removed": "Removed from favorites"
+    "files.favorites.removed": "Removed from favorites",
+    "files.quickOpen.placeholder": "Search files by name... (Ctrl+P)",
+    "files.quickOpen.noResults": "No files found",
+    "files.quickOpen.hint": "Start typing to search for files",
+    "files.quickOpen.navigate": "navigate",
+    "files.quickOpen.select": "select",
+    "files.quickOpen.close": "close",
+    "files.selectRelated": "Select related files",
+    "files.relatedFilesSelected": "Selected {count} related files"
 }

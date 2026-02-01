@@ -3,9 +3,12 @@
     :class="[
       'tree-row group',
       props.isSelected ? 'tree-row-selected' : '',
-      isDragging ? 'tree-row-dragging' : ''
+      isDragging ? 'tree-row-dragging' : '',
+      props.isFocused ? 'tree-row-focused' : '',
+      !isRelevant ? 'tree-row-dimmed' : ''
     ]"
     :style="{ paddingLeft: `${item.depth * 16 + 8}px` }"
+    :tabindex="props.isFocused ? 0 : -1"
     @click="handleClick($event)"
     @contextmenu.prevent="handleContextMenu"
     :title="item.node.isIgnored ? `${item.node.path} (ignored)` : item.node.path"
@@ -22,15 +25,27 @@
         <line v-if="hasMore" 
           :x1="8 + (idx + 1) * 16 + 0.5" y1="-4" 
           :x2="8 + (idx + 1) * 16 + 0.5" :y2="rowHeight + 4"
-          class="tree-guide-line" :class="`tree-guide-${Math.min(idx + 1, 5)}`" />
+          :class="[
+            'tree-guide-line',
+            `tree-guide-${Math.min(idx + 1, 5)}`,
+            { 'tree-guide-highlight': shouldHighlightGuide(idx) }
+          ]" />
       </template>
       <!-- Current level: vertical line (full or half) + horizontal connector -->
       <line :x1="8 + item.depth * 16 + 0.5" y1="-4" 
             :x2="8 + item.depth * 16 + 0.5" :y2="item.isLast ? rowHeight / 2 : rowHeight + 4"
-            class="tree-guide-line" :class="`tree-guide-${Math.min(item.depth, 5)}`" />
+            :class="[
+              'tree-guide-line',
+              `tree-guide-${Math.min(item.depth, 5)}`,
+              { 'tree-guide-highlight': shouldHighlightGuide(item.depth - 1) }
+            ]" />
       <line :x1="8 + item.depth * 16" y1="rowHeight / 2" 
             :x2="8 + item.depth * 16 + 10" :y2="rowHeight / 2"
-            class="tree-guide-line" :class="`tree-guide-${Math.min(item.depth, 5)}`" />
+            :class="[
+              'tree-guide-line',
+              `tree-guide-${Math.min(item.depth, 5)}`,
+              { 'tree-guide-highlight': shouldHighlightGuide(item.depth - 1) }
+            ]" />
     </svg>
 
     <!-- Expand/Collapse Icon -->
@@ -61,6 +76,16 @@
       ></div>
     </div>
 
+    <!-- Magic Wand Button (Select Related) -->
+    <button
+      v-if="!item.node.isDir"
+      class="tree-wand"
+      @click.stop="handleSelectRelated"
+      :title="t('files.selectRelated')"
+    >
+      <WandIcon />
+    </button>
+
     <!-- File/Folder Icon -->
     <div class="tree-icon">
       <FolderOpenIcon v-if="item.node.isDir && item.node.isExpanded" />
@@ -68,9 +93,22 @@
       <span v-else class="tree-file-icon">{{ getFileIcon(item.node.name) }}</span>
     </div>
 
-    <!-- Name -->
+    <!-- Name with search highlighting -->
     <span class="tree-name" :style="heatmapColor ? { color: heatmapColor, fontWeight: 600 } : {}">
-      {{ item.displayName || item.node.name }}
+      <template v-if="nameSegments.length > 1">
+        <template v-for="(segment, idx) in nameSegments" :key="idx">
+          <mark v-if="segment.isMatch" class="tree-highlight">{{ segment.text }}</mark>
+          <span v-else>{{ segment.text }}</span>
+        </template>
+      </template>
+      <template v-else>
+        {{ item.displayName || item.node.name }}
+      </template>
+    </span>
+    
+    <!-- Search mode: show relative path -->
+    <span v-if="item.relativePath" class="tree-search-path">
+      {{ item.relativePath }}
     </span>
 
     <!-- Folder: file count + selected tokens weight -->
@@ -129,11 +167,13 @@ import { useI18n } from '@/composables/useI18n'
 import type { FlattenedNode } from '@/composables/useVirtualTree'
 import { TOKEN_THRESHOLDS } from '@/config/constants'
 import { getFileIcon } from '@/utils/fileIcons'
+import { highlightMatches } from '@/utils/searchHighlight'
 import { useHoveredFile } from '../composables/useHoveredFile'
 import { useFileStore, type FileNode } from '../model/file.store'
 import { useSettingsStore } from '@/stores/settings.store'
-import { CheckIcon, ChevronIcon, EyeIcon, FolderIcon, FolderOpenIcon } from '@/components/icons'
+import { CheckIcon, ChevronIcon, EyeIcon, FolderIcon, FolderOpenIcon, WandIcon } from '@/components/icons'
 import { computed, ref } from 'vue'
+import type { FuseResultMatch } from 'fuse.js'
 
 const { t } = useI18n()
 const hoveredFile = useHoveredFile()
@@ -148,6 +188,7 @@ interface Props {
   item: FlattenedNode
   compactMode?: boolean
   isSelected?: boolean
+  isFocused?: boolean
   checkboxState?: 'none' | 'partial' | 'full'
   fileCount?: number
   selectedTokens?: number
@@ -157,6 +198,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   compactMode: false,
   isSelected: false,
+  isFocused: false,
   checkboxState: 'none',
   fileCount: 0,
   selectedTokens: 0,
@@ -210,10 +252,41 @@ const emit = defineEmits<{
   (e: 'toggle-expand', path: string): void
   (e: 'contextmenu', node: FileNode, event: MouseEvent): void
   (e: 'quicklook', path: string): void
+  (e: 'select-related', path: string): void
 }>()
 
 const fileStore = useFileStore()
 const isDragging = ref(false)
+
+const isHoveredOrFocused = computed(() => {
+  return props.isSelected || hoveredFile.isHovered(props.item.node.path)
+})
+
+const isRelevant = computed(() => {
+  if (!fileStore.isZenMode) return true
+  if (props.isSelected) return true
+  if (props.item.node.isDir) {
+    // Folder is relevant if it contains selected files
+    return props.checkboxState !== 'none'
+  }
+  return false
+})
+
+// Search highlighting: split name into segments
+const nameSegments = computed(() => {
+  // Check if this is a search result with matches
+  const searchResult = props.item as unknown as { matches?: ReadonlyArray<FuseResultMatch> }
+  if (searchResult.matches && fileStore.searchQuery) {
+    return highlightMatches(props.item.node.name, searchResult.matches)
+  }
+  return [{ text: props.item.node.name, isMatch: false }]
+})
+
+function shouldHighlightGuide(depth: number): boolean {
+  if (!isHoveredOrFocused.value) return false
+  // Highlight parent's guide line (depth - 1)
+  return depth === props.item.depth - 1
+}
 
 function handleClick(event: MouseEvent) {
   if (props.item.node.isDir) {
@@ -276,6 +349,10 @@ function handleDragStart(e: DragEvent) {
 
 function handleDragEnd() {
   isDragging.value = false
+}
+
+function handleSelectRelated() {
+  emit('select-related', props.item.node.path)
 }
 </script>
 

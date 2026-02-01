@@ -114,6 +114,12 @@
       :is-open="uiStore.isFileSearchModalOpen"
     />
 
+    <!-- File Quick Open Modal -->
+    <FileQuickOpenModal
+      v-if="projectStore.hasProject"
+      ref="quickOpenRef"
+    />
+
     <!-- Confirm Dialog (global) -->
     <ConfirmDialog />
 
@@ -141,6 +147,7 @@ const MemoryDashboard = defineAsyncComponent(() => import('@/components/MemoryDa
 const SettingsModal = defineAsyncComponent(() => import('@/components/SettingsModal.vue'))
 const ConfirmDialog = defineAsyncComponent(() => import('@/components/ConfirmDialog.vue'))
 const FileSearchModal = defineAsyncComponent(() => import('@/features/files/ui/FileSearchModal.vue'))
+const FileQuickOpenModal = defineAsyncComponent(() => import('@/features/files/ui/FileQuickOpenModal.vue'))
 
 const { t } = useI18n()
 const projectStore = useProjectStore()
@@ -150,6 +157,8 @@ const globalError = ref<string | null>(null)
 const isCommandPaletteOpen = ref(false)
 const isShortcutsModalOpen = ref(false)
 const showMemoryDashboard = ref(false)
+// @ts-expect-error - Used in template ref binding
+const quickOpenRef = ref<InstanceType<typeof FileQuickOpenModal>>()
 
 // Apply UI scale to root element
 watchEffect(() => {

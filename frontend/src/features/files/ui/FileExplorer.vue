@@ -54,6 +54,31 @@
             @open-ignore-rules="ignoreRulesModalRef?.open()" 
             @settings-changed="explorer.handleSettingsChange"
           />
+          
+          <!-- Selected Only Mode Toggle -->
+          <BaseButton
+            v-if="fileStore.selectedCount > 0"
+            variant="ghost"
+            size="sm"
+            icon-only
+            @click="fileStore.toggleSelectedOnlyMode()"
+            :class="{ 'text-indigo-400': fileStore.isSelectedOnlyMode }"
+            :title="t('files.selectedOnlyMode')"
+          >
+            <CheckSquare class="w-4 h-4" />
+          </BaseButton>
+          
+          <!-- Zen Mode Toggle -->
+          <BaseButton
+            variant="ghost"
+            size="sm"
+            icon-only
+            @click="fileStore.toggleZenMode()"
+            :class="{ 'text-indigo-400': fileStore.isZenMode }"
+            :title="t('files.zenMode')"
+          >
+            <Eye class="w-4 h-4" />
+          </BaseButton>
 
           <!-- Refresh Button -->
           <BaseButton
@@ -192,7 +217,7 @@ import { useProjectStore } from '@/stores/project.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useUIStore } from '@/stores/ui.store'
 import { BaseBadge, BaseButton, BaseCard } from '@/components/ui'
-import { RefreshCw, Search as SearchIcon, X } from 'lucide-vue-next'
+import { RefreshCw, Search as SearchIcon, X, Eye, CheckSquare } from 'lucide-vue-next'
 import { defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import { useFileExplorer } from '../composables/useFileExplorer'

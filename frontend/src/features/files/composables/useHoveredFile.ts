@@ -21,6 +21,7 @@ interface HoveredFileActions {
     readonly state: HoveredFileState
     setHovered: (path: string | null, isDir: boolean | null) => void
     clearHovered: (currentPath: string) => void
+    isHovered: (path: string) => boolean
 }
 
 // Singleton reactive state - shared across all components
@@ -55,9 +56,14 @@ export function useHoveredFile(): HoveredFileActions {
         }
     }
 
+    const isHovered = (path: string): boolean => {
+        return hoveredState.path === path
+    }
+
     return {
         state: hoveredState,
         setHovered,
         clearHovered,
+        isHovered,
     }
 }

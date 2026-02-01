@@ -18,7 +18,8 @@
 .tree-item:hover {
     background: var(--bg-2);
     color: var(--text-primary);
-    transform: translateX(2px);
+    /* Removed transform to prevent text jitter */
+    border-left: 3px solid var(--accent-indigo);
 }
 
 .tree-item-selected {
@@ -57,6 +58,14 @@
     white-space: nowrap;
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
+}
+
+.tree-search-path {
+    font-size: 10px;
+    color: var(--text-subtle);
+    margin-left: var(--space-2);
+    opacity: 0.7;
+    font-family: ui-monospace, monospace;
 }
 
 .tree-count {
@@ -132,12 +141,21 @@
     stroke-width: 1px;
     stroke-linecap: square;
     stroke-linejoin: miter;
-    opacity: 0.5;
-    transition: opacity var(--transition-fast);
+    opacity: 0.15;
+    transition: opacity 200ms ease-out, stroke-width 200ms ease-out;
+}
+
+.tree-guide-highlight {
+    opacity: 0.8 !important;
+    stroke-width: 2px !important;
+}
+
+.tree-row-focused .tree-guide-line {
+    opacity: 0.3;
 }
 
 .tree-row:hover .tree-guide-line {
-    opacity: 0.8;
+    opacity: 0.3;
 }
 
 /* Guide colors by depth - subtle colors */
@@ -427,7 +445,9 @@
     padding: var(--space-1);
     border-radius: var(--radius-sm);
     color: var(--text-muted);
-    transition: all var(--transition-fast);
+    transition: opacity 150ms ease-out;
+    transition-delay: 150ms;
+    /* Lazy hover - prevent flicker on fast mouse movement */
 }
 
 .tree-preview:hover {
@@ -437,6 +457,33 @@
 
 .tree-row:hover .tree-preview,
 .group:hover .tree-preview {
+    opacity: 1;
+}
+
+/* Magic Wand Button (Select Related) */
+.tree-wand {
+    opacity: 0;
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-1);
+    border-radius: var(--radius-sm);
+    color: #a78bfa;
+    transition: opacity 150ms ease-out, background 150ms ease-out, color 150ms ease-out;
+    transition-delay: 150ms;
+    /* Lazy hover - prevent flicker on fast mouse movement */
+}
+
+.tree-wand:hover {
+    color: #c4b5fd;
+    background: rgba(167, 139, 250, 0.15);
+}
+
+.tree-row:hover .tree-wand,
+.group:hover .tree-wand {
     opacity: 1;
 }
 
@@ -528,6 +575,26 @@
     }
 }
 
+/* Disable animations during scroll to prevent jitter */
+.is-scrolling .tree-row {
+    animation: none !important;
+    transition: none !important;
+}
+
+.is-scrolling .tree-stagger {
+    animation: none !important;
+}
+
+.is-scrolling .tree-preview {
+    transition-delay: 0ms;
+    opacity: 0 !important;
+}
+
+.is-scrolling .tree-wand {
+    transition-delay: 0ms;
+    opacity: 0 !important;
+}
+
 /* Tooltip for ignored files */
 .tree-tooltip {
     position: absolute;
@@ -607,18 +674,30 @@
    SEARCH HIGHLIGHT
    ============================================ */
 .tree-highlight {
-    background: rgba(251, 191, 36, 0.3);
+    background: rgba(168, 85, 247, 0.4);
     color: white;
     padding: 0 2px;
     border-radius: 2px;
+    font-weight: 600;
 }
 
 /* ============================================
    KEYBOARD FOCUS
    ============================================ */
+.tree-row-focused {
+    outline: 2px solid var(--accent-indigo);
+    outline-offset: -2px;
+    background: rgba(99, 102, 241, 0.12) !important;
+    box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.3);
+}
+
+.tree-row-focused:not(.tree-row-selected) {
+    color: var(--text-primary);
+}
+
 .tree-row:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 2px var(--accent-indigo), 0 0 0 4px rgba(99, 102, 241, 0.2);
+    outline: 2px solid var(--accent-indigo);
+    outline-offset: -2px;
 }
 
 /* ============================================
@@ -683,4 +762,16 @@
 
 .tree-row[draggable="true"]:active {
     cursor: grabbing;
+}
+
+/* Zen Mode: dim unselected nodes */
+.tree-row-dimmed {
+    opacity: 0.35;
+    filter: grayscale(1);
+    transition: opacity 300ms, filter 300ms;
+}
+
+.tree-row-dimmed:hover {
+    opacity: 0.6;
+    filter: grayscale(0.5);
 }

@@ -169,7 +169,7 @@ import { useSandboxStore } from '@/stores/sandbox.store'
 import { useChatDragDrop } from '../composables/useChatDragDrop'
 import { useAutoSuggest } from '../composables/useAutoSuggest'
 import { BaseButton, BaseBadge } from '@/components/ui'
-import { MessageSquare, RefreshCw, Trash2 } from 'lucide-vue-next'
+import { MessageSquare, Trash2 } from 'lucide-vue-next'
 import MessageItem from './MessageItem.vue'
 
 import ChangePreviewModal from './ChangePreviewModal.vue'

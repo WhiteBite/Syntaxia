@@ -14,23 +14,67 @@ export interface FlattenedNode {
     isLast: boolean
     ancestorHasMoreSiblings: boolean[]
     displayName?: string // For compact mode (e.g. "src/components")
+    relativePath?: string // For search mode (relative to root)
 }
 
 export interface UseVirtualTreeOptions {
     nodes: Ref<FileNode[]>
+    isSelectedOnlyMode?: Ref<boolean>
+    selectedPaths?: Ref<Set<string>>
+    rootPath?: Ref<string>
 }
 
 /**
  * Flatten tree to visible nodes only (expanded folders)
  */
 export function useVirtualTree(options: UseVirtualTreeOptions) {
-    const { nodes } = options
+    const { nodes, isSelectedOnlyMode, selectedPaths, rootPath } = options
     const settingsStore = useSettingsStore()
 
     const flattenedVisibleNodes = computed<FlattenedNode[]>(() => {
         const result: FlattenedNode[] = []
         const isCompactEnabled = settingsStore.settings.fileExplorer.compactNestedFolders
 
+        // Selected Only Mode: show flat list of selected files only
+        if (isSelectedOnlyMode?.value && selectedPaths?.value) {
+            const allNodes: FileNode[] = []
+
+            // Collect all nodes from tree
+            function collectAllNodes(nodeList: FileNode[]) {
+                nodeList.forEach((node) => {
+                    allNodes.push(node)
+                    if (node.children?.length) {
+                        collectAllNodes(node.children)
+                    }
+                })
+            }
+            collectAllNodes(nodes.value)
+
+            // Filter only selected files and create flat list
+            allNodes
+                .filter((node) => !node.isDir && selectedPaths.value.has(node.path))
+                .forEach((node) => {
+                    // Calculate relative path from root
+                    let relativePath = node.path
+                    if (rootPath?.value && node.path.startsWith(rootPath.value)) {
+                        relativePath = node.path.slice(rootPath.value.length).replace(/^[/\\]/, '')
+                    }
+
+                    result.push({
+                        id: node.path,
+                        node,
+                        depth: 0, // Flat list, no depth
+                        isLast: false,
+                        ancestorHasMoreSiblings: [],
+                        displayName: node.name,
+                        relativePath
+                    })
+                })
+
+            return result
+        }
+
+        // Normal tree mode
         function flatten(
             nodeList: FileNode[],
             depth: number,
@@ -40,7 +84,7 @@ export function useVirtualTree(options: UseVirtualTreeOptions) {
                 const isLast = index === nodeList.length - 1
                 let displayName = node.name
                 let currentNode = node
-                
+
                 // Compact mode: merge folders with single subfolder
                 if (isCompactEnabled && node.isDir && node.children?.length === 1 && node.children[0].isDir) {
                     let nextNode = node.children[0]

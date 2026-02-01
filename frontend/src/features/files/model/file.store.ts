@@ -33,6 +33,7 @@ export const useFileStore = defineStore('file', () => {
     // Compose: File Fuzzy Search (depends on tree)
     const search = useFileFuzzySearch({
         flattenedNodes: tree.flattenedNodes,
+        rootPath: computed(() => tree.rootPath.value),
     })
 
     // Compose: File Filter (depends on tree)
@@ -55,6 +56,15 @@ export const useFileStore = defineStore('file', () => {
     const isLoading = ref(false)
 
     const error = ref<string | null>(null)
+
+    // Zen mode: dim unselected nodes
+    const isZenMode = ref(false)
+
+    // Keyboard navigation: focused path for roving tabindex
+    const focusedPath = ref<string | null>(null)
+
+    // Selected Only mode: show only selected files in flat list
+    const isSelectedOnlyMode = ref(false)
 
     // Settings
     const settingsStore = useSettingsStore()
@@ -97,7 +107,7 @@ export const useFileStore = defineStore('file', () => {
                 // Load expanded state or auto-expand
                 const loadedPaths = persistence.loadExpandedState()
                 if (loadedPaths.length === 0) {
-                    tree.autoExpand(3)
+                    tree.autoExpand(1) // Changed from 3 to 1 - show only root level folders
                 }
 
                 // Load saved selection
@@ -226,6 +236,39 @@ export const useFileStore = defineStore('file', () => {
         logger.debug('Pruning unused branches...')
     }
 
+    function toggleZenMode() {
+        isZenMode.value = !isZenMode.value
+    }
+
+    function toggleSelectedOnlyMode() {
+        isSelectedOnlyMode.value = !isSelectedOnlyMode.value
+    }
+
+    function setFocusedPath(path: string | null) {
+        focusedPath.value = path
+    }
+
+    function selectRelated(path: string): number {
+        const { findRelatedFiles, getAllFileNodes } = require('@/utils/fileRelations')
+        const allFileNodes = getAllFileNodes(tree.nodes.value)
+        const relatedPaths = findRelatedFiles(path, allFileNodes)
+
+        // Select all related files
+        let selectedCount = 0
+        for (const relatedPath of relatedPaths) {
+            if (!selection.selectedPaths.value.has(relatedPath)) {
+                selection.selectPath(relatedPath)
+                selectedCount++
+            }
+        }
+
+        if (autoSaveSelection.value && selectedCount > 0) {
+            persistence.debouncedSaveSelection()
+        }
+
+        return selectedCount
+    }
+
     return {
         // State (from tree)
         nodes: tree.nodes,
@@ -234,6 +277,9 @@ export const useFileStore = defineStore('file', () => {
         directoryHistory: tree.directoryHistory,
         isLoading,
         error,
+        isZenMode,
+        isSelectedOnlyMode,
+        focusedPath,
 
         // State (from selection)
         selectedPaths: selection.selectedPaths,
@@ -320,6 +366,10 @@ export const useFileStore = defineStore('file', () => {
         resetStore,
         getMemoryUsage,
         pruneUnusedBranches,
+        toggleZenMode,
+        toggleSelectedOnlyMode,
+        setFocusedPath,
+        selectRelated,
 
         // Public utility methods for UI components
         getRecursiveFileCount: tree.getRecursiveFileCount,

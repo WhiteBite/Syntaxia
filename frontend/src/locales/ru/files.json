@@ -25,6 +25,8 @@
     "files.undoSelection": "Отменить выбор (Ctrl+Z)",
     "files.redoSelection": "Повторить выбор (Ctrl+Y)",
     "files.clearSelection": "Очистить выбор",
+    "files.zenMode": "Zen режим - Фокус на выбранных файлах",
+    "files.selectedOnlyMode": "Только выбранные - Показать только выбранные файлы",
     "files.clearConfirmTitle": "Очистить выбор?",
     "files.clearConfirmMessage": "Вы уверены что хотите снять выбор с {count} файлов?",
     "files.undo": "Отменить выбор",
@@ -197,5 +199,13 @@
     "files.favorites.empty": "Нет избранных файлов",
     "files.favorites.maxReached": "Достигнут лимит избранных (20)",
     "files.favorites.added": "Добавлено в избранное",
-    "files.favorites.removed": "Удалено из избранного"
+    "files.favorites.removed": "Удалено из избранного",
+    "files.quickOpen.placeholder": "Поиск файлов по имени... (Ctrl+P)",
+    "files.quickOpen.noResults": "Файлы не найдены",
+    "files.quickOpen.hint": "Начните вводить для поиска файлов",
+    "files.quickOpen.navigate": "навигация",
+    "files.quickOpen.select": "выбрать",
+    "files.quickOpen.close": "закрыть",
+    "files.selectRelated": "Выбрать связанные файлы",
+    "files.relatedFilesSelected": "Выбрано связанных файлов: {count}"
 }

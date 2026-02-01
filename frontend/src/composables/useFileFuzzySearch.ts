@@ -7,26 +7,35 @@
  */
 
 import type { FileNode } from '@/types/domain'
-import Fuse from 'fuse.js'
+import Fuse, { type FuseResultMatch } from 'fuse.js'
 import { computed, ref, type ComputedRef } from 'vue'
 
 export interface UseFileFuzzySearchOptions {
     flattenedNodes: ComputedRef<FileNode[]>
+    rootPath?: ComputedRef<string>
     maxResults?: number
     fuseThreshold?: number
 }
 
+export interface SearchResultNode extends FileNode {
+    depth: number
+    relativePath?: string
+    score?: number
+    matches?: ReadonlyArray<FuseResultMatch>
+}
+
 export function useFileFuzzySearch(options: UseFileFuzzySearchOptions) {
-    const { flattenedNodes, maxResults = 100, fuseThreshold = 0.3 } = options
+    const { flattenedNodes, rootPath, maxResults = 100, fuseThreshold = 0.3 } = options
 
     // State
     const searchQuery = ref('')
 
     // Computed
-    const searchResults = computed(() => {
+    const searchResults = computed((): SearchResultNode[] => {
         if (!searchQuery.value) return []
 
-        const allFiles = flattenedNodes.value
+        // FLAT SEARCH: Only files, no hierarchy
+        const allFiles = flattenedNodes.value.filter(node => !node.isDir)
 
         // For large trees, use simple string matching
         if (allFiles.length > 2000) {
@@ -37,6 +46,28 @@ export function useFileFuzzySearch(options: UseFileFuzzySearchOptions) {
                         file.name.toLowerCase().includes(query) ||
                         file.path.toLowerCase().includes(query)
                 )
+                .map(file => {
+                    // Create simple match indices for highlighting
+                    const nameIndex = file.name.toLowerCase().indexOf(query)
+                    const matches: FuseResultMatch[] = []
+
+                    if (nameIndex !== -1) {
+                        matches.push({
+                            indices: [[nameIndex, nameIndex + query.length - 1]],
+                            value: file.name,
+                            key: 'name',
+                            refIndex: 0
+                        })
+                    }
+
+                    return {
+                        ...file,
+                        // Flat list: no depth, show relative path
+                        depth: 0,
+                        relativePath: rootPath?.value ? file.path.replace(rootPath.value + '/', '') : file.path,
+                        matches: matches.length > 0 ? matches : undefined
+                    }
+                })
                 .slice(0, maxResults)
         }
 
@@ -44,11 +75,19 @@ export function useFileFuzzySearch(options: UseFileFuzzySearchOptions) {
         const fuse = new Fuse(allFiles, {
             keys: ['name', 'path'],
             threshold: fuseThreshold,
+            includeScore: true,
+            includeMatches: true
         })
 
         return fuse
             .search(searchQuery.value)
-            .map((result) => result.item)
+            .map((result) => ({
+                ...result.item,
+                depth: 0,
+                relativePath: rootPath?.value ? result.item.path.replace(rootPath.value + '/', '') : result.item.path,
+                score: result.score,
+                matches: result.matches
+            }))
             .slice(0, maxResults)
     })
 

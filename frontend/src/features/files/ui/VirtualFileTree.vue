@@ -1,16 +1,25 @@
 <template>
-  <div class="virtual-tree-wrapper">
+  <div class="virtual-tree-wrapper" @keydown="handleKeyDown">
+    <div v-if="currentFolderPath && flattenedNodes.length > 20" class="tree-sticky-breadcrumb">
+      <FolderIcon class="w-4 h-4" />
+      <span>{{ currentFolderPath }}</span>
+    </div>
     <RecycleScroller
+      ref="scrollerRef"
       class="virtual-tree-scroller"
+      :class="{ 'is-scrolling': isScrolling }"
       :items="flattenedNodes"
       :item-size="rowHeight"
       key-field="id"
       v-slot="{ item }"
+      @scroll.passive="handleScroll"
     >
       <VirtualTreeRow
+        :ref="(el) => setRowRef(item.id, el)"
         :item="item"
         :compact-mode="compactMode"
         :is-selected="isNodeSelected(item.node)"
+        :is-focused="item.id === fileStore.focusedPath"
         :checkbox-state="getCheckboxState(item.node)"
         :file-count="getFileCount(item.node)"
         :selected-tokens="getSelectedTokens(item.node)"
@@ -19,6 +28,7 @@
         @toggle-expand="$emit('toggle-expand', $event)"
         @contextmenu="(node, event) => $emit('contextmenu', node, event)"
         @quicklook="$emit('quicklook', $event)"
+        @select-related="handleSelectRelated"
       />
     </RecycleScroller>
     <div v-if="flattenedNodes.length === 0" class="empty-state">
@@ -32,7 +42,9 @@
 import { useI18n } from '@/composables/useI18n'
 import { useVirtualTree } from '@/composables/useVirtualTree'
 import { useSettingsStore } from '@/stores/settings.store'
-import { computed, toRef } from 'vue'
+import { useUIStore } from '@/stores/ui.store'
+import { computed, toRef, ref } from 'vue'
+import { FolderIcon } from 'lucide-vue-next'
 
 import { RecycleScroller } from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
@@ -42,6 +54,7 @@ import VirtualTreeRow from './VirtualTreeRow.vue'
 const { t } = useI18n()
 const fileStore = useFileStore()
 const settingsStore = useSettingsStore()
+const uiStore = useUIStore()
 
 const rowHeight = computed(() => 26 * settingsStore.settings.uiScale)
 
@@ -62,12 +75,55 @@ const emit = defineEmits<{
   (e: 'toggle-expand', path: string): void
   (e: 'contextmenu', node: FileNode, event: MouseEvent): void
   (e: 'quicklook', path: string): void
+  (e: 'select-related', path: string): void
 }>()
 
 const nodesRef = toRef(props, 'nodes')
-const { flattenedVisibleNodes } = useVirtualTree({ nodes: nodesRef })
+const { flattenedVisibleNodes } = useVirtualTree({ 
+  nodes: nodesRef,
+  isSelectedOnlyMode: computed(() => fileStore.isSelectedOnlyMode),
+  selectedPaths: computed(() => fileStore.selectedPaths),
+  rootPath: computed(() => fileStore.rootPath)
+})
 
 const flattenedNodes = computed(() => flattenedVisibleNodes.value)
+
+// Scroll performance optimization
+const isScrolling = ref(false)
+const currentFolderPath = ref('')
+let scrollTimeout: number | null = null
+
+// Keyboard navigation: refs to row elements
+const rowRefs = new Map<string, InstanceType<typeof VirtualTreeRow>>()
+const scrollerRef = ref<InstanceType<typeof RecycleScroller> | null>(null)
+
+function setRowRef(id: string, el: unknown) {
+  if (el) {
+    rowRefs.set(id, el as InstanceType<typeof VirtualTreeRow>)
+  } else {
+    rowRefs.delete(id)
+  }
+}
+
+function handleScroll(event: Event) {
+  isScrolling.value = true
+  if (scrollTimeout) clearTimeout(scrollTimeout)
+  scrollTimeout = setTimeout(() => {
+    isScrolling.value = false
+  }, 150) as unknown as number
+  
+  // Calculate current folder path
+  const scroller = event.target as HTMLElement
+  const scrollTop = scroller.scrollTop
+  const firstVisibleIndex = Math.floor(scrollTop / rowHeight.value)
+  const firstVisible = flattenedNodes.value[firstVisibleIndex]
+  
+  if (firstVisible) {
+    const parts = firstVisible.node.path.split('/')
+    const folderPath = parts.slice(0, -1).join(' › ')
+    currentFolderPath.value = folderPath || fileStore.projectName
+  }
+}
 
 function handleToggleSelect(payload: { path: string, shiftKey: boolean }) {
   const { path, shiftKey } = payload
@@ -162,6 +218,121 @@ function getSelectedTokens(node: FileNode): number {
   }
   return totalTokens
 }
+
+// Keyboard navigation handler
+function handleKeyDown(event: KeyboardEvent) {
+  const nodes = flattenedNodes.value
+  if (nodes.length === 0) return
+
+  // Initialize focus to first node if not set
+  if (!fileStore.focusedPath) {
+    fileStore.setFocusedPath(nodes[0].id)
+    return
+  }
+
+  const currentIndex = nodes.findIndex(n => n.id === fileStore.focusedPath)
+  if (currentIndex === -1) {
+    fileStore.setFocusedPath(nodes[0].id)
+    return
+  }
+
+  const currentNode = nodes[currentIndex].node
+  let handled = false
+
+  switch (event.key) {
+    case 'ArrowDown':
+      // Move focus to next visible node
+      if (currentIndex < nodes.length - 1) {
+        fileStore.setFocusedPath(nodes[currentIndex + 1].id)
+        scrollFocusedIntoView()
+        handled = true
+      }
+      break
+
+    case 'ArrowUp':
+      // Move focus to previous visible node
+      if (currentIndex > 0) {
+        fileStore.setFocusedPath(nodes[currentIndex - 1].id)
+        scrollFocusedIntoView()
+        handled = true
+      }
+      break
+
+    case 'ArrowRight':
+      // Expand folder if collapsed
+      if (currentNode.isDir && !currentNode.isExpanded) {
+        emit('toggle-expand', currentNode.path)
+        handled = true
+      }
+      break
+
+    case 'ArrowLeft':
+      // Collapse folder if expanded
+      if (currentNode.isDir && currentNode.isExpanded) {
+        emit('toggle-expand', currentNode.path)
+        handled = true
+      }
+      break
+
+    case ' ':
+      // Toggle checkbox selection
+      event.preventDefault() // Prevent page scroll
+      handleToggleSelect({ path: currentNode.path, shiftKey: false })
+      handled = true
+      break
+
+    case 'Enter':
+      // Toggle expand/collapse for folders, select for files
+      if (currentNode.isDir) {
+        emit('toggle-expand', currentNode.path)
+      } else {
+        handleToggleSelect({ path: currentNode.path, shiftKey: false })
+      }
+      handled = true
+      break
+  }
+
+  if (handled) {
+    event.preventDefault()
+  }
+}
+
+function handleSelectRelated(path: string) {
+  const count = fileStore.selectRelated(path)
+  if (count > 0) {
+    uiStore.addToast(
+      t('files.relatedFilesSelected').replace('{count}', String(count)),
+      'success',
+      2000
+    )
+  } else {
+    uiStore.addToast(
+      t('files.relatedFilesSelected').replace('{count}', '0'),
+      'info',
+      2000
+    )
+  }
+}
+
+function scrollFocusedIntoView() {
+  // Use nextTick to ensure DOM is updated
+  import('vue').then(({ nextTick }) => {
+    nextTick(() => {
+      if (!fileStore.focusedPath) return
+      
+      const focusedIndex = flattenedNodes.value.findIndex(n => n.id === fileStore.focusedPath)
+      if (focusedIndex === -1) return
+
+      // Scroll the RecycleScroller to the focused item
+      if (scrollerRef.value) {
+        const scroller = scrollerRef.value as { scrollToItem?: (index: number) => void }
+        if (scroller.scrollToItem) {
+          scroller.scrollToItem(focusedIndex)
+        }
+      }
+    })
+  })
+}
 </script>
 
 <style scoped>
@@ -193,5 +364,21 @@ function getSelectedTokens(node: FileNode): number {
   justify-content: center;
   height: 100%;
   color: var(--text-muted);
+}
+
+.tree-sticky-breadcrumb {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 </style>
