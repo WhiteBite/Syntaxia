@@ -1,5 +1,52 @@
 <template>
   <div class="magic-bar-wrapper">
+    <!-- Token Weight Statistics Bar -->
+    <div v-if="tokenStats.total > 0" class="token-stats-bar">
+      <div class="token-stats-label">{{ t('commandBar.tokenDistribution') }}:</div>
+      <div class="token-stats-segments">
+        <button
+          v-if="tokenStats.medium > 0"
+          class="token-stat-segment token-stat-segment--medium"
+          :class="{ active: weightFilter === 'medium' }"
+          @click="handleWeightFilterClick('medium')"
+          :title="t('commandBar.filterMediumTooltip')"
+        >
+          <span class="token-stat-count">{{ tokenStats.medium }}</span>
+          <span class="token-stat-label">10K+</span>
+        </button>
+        <button
+          v-if="tokenStats.heavy > 0"
+          class="token-stat-segment token-stat-segment--heavy"
+          :class="{ active: weightFilter === 'heavy' }"
+          @click="handleWeightFilterClick('heavy')"
+          :title="t('commandBar.filterHeavyTooltip')"
+        >
+          <span class="token-stat-count">{{ tokenStats.heavy }}</span>
+          <span class="token-stat-label">50K+</span>
+        </button>
+        <button
+          v-if="tokenStats.critical > 0"
+          class="token-stat-segment token-stat-segment--critical"
+          :class="{ active: weightFilter === 'critical' }"
+          @click="handleWeightFilterClick('critical')"
+          :title="t('commandBar.filterCriticalTooltip')"
+        >
+          <span class="token-stat-count">{{ tokenStats.critical }}</span>
+          <span class="token-stat-label">100K+</span>
+        </button>
+        <BaseButton
+          v-if="weightFilter !== 'none'"
+          variant="ghost"
+          size="xs"
+          class="clear-weight-filter"
+          @click="handleClearWeightFilter"
+          :title="t('commandBar.clearWeightFilter')"
+        >
+          <X class="w-3 h-3" />
+        </BaseButton>
+      </div>
+    </div>
+
     <!-- MAGIC CONTROL BAR -->
     <div class="magic-bar">
       <!-- LEFT: Token Limit Selector -->
@@ -121,6 +168,9 @@ import { useSettingsStore } from '@/stores/settings.store'
 import { BaseButton, BaseBadge } from '@/components/ui'
 import { Check, ChevronDown, Zap, X } from 'lucide-vue-next'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { TOKEN_THRESHOLDS } from '@/config/constants'
+import type { WeightFilterLevel } from '@/composables/useFileFilter'
+import type { FileNode } from '@/types/domain'
 
 
 const props = defineProps<{
@@ -145,6 +195,34 @@ const isCustomFocused = ref(false)
 const isDisabled = computed(() => props.selectedCount === 0)
 const isButtonDisabled = computed(() => props.selectedCount === 0 || props.isBuilding)
 const estimatedTokens = computed(() => Math.round(fileStore.estimatedTokenCount / 1000))
+const weightFilter = computed(() => fileStore.weightFilter)
+
+// Calculate token weight statistics from all files in tree
+const tokenStats = computed(() => {
+  const stats = { medium: 0, heavy: 0, critical: 0, total: 0 }
+  
+  const countFileTokens = (nodes: FileNode[]) => {
+    for (const node of nodes) {
+      if (!node.isDir && node.size) {
+        const tokens = Math.round(node.size / TOKEN_THRESHOLDS.BYTES_PER_TOKEN)
+        stats.total++
+        if (tokens >= TOKEN_THRESHOLDS.CRITICAL) {
+          stats.critical++
+        } else if (tokens >= TOKEN_THRESHOLDS.HEAVY) {
+          stats.heavy++
+        } else if (tokens >= TOKEN_THRESHOLDS.MEDIUM) {
+          stats.medium++
+        }
+      }
+      if (node.children) {
+        countFileTokens(node.children)
+      }
+    }
+  }
+  
+  countFileTokens(fileStore.nodes)
+  return stats
+})
 
 const tokenPresets = [
   { value: 32000, label: '32K', model: 'GPT-4' },
@@ -194,6 +272,18 @@ function handleClear() {
   fileStore.clearSelection()
 }
 
+function handleWeightFilterClick(level: WeightFilterLevel) {
+  if (weightFilter.value === level) {
+    fileStore.clearWeightFilter()
+  } else {
+    fileStore.setWeightFilter(level)
+  }
+}
+
+function handleClearWeightFilter() {
+  fileStore.clearWeightFilter()
+}
+
 function handleClickOutside(event: MouseEvent) {
   if (showDropdown.value && limitRef.value && !limitRef.value.contains(event.target as Node)) {
     showDropdown.value = false
@@ -209,6 +299,120 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+/* TOKEN STATS BAR */
+.token-stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-md);
+}
+
+.token-stats-label {
+  font-size: var(--font-size-xs);
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.token-stats-segments {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.token-stat-segment {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+}
+
+.token-stat-segment:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.token-stat-segment.active {
+  border-width: 2px;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+.token-stat-segment--medium {
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+.token-stat-segment--medium:hover,
+.token-stat-segment--medium.active {
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.5);
+}
+
+.token-stat-segment--heavy {
+  border-color: rgba(249, 115, 22, 0.3);
+}
+
+.token-stat-segment--heavy:hover,
+.token-stat-segment--heavy.active {
+  background: rgba(249, 115, 22, 0.1);
+  border-color: rgba(249, 115, 22, 0.5);
+}
+
+.token-stat-segment--critical {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.token-stat-segment--critical:hover,
+.token-stat-segment--critical.active {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.token-stat-count {
+  font-family: ui-monospace, monospace;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: white;
+}
+
+.token-stat-label {
+  font-size: var(--font-size-xs);
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.token-stat-segment--medium .token-stat-count {
+  color: #fbbf24;
+}
+
+.token-stat-segment--heavy .token-stat-count {
+  color: #f97316;
+}
+
+.token-stat-segment--critical .token-stat-count {
+  color: #ef4444;
+}
+
+.clear-weight-filter {
+  margin-left: auto;
+  padding: 0.25rem;
+  color: #6b7280;
+  transition: all 0.15s ease-out;
+}
+
+.clear-weight-filter:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
 }
 
 /* MAGIC BAR */

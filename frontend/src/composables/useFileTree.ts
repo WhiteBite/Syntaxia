@@ -124,12 +124,50 @@ export function useFileTree() {
         return findNode(path) !== null
     }
 
-    function toggleExpand(path: string) {
+    function toggleExpand(path: string, soloMode: boolean = false) {
         const node = findNode(path)
         if (node && node.isDir) {
-            node.isExpanded = !node.isExpanded
+            const willExpand = !node.isExpanded
+            node.isExpanded = willExpand
+
+            // Solo expansion: collapse siblings when expanding
+            if (soloMode && willExpand) {
+                collapseSiblings(path)
+            }
             // Note: We don't invalidate flattenedNodesCache here for performance
             // The cache is only used for search, not for rendering expanded state
+        }
+    }
+
+    function collapseSiblings(targetPath: string) {
+        const targetNode = findNode(targetPath)
+        if (!targetNode || !targetNode.isDir) return
+
+        // Find parent by removing last segment from path
+        const lastSeparator = Math.max(
+            targetPath.lastIndexOf('/'),
+            targetPath.lastIndexOf('\\')
+        )
+
+        if (lastSeparator === -1) {
+            // Target is at root level, collapse all other root folders
+            for (const node of nodes.value) {
+                if (node.path !== targetPath && node.isDir && node.isExpanded) {
+                    node.isExpanded = false
+                }
+            }
+        } else {
+            // Find parent and collapse its other children
+            const parentPath = targetPath.substring(0, lastSeparator)
+            const parent = findNode(parentPath)
+
+            if (parent && parent.children) {
+                for (const sibling of parent.children) {
+                    if (sibling.path !== targetPath && sibling.isDir && sibling.isExpanded) {
+                        sibling.isExpanded = false
+                    }
+                }
+            }
         }
     }
 

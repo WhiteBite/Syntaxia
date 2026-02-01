@@ -18,6 +18,8 @@ import { filesApi } from '../api/files.api'
 const logger = useLogger('FileStore')
 
 // Re-export FileNode for backward compatibility
+export type { WeightFilterLevel } from '@/composables/useFileFilter'
+export type { SelectionPreset } from '@/composables/useFilePersistence'
 export type { FileNode } from '@/types/domain'
 
 export const useFileStore = defineStore('file', () => {
@@ -39,6 +41,7 @@ export const useFileStore = defineStore('file', () => {
     // Compose: File Filter (depends on tree)
     const filter = useFileFilter({
         nodes: tree.nodes,
+        getAllFilesInNode: tree.getAllFilesInNode,
     })
 
     // Compose: Persistence (depends on tree and selection)
@@ -65,6 +68,9 @@ export const useFileStore = defineStore('file', () => {
 
     // Selected Only mode: show only selected files in flat list
     const isSelectedOnlyMode = ref(false)
+
+    // Solo Expansion mode: only one folder expanded per level (accordion)
+    const isSoloExpansionMode = ref(false)
 
     // Settings
     const settingsStore = useSettingsStore()
@@ -135,6 +141,20 @@ export const useFileStore = defineStore('file', () => {
         }
     }
 
+    function batchToggleSelect(paths: string[], shouldSelect: boolean) {
+        for (const path of paths) {
+            if (shouldSelect) {
+                selection.selectPath(path)
+            } else {
+                selection.deselectPath(path)
+            }
+        }
+
+        if (autoSaveSelection.value) {
+            persistence.debouncedSaveSelection()
+        }
+    }
+
 
     function clearSelection() {
         selection.clearSelection()
@@ -158,10 +178,10 @@ export const useFileStore = defineStore('file', () => {
                 }
             } catch {
                 // Fallback to simple toggle if JSON parse fails
-                tree.toggleExpand(pathOrCompact)
+                tree.toggleExpand(pathOrCompact, isSoloExpansionMode.value)
             }
         } else {
-            tree.toggleExpand(pathOrCompact)
+            tree.toggleExpand(pathOrCompact, isSoloExpansionMode.value)
         }
         persistence.debouncedSaveExpandedState()
     }
@@ -244,6 +264,10 @@ export const useFileStore = defineStore('file', () => {
         isSelectedOnlyMode.value = !isSelectedOnlyMode.value
     }
 
+    function toggleSoloExpansionMode() {
+        isSoloExpansionMode.value = !isSoloExpansionMode.value
+    }
+
     function setFocusedPath(path: string | null) {
         focusedPath.value = path
     }
@@ -269,6 +293,33 @@ export const useFileStore = defineStore('file', () => {
         return selectedCount
     }
 
+    function getPresets() {
+        return persistence.getPresets()
+    }
+
+    function savePreset(name: string, description?: string) {
+        persistence.savePreset(name, description)
+    }
+
+    function loadPreset(name: string): number {
+        const count = persistence.loadPreset(name)
+        triggerRef(selection.selectedPaths)
+
+        if (autoSaveSelection.value && count > 0) {
+            persistence.debouncedSaveSelection()
+        }
+
+        return count
+    }
+
+    function deletePreset(name: string) {
+        persistence.deletePreset(name)
+    }
+
+    function clearAllPresets() {
+        persistence.clearAllPresets()
+    }
+
     return {
         // State (from tree)
         nodes: tree.nodes,
@@ -279,6 +330,7 @@ export const useFileStore = defineStore('file', () => {
         error,
         isZenMode,
         isSelectedOnlyMode,
+        isSoloExpansionMode,
         focusedPath,
 
         // State (from selection)
@@ -290,6 +342,7 @@ export const useFileStore = defineStore('file', () => {
         // State (from filter)
         filterExtensions: filter.filterExtensions,
         excludeExtensions: filter.excludeExtensions,
+        weightFilter: filter.weightFilter,
         lastSelectedPath,
 
         // Computed (from tree)
@@ -335,6 +388,7 @@ export const useFileStore = defineStore('file', () => {
 
         // Actions (selection)
         toggleSelect,
+        batchToggleSelect,
         selectPath: selection.selectPath,
         deselectPath: selection.deselectPath,
         selectMultiple: selection.selectMultiple,
@@ -350,6 +404,8 @@ export const useFileStore = defineStore('file', () => {
 
         // Actions (filter)
         setFilterExtensions: filter.setFilterExtensions,
+        setWeightFilter: filter.setWeightFilter,
+        clearWeightFilter: filter.clearWeightFilter,
 
         // Actions (persistence)
         autoSaveSelection,
@@ -368,10 +424,19 @@ export const useFileStore = defineStore('file', () => {
         pruneUnusedBranches,
         toggleZenMode,
         toggleSelectedOnlyMode,
+        toggleSoloExpansionMode,
         setFocusedPath,
         selectRelated,
 
+        // Actions (presets)
+        getPresets,
+        savePreset,
+        loadPreset,
+        deletePreset,
+        clearAllPresets,
+
         // Public utility methods for UI components
+        findNode: tree.findNode,
         getRecursiveFileCount: tree.getRecursiveFileCount,
         getAllFilesInNode: tree.getAllFilesInNode,
         getSelectedFileCountInNode: selection.getSelectedFileCountInNode,

@@ -1,5 +1,9 @@
 <template>
-  <div class="virtual-tree-wrapper" @keydown="handleKeyDown">
+  <div 
+    class="virtual-tree-wrapper" 
+    :class="{ 'tree-row-drag-selecting': isDraggingSelection }"
+    @keydown="handleKeyDown"
+  >
     <div v-if="currentFolderPath && flattenedNodes.length > 20" class="tree-sticky-breadcrumb">
       <FolderIcon class="w-4 h-4" />
       <span>{{ currentFolderPath }}</span>
@@ -22,13 +26,17 @@
         :is-focused="item.id === fileStore.focusedPath"
         :checkbox-state="getCheckboxState(item.node)"
         :file-count="getFileCount(item.node)"
+        :selected-file-count="getSelectedFileCount(item.node)"
         :selected-tokens="getSelectedTokens(item.node)"
         :allow-select-binary="allowSelectBinary"
+        :is-dragging-selection="isDraggingSelection"
         @toggle-select="handleToggleSelect"
         @toggle-expand="$emit('toggle-expand', $event)"
         @contextmenu="(node, event) => $emit('contextmenu', node, event)"
         @quicklook="$emit('quicklook', $event)"
         @select-related="handleSelectRelated"
+        @checkbox-mousedown="handleCheckboxMouseDown"
+        @row-mouseenter="handleRowMouseEnter"
       />
     </RecycleScroller>
     <div v-if="flattenedNodes.length === 0" class="empty-state">
@@ -87,6 +95,11 @@ const { flattenedVisibleNodes } = useVirtualTree({
 })
 
 const flattenedNodes = computed(() => flattenedVisibleNodes.value)
+
+// Drag-to-select state
+const isDraggingSelection = ref(false)
+const dragInitialAction = ref<'select' | 'deselect'>('select')
+const draggedPaths = new Set<string>()
 
 // Scroll performance optimization
 const isScrolling = ref(false)
@@ -219,6 +232,12 @@ function getSelectedTokens(node: FileNode): number {
   return totalTokens
 }
 
+// Get count of selected files inside a folder (for bubble-up indicator)
+function getSelectedFileCount(node: FileNode): number {
+  if (!node.isDir) return 0
+  return fileStore.getSelectedFileCountInNode(node)
+}
+
 // Keyboard navigation handler
 function handleKeyDown(event: KeyboardEvent) {
   const nodes = flattenedNodes.value
@@ -311,6 +330,59 @@ function handleSelectRelated(path: string) {
       'info',
       2000
     )
+  }
+}
+
+// Drag-to-select handlers
+function handleCheckboxMouseDown(payload: { path: string, isSelected: boolean }) {
+  const node = fileStore.findNode(payload.path)
+  if (!node) return
+  
+  // For directories, use normal toggle behavior
+  if (node.isDir) {
+    return
+  }
+  
+  isDraggingSelection.value = true
+  dragInitialAction.value = payload.isSelected ? 'deselect' : 'select'
+  draggedPaths.clear()
+  draggedPaths.add(payload.path)
+  
+  // Apply initial action immediately
+  if (dragInitialAction.value === 'select') {
+    fileStore.selectPath(payload.path)
+  } else {
+    fileStore.deselectPath(payload.path)
+  }
+  
+  // Add global mouseup listener
+  document.addEventListener('mouseup', handleDragEnd, { once: true })
+}
+
+function handleRowMouseEnter(path: string) {
+  if (!isDraggingSelection.value) return
+  if (draggedPaths.has(path)) return
+  
+  draggedPaths.add(path)
+  
+  // Apply the initial action to this path
+  const node = fileStore.findNode(path)
+  if (!node || node.isDir) return
+  
+  if (dragInitialAction.value === 'select') {
+    fileStore.selectPath(path)
+  } else {
+    fileStore.deselectPath(path)
+  }
+}
+
+function handleDragEnd() {
+  isDraggingSelection.value = false
+  draggedPaths.clear()
+  
+  // Save selection if auto-save is enabled
+  if (settingsStore.settings.fileExplorer.autoSaveSelection) {
+    fileStore.saveSelectionToStorage()
   }
 }
 

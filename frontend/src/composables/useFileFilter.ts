@@ -1,15 +1,93 @@
 /**
- * useFileFilter - File filtering by extensions
- * Manages include/exclude extension filters and sorting
+ * useFileFilter - File filtering by extensions and token weight
+ * Manages include/exclude extension filters, weight filters, and sorting
  */
 
+import { TOKEN_THRESHOLDS } from '@/config/constants'
 import { useSettingsStore } from '@/stores/settings.store'
 import type { FileNode } from '@/types/domain'
 import { filterTreeByExtensions } from '@/utils/fileTreeUtils'
 import { computed, ref, type Ref } from 'vue'
 
+export type WeightFilterLevel = 'none' | 'medium' | 'heavy' | 'critical'
+
 export interface UseFileFilterOptions {
     nodes: Ref<FileNode[]>
+    getAllFilesInNode?: (node: FileNode) => string[]
+}
+
+/**
+ * Calculate token count for a file
+ */
+function getFileTokens(node: FileNode): number {
+    if (node.isDir || !node.size) return 0
+    return Math.round(node.size / TOKEN_THRESHOLDS.BYTES_PER_TOKEN)
+}
+
+/**
+ * Get weight threshold value for a filter level
+ */
+function getWeightThreshold(level: WeightFilterLevel): number {
+    switch (level) {
+        case 'medium': return TOKEN_THRESHOLDS.MEDIUM
+        case 'heavy': return TOKEN_THRESHOLDS.HEAVY
+        case 'critical': return TOKEN_THRESHOLDS.CRITICAL
+        default: return 0
+    }
+}
+
+/**
+ * Check if a node or its children contain files above the weight threshold
+ */
+function hasFilesAboveWeight(
+    node: FileNode,
+    threshold: number,
+    getAllFilesInNode?: (node: FileNode) => string[]
+): boolean {
+    if (!node.isDir) {
+        return getFileTokens(node) >= threshold
+    }
+
+    // For directories, check if any child file meets the threshold
+    // Note: getAllFilesInNode returns paths, we need to check children directly
+    if (node.children) {
+        return node.children.some(child => hasFilesAboveWeight(child, threshold, getAllFilesInNode))
+    }
+
+    return false
+}
+
+/**
+ * Filter tree by weight threshold
+ */
+function filterTreeByWeight(
+    nodes: FileNode[],
+    threshold: number,
+    getAllFilesInNode?: (node: FileNode) => string[]
+): FileNode[] {
+    if (threshold === 0) return nodes
+
+    return nodes.reduce<FileNode[]>((acc, node) => {
+        if (!node.isDir) {
+            // File: include if it meets threshold
+            if (getFileTokens(node) >= threshold) {
+                acc.push(node)
+            }
+        } else {
+            // Directory: include if it has files meeting threshold
+            if (hasFilesAboveWeight(node, threshold, getAllFilesInNode)) {
+                const filteredChildren = node.children
+                    ? filterTreeByWeight(node.children, threshold, getAllFilesInNode)
+                    : []
+
+                acc.push({
+                    ...node,
+                    children: filteredChildren
+                })
+            }
+        }
+        return acc
+    }, [])
 }
 
 /**
@@ -62,12 +140,13 @@ function sortFoldersFirst(nodes: FileNode[]): FileNode[] {
 
 
 export function useFileFilter(options: UseFileFilterOptions) {
-    const { nodes } = options
+    const { nodes, getAllFilesInNode } = options
     const settingsStore = useSettingsStore()
 
     // State
     const filterExtensions = ref<string[]>([])
     const excludeExtensions = ref<string[]>([])
+    const weightFilter = ref<WeightFilterLevel>('none')
 
     // Computed
     const filteredNodes = computed(() => {
@@ -80,6 +159,12 @@ export function useFileFilter(options: UseFileFilterOptions) {
                 filterExtensions.value,
                 excludeExtensions.value
             )
+        }
+
+        // Apply weight filter
+        if (weightFilter.value !== 'none') {
+            const threshold = getWeightThreshold(weightFilter.value)
+            result = filterTreeByWeight(result, threshold, getAllFilesInNode)
         }
 
         // Apply folders first sorting
@@ -99,6 +184,7 @@ export function useFileFilter(options: UseFileFilterOptions) {
     function clearFilters() {
         filterExtensions.value = []
         excludeExtensions.value = []
+        weightFilter.value = 'none'
     }
 
     function addIncludeExtension(ext: string) {
@@ -127,10 +213,19 @@ export function useFileFilter(options: UseFileFilterOptions) {
         }
     }
 
+    function setWeightFilter(level: WeightFilterLevel) {
+        weightFilter.value = level
+    }
+
+    function clearWeightFilter() {
+        weightFilter.value = 'none'
+    }
+
     return {
         // State
         filterExtensions,
         excludeExtensions,
+        weightFilter,
         // Computed
         filteredNodes,
         // Actions
@@ -140,5 +235,7 @@ export function useFileFilter(options: UseFileFilterOptions) {
         removeIncludeExtension,
         addExcludeExtension,
         removeExcludeExtension,
+        setWeightFilter,
+        clearWeightFilter,
     }
 }

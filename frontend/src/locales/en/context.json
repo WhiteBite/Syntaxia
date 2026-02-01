@@ -200,5 +200,11 @@
     "commandBar.selected": "Selected",
     "commandBar.files": "files",
     "commandBar.custom": "Custom",
-    "commandBar.customLimit": "Custom limit"
+    "commandBar.customLimit": "Custom limit",
+    "commandBar.tokenDistribution": "Token Weight",
+    "commandBar.filterMediumTooltip": "Show files with 10K+ tokens (Medium weight)",
+    "commandBar.filterHeavyTooltip": "Show files with 50K+ tokens (Heavy weight)",
+    "commandBar.filterCriticalTooltip": "Show files with 100K+ tokens (Critical weight)",
+    "commandBar.clearWeightFilter": "Clear weight filter",
+    "commandBar.weightFilterActive": "Weight filter active: {level}"
 }

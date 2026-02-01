@@ -200,5 +200,11 @@
     "commandBar.selected": "Выбрано",
     "commandBar.files": "файлов",
     "commandBar.custom": "Свой",
-    "commandBar.customLimit": "Свой лимит"
+    "commandBar.customLimit": "Свой лимит",
+    "commandBar.tokenDistribution": "Вес токенов",
+    "commandBar.filterMediumTooltip": "Показать файлы с 10K+ токенами (Средний вес)",
+    "commandBar.filterHeavyTooltip": "Показать файлы с 50K+ токенами (Тяжёлый вес)",
+    "commandBar.filterCriticalTooltip": "Показать файлы с 100K+ токенами (Критический вес)",
+    "commandBar.clearWeightFilter": "Сбросить фильтр по весу",
+    "commandBar.weightFilterActive": "Активен фильтр по весу: {level}"
 }

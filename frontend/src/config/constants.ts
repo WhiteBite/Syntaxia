@@ -47,9 +47,9 @@ export const CONTEXT = {
 
 // Token Weight Thresholds (for file tree visualization)
 export const TOKEN_THRESHOLDS = {
-    MEDIUM: 5000,      // 5k tokens - yellow indicator
-    HEAVY: 20000,      // 20k tokens - orange indicator  
-    CRITICAL: 50000,   // 50k tokens - red indicator
+    MEDIUM: 10000,     // 10k tokens - yellow indicator
+    HEAVY: 50000,      // 50k tokens - orange indicator  
+    CRITICAL: 100000,  // 100k tokens - red indicator
     BYTES_PER_TOKEN: 4, // approximate bytes per token
 } as const
 

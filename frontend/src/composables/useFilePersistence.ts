@@ -19,7 +19,16 @@ export interface UseFilePersistenceOptions {
 
 const SELECTION_PREFIX = 'file-selection-'
 const EXPANDED_PREFIX = 'file-expanded-'
+const PRESETS_PREFIX = 'file-presets-'
 const MAX_SAVED_SELECTIONS = 100
+const MAX_PRESETS = 20
+
+export interface SelectionPreset {
+    name: string
+    description?: string
+    paths: string[]
+    createdAt: number
+}
 
 export function useFilePersistence(options: UseFilePersistenceOptions) {
     const { nodes, selectedPaths, rootPath, findNode } = options
@@ -170,6 +179,132 @@ export function useFilePersistence(options: UseFilePersistenceOptions) {
         }
     }
 
+    // Preset management
+    function getPresetsKey(): string {
+        return `${PRESETS_PREFIX}${rootPath.value}`
+    }
+
+    function getPresets(): SelectionPreset[] {
+        if (!rootPath.value) return []
+
+        try {
+            const key = getPresetsKey()
+            const saved = localStorage.getItem(key)
+            if (saved) {
+                const presets = JSON.parse(saved) as SelectionPreset[]
+                return presets.sort((a, b) => b.createdAt - a.createdAt)
+            }
+        } catch (err) {
+            logger.warn('Failed to load presets:', err)
+        }
+        return []
+    }
+
+    function savePreset(name: string, description?: string): void {
+        if (!rootPath.value) {
+            throw new Error('No project loaded')
+        }
+
+        const trimmedName = name.trim()
+        if (!trimmedName) {
+            throw new Error('Preset name is required')
+        }
+
+        const presets = getPresets()
+
+        // Check max limit
+        if (presets.length >= MAX_PRESETS) {
+            throw new Error(`Maximum ${MAX_PRESETS} presets allowed`)
+        }
+
+        // Check for duplicate name
+        const existingIndex = presets.findIndex((p) => p.name === trimmedName)
+
+        const newPreset: SelectionPreset = {
+            name: trimmedName,
+            description: description?.trim(),
+            paths: Array.from(selectedPaths.value),
+            createdAt: Date.now(),
+        }
+
+        if (existingIndex >= 0) {
+            // Update existing preset
+            presets[existingIndex] = newPreset
+        } else {
+            // Add new preset
+            presets.push(newPreset)
+        }
+
+        try {
+            const key = getPresetsKey()
+            localStorage.setItem(key, JSON.stringify(presets))
+            logger.debug(`Saved preset: ${trimmedName} (${newPreset.paths.length} files)`)
+        } catch (err) {
+            logger.error('Failed to save preset:', err)
+            throw new Error('Failed to save preset')
+        }
+    }
+
+    function loadPreset(name: string): number {
+        const presets = getPresets()
+        const preset = presets.find((p) => p.name === name)
+
+        if (!preset) {
+            throw new Error('Preset not found')
+        }
+
+        // Validate that files still exist
+        const validPaths: string[] = []
+        for (const path of preset.paths) {
+            const node = findNode(path)
+            if (node && !node.isDir) {
+                validPaths.push(path)
+            }
+        }
+
+        if (validPaths.length === 0) {
+            logger.warn('No valid files found in preset')
+            return 0
+        }
+
+        // Clear current selection and load preset
+        selectedPaths.value.clear()
+        validPaths.forEach((path) => selectedPaths.value.add(path))
+
+        logger.debug(`Loaded preset: ${name} (${validPaths.length}/${preset.paths.length} files)`)
+        return validPaths.length
+    }
+
+    function deletePreset(name: string): void {
+        const presets = getPresets()
+        const filteredPresets = presets.filter((p) => p.name !== name)
+
+        if (filteredPresets.length === presets.length) {
+            throw new Error('Preset not found')
+        }
+
+        try {
+            const key = getPresetsKey()
+            localStorage.setItem(key, JSON.stringify(filteredPresets))
+            logger.debug(`Deleted preset: ${name}`)
+        } catch (err) {
+            logger.error('Failed to delete preset:', err)
+            throw new Error('Failed to delete preset')
+        }
+    }
+
+    function clearAllPresets(): void {
+        if (!rootPath.value) return
+
+        try {
+            const key = getPresetsKey()
+            localStorage.removeItem(key)
+            logger.debug('Cleared all presets')
+        } catch (err) {
+            logger.warn('Failed to clear presets:', err)
+        }
+    }
+
     // Cleanup
     function dispose() {
         if (saveExpandedStateTimer) {
@@ -194,6 +329,12 @@ export function useFilePersistence(options: UseFilePersistenceOptions) {
         debouncedSaveExpandedState,
         loadExpandedState,
         clearExpandedHistory,
+        // Preset management
+        getPresets,
+        savePreset,
+        loadPreset,
+        deletePreset,
+        clearAllPresets,
         // Cleanup
         dispose,
     }

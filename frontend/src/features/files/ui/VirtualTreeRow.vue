@@ -5,7 +5,8 @@
       props.isSelected ? 'tree-row-selected' : '',
       isDragging ? 'tree-row-dragging' : '',
       props.isFocused ? 'tree-row-focused' : '',
-      !isRelevant ? 'tree-row-dimmed' : ''
+      !isRelevant ? 'tree-row-dimmed' : '',
+      props.isDraggingSelection ? 'tree-row-drag-selecting' : ''
     ]"
     :style="{ paddingLeft: `${item.depth * 16 + 8}px` }"
     :tabindex="props.isFocused ? 0 : -1"
@@ -64,9 +65,11 @@
         'tree-cb',
         props.checkboxState !== 'none' ? 'tree-cb-checked' : '',
         props.checkboxState === 'partial' ? 'tree-cb-partial' : '',
-        isSelectionDisabled ? 'tree-cb-disabled' : ''
+        isSelectionDisabled ? 'tree-cb-disabled' : '',
+        props.isDraggingSelection ? 'tree-cb-dragging' : ''
       ]"
       @click.stop="handleToggleSelect($event)"
+      @mousedown.stop="handleCheckboxMouseDown"
       :title="isSelectionDisabled ? t('files.binaryFile') : undefined"
     >
       <CheckIcon v-if="props.checkboxState === 'full'" />
@@ -111,8 +114,14 @@
       {{ item.relativePath }}
     </span>
 
-    <!-- Folder: file count + selected tokens weight -->
+    <!-- Folder: file count + selected count + selected tokens weight -->
     <template v-if="item.node.isDir">
+      <span 
+        v-if="props.selectedFileCount > 0" 
+        class="tree-count-selected"
+        :title="t('files.selectedFileCountTooltip').replace('{count}', String(props.selectedFileCount))">
+        +{{ props.selectedFileCount }}
+      </span>
       <span 
         v-if="props.fileCount > 0" 
         class="tree-count"
@@ -191,8 +200,10 @@ interface Props {
   isFocused?: boolean
   checkboxState?: 'none' | 'partial' | 'full'
   fileCount?: number
+  selectedFileCount?: number
   selectedTokens?: number
   allowSelectBinary?: boolean
+  isDraggingSelection?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -201,8 +212,10 @@ const props = withDefaults(defineProps<Props>(), {
   isFocused: false,
   checkboxState: 'none',
   fileCount: 0,
+  selectedFileCount: 0,
   selectedTokens: 0,
-  allowSelectBinary: false
+  allowSelectBinary: false,
+  isDraggingSelection: false
 })
 
 const isSelectionDisabled = computed(() => {
@@ -253,6 +266,8 @@ const emit = defineEmits<{
   (e: 'contextmenu', node: FileNode, event: MouseEvent): void
   (e: 'quicklook', path: string): void
   (e: 'select-related', path: string): void
+  (e: 'checkbox-mousedown', payload: { path: string, isSelected: boolean }): void
+  (e: 'row-mouseenter', path: string): void
 }>()
 
 const fileStore = useFileStore()
@@ -315,10 +330,28 @@ function handleQuickLook() {
 
 function handleMouseEnter() {
   hoveredFile.setHovered(props.item.node.path, props.item.node.isDir)
+  
+  // Emit row-mouseenter for drag-to-select
+  if (props.isDraggingSelection) {
+    emit('row-mouseenter', props.item.node.path)
+  }
 }
 
 function handleMouseLeave() {
   hoveredFile.clearHovered(props.item.node.path)
+}
+
+function handleCheckboxMouseDown() {
+  if (isSelectionDisabled.value) return
+  
+  // Only start drag-to-select for files, not directories
+  if (!props.item.node.isDir) {
+    // Emit checkbox-mousedown to start drag-to-select
+    emit('checkbox-mousedown', {
+      path: props.item.node.path,
+      isSelected: props.checkboxState === 'full'
+    })
+  }
 }
 
 function formatSize(bytes: number): string {

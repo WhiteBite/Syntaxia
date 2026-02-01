@@ -334,6 +334,35 @@
     background: rgba(255, 255, 255, 0.15);
 }
 
+/* Selected file count badge (bubble-up indicator) */
+.tree-count-selected {
+    font-size: 10px;
+    margin-left: auto;
+    margin-right: var(--space-1);
+    padding: 2px 6px;
+    border-radius: var(--radius-md);
+    color: #a78bfa;
+    background: rgba(167, 139, 250, 0.2);
+    border: 1px solid rgba(167, 139, 250, 0.3);
+    font-weight: 600;
+    min-width: 1.25rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    transition: all var(--transition-fast);
+}
+
+.tree-row:hover .tree-count-selected {
+    color: #c4b5fd;
+    background: rgba(167, 139, 250, 0.3);
+    border-color: rgba(167, 139, 250, 0.4);
+}
+
+.tree-row-selected .tree-count-selected {
+    color: #e9d5ff;
+    background: rgba(167, 139, 250, 0.35);
+    border-color: rgba(167, 139, 250, 0.5);
+}
+
 .tree-count-bounce {
     animation: count-bounce 300ms var(--ease-out);
 }
@@ -762,6 +791,33 @@
 
 .tree-row[draggable="true"]:active {
     cursor: grabbing;
+}
+
+/* Drag-to-select states */
+.tree-row-drag-selecting {
+    user-select: none;
+    cursor: grabbing !important;
+}
+
+.tree-row-drag-selecting * {
+    user-select: none;
+    cursor: grabbing !important;
+}
+
+.tree-cb-dragging {
+    cursor: grabbing !important;
+}
+
+/* Highlight effect when dragging over rows */
+.tree-row-drag-selecting .tree-row:hover {
+    background: rgba(99, 102, 241, 0.15) !important;
+    transition: background 50ms ease-out;
+}
+
+/* Checkbox glow effect during drag */
+.tree-row-drag-selecting .tree-cb {
+    box-shadow: 0 0 8px rgba(99, 102, 241, 0.5);
+    transition: box-shadow 100ms ease-out;
 }
 
 /* Zen Mode: dim unselected nodes */

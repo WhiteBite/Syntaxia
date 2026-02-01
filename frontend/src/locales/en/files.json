@@ -20,6 +20,7 @@
     "files.copyPath": "Copy full path",
     "files.openInExplorer": "Open in explorer",
     "files.fileCountTooltip": "Files in folder: {count}",
+    "files.selectedFileCountTooltip": "{count} files selected in this folder",
     "files.selectedTokensTooltip": "Selected tokens: {count}",
     "files.tokenCountTooltip": "File size: {count} tokens",
     "files.undoSelection": "Undo selection (Ctrl+Z)",
@@ -27,6 +28,7 @@
     "files.clearSelection": "Clear selection",
     "files.zenMode": "Zen Mode - Focus on selected files",
     "files.selectedOnlyMode": "Selected Only - Show only selected files",
+    "files.soloExpansionMode": "Solo Expansion - Only one folder expanded per level (accordion)",
     "files.clearConfirmTitle": "Clear selection?",
     "files.clearConfirmMessage": "Are you sure you want to deselect {count} files?",
     "files.undo": "Undo selection",
@@ -207,5 +209,11 @@
     "files.quickOpen.select": "select",
     "files.quickOpen.close": "close",
     "files.selectRelated": "Select related files",
-    "files.relatedFilesSelected": "Selected {count} related files"
+    "files.relatedFilesSelected": "Selected {count} related files",
+    "commandBar.tokenDistribution": "Token Weight",
+    "commandBar.filterMediumTooltip": "Show files with 10K+ tokens (Medium weight)",
+    "commandBar.filterHeavyTooltip": "Show files with 50K+ tokens (Heavy weight)",
+    "commandBar.filterCriticalTooltip": "Show files with 100K+ tokens (Critical weight)",
+    "commandBar.clearWeightFilter": "Clear weight filter",
+    "commandBar.weightFilterActive": "Weight filter active: {level}"
 }

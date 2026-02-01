@@ -442,4 +442,108 @@ describe('FileStore', () => {
             expect(store.canRedoSelection).toBe(true)
         })
     })
+
+    describe('Weight Filter Operations', () => {
+        const mockTree = [
+            {
+                name: 'src',
+                path: '/project/src',
+                isDir: true,
+                children: [
+                    // Small file: 1000 bytes = ~250 tokens
+                    { name: 'small.ts', path: '/project/src/small.ts', isDir: false, size: 1000 },
+                    // Medium file: 40000 bytes = ~10000 tokens
+                    { name: 'medium.ts', path: '/project/src/medium.ts', isDir: false, size: 40000 },
+                    // Heavy file: 200000 bytes = ~50000 tokens
+                    { name: 'heavy.ts', path: '/project/src/heavy.ts', isDir: false, size: 200000 },
+                    // Critical file: 400000 bytes = ~100000 tokens
+                    { name: 'critical.ts', path: '/project/src/critical.ts', isDir: false, size: 400000 },
+                ],
+            },
+        ]
+
+        beforeEach(() => {
+            const store = useFileStore()
+            store.setFileTree(mockTree)
+        })
+
+        it('should have no weight filter by default', () => {
+            const store = useFileStore()
+            expect(store.weightFilter).toBe('none')
+        })
+
+        it('should set weight filter to medium', () => {
+            const store = useFileStore()
+            store.setWeightFilter('medium')
+            expect(store.weightFilter).toBe('medium')
+        })
+
+        it('should set weight filter to heavy', () => {
+            const store = useFileStore()
+            store.setWeightFilter('heavy')
+            expect(store.weightFilter).toBe('heavy')
+        })
+
+        it('should set weight filter to critical', () => {
+            const store = useFileStore()
+            store.setWeightFilter('critical')
+            expect(store.weightFilter).toBe('critical')
+        })
+
+        it('should clear weight filter', () => {
+            const store = useFileStore()
+            store.setWeightFilter('heavy')
+            store.clearWeightFilter()
+            expect(store.weightFilter).toBe('none')
+        })
+
+        it('should filter files by medium weight (10K+ tokens)', () => {
+            const store = useFileStore()
+            store.setWeightFilter('medium')
+
+            const filtered = store.filteredNodes
+            expect(filtered.length).toBe(1)
+            expect(filtered[0].isDir).toBe(true)
+            expect(filtered[0].children?.length).toBe(3) // medium, heavy, critical
+        })
+
+        it('should filter files by heavy weight (50K+ tokens)', () => {
+            const store = useFileStore()
+            store.setWeightFilter('heavy')
+
+            const filtered = store.filteredNodes
+            expect(filtered.length).toBe(1)
+            expect(filtered[0].isDir).toBe(true)
+            expect(filtered[0].children?.length).toBe(2) // heavy, critical
+        })
+
+        it('should filter files by critical weight (100K+ tokens)', () => {
+            const store = useFileStore()
+            store.setWeightFilter('critical')
+
+            const filtered = store.filteredNodes
+            expect(filtered.length).toBe(1)
+            expect(filtered[0].isDir).toBe(true)
+            expect(filtered[0].children?.length).toBe(1) // critical only
+        })
+
+        it('should show all files when weight filter is none', () => {
+            const store = useFileStore()
+            store.setWeightFilter('none')
+
+            const filtered = store.filteredNodes
+            expect(filtered.length).toBe(1)
+            expect(filtered[0].children?.length).toBe(4) // all files
+        })
+
+        it('should combine weight filter with extension filter', () => {
+            const store = useFileStore()
+            store.setWeightFilter('medium')
+            store.setFilterExtensions(['.ts'], [])
+
+            const filtered = store.filteredNodes
+            expect(filtered.length).toBe(1)
+            expect(filtered[0].children?.length).toBe(3) // medium, heavy, critical (all .ts)
+        })
+    })
 })

@@ -55,6 +55,18 @@
             @settings-changed="explorer.handleSettingsChange"
           />
           
+          <!-- Solo Expansion Mode Toggle -->
+          <BaseButton
+            variant="ghost"
+            size="sm"
+            icon-only
+            @click="fileStore.toggleSoloExpansionMode()"
+            :class="{ 'text-indigo-400': fileStore.isSoloExpansionMode }"
+            :title="t('files.soloExpansionMode')"
+          >
+            <List class="w-4 h-4" />
+          </BaseButton>
+          
           <!-- Selected Only Mode Toggle -->
           <BaseButton
             v-if="fileStore.selectedCount > 0"
@@ -107,6 +119,9 @@
 
     <!-- Quick Filters -->
     <QuickFiltersBar />
+
+    <!-- Presets Panel -->
+    <PresetsPanel />
 
     <!-- Favorites Section -->
     <FavoritesPanel @select="handleFavoriteSelect" />
@@ -217,7 +232,7 @@ import { useProjectStore } from '@/stores/project.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useUIStore } from '@/stores/ui.store'
 import { BaseBadge, BaseButton, BaseCard } from '@/components/ui'
-import { RefreshCw, Search as SearchIcon, X, Eye, CheckSquare } from 'lucide-vue-next'
+import { RefreshCw, Search as SearchIcon, X, Eye, CheckSquare, List } from 'lucide-vue-next'
 import { defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import { useFileExplorer } from '../composables/useFileExplorer'
@@ -231,6 +246,7 @@ import QuickFiltersBar from './QuickFiltersBar.vue'
 import SettingsPopover from './SettingsPopover.vue'
 import VirtualFileTree from './VirtualFileTree.vue'
 import FavoritesPanel from './FavoritesPanel.vue'
+import PresetsPanel from './PresetsPanel.vue'
 
 const QuickLookModal = defineAsyncComponent(() => import('@/components/QuickLookModal.vue'))
 const IgnoreRulesModal = defineAsyncComponent(() => import('./IgnoreRulesModal.vue'))
