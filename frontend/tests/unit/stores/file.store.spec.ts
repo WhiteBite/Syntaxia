@@ -151,4 +151,40 @@ describe('FileStore', () => {
             expect(files).toHaveLength(0)
         })
     })
+
+    describe('isFlatSearchMode', () => {
+        it('should return false when search query is empty', () => {
+            const store = useFileStore()
+
+            expect(store.isFlatSearchMode).toBe(false)
+        })
+
+        it('should return true when search query has text', () => {
+            const store = useFileStore()
+
+            store.setSearchQuery('test')
+
+            expect(store.isFlatSearchMode).toBe(true)
+        })
+
+        it('should return false when search query is only whitespace', () => {
+            const store = useFileStore()
+
+            store.setSearchQuery('   ')
+
+            expect(store.isFlatSearchMode).toBe(false)
+        })
+
+        it('should update reactively when search query changes', () => {
+            const store = useFileStore()
+
+            expect(store.isFlatSearchMode).toBe(false)
+
+            store.setSearchQuery('component')
+            expect(store.isFlatSearchMode).toBe(true)
+
+            store.setSearchQuery('')
+            expect(store.isFlatSearchMode).toBe(false)
+        })
+    })
 })

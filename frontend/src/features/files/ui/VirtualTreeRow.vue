@@ -6,21 +6,22 @@
       isDragging ? 'tree-row-dragging' : '',
       props.isFocused ? 'tree-row-focused' : '',
       !isRelevant ? 'tree-row-dimmed' : '',
-      props.isDraggingSelection ? 'tree-row-drag-selecting' : ''
+      props.isDraggingSelection ? 'tree-row-drag-selecting' : '',
+      item.relativePath ? 'tree-row-flat-search' : ''
     ]"
-    :style="{ paddingLeft: `${item.depth * 16 + 8}px` }"
+    :style="item.relativePath ? { paddingLeft: '8px' } : { paddingLeft: `${item.depth * 16 + 8}px` }"
     :tabindex="props.isFocused ? 0 : -1"
     @click="handleClick($event)"
     @contextmenu.prevent="handleContextMenu"
-    :title="item.node.isIgnored ? `${item.node.path} (ignored)` : item.node.path"
+    :title="getSizeWarningTooltip()"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
     draggable="true"
     @dragstart="handleDragStart"
     @dragend="handleDragEnd"
   >
-    <!-- Tree guide lines -->
-    <svg v-if="item.depth > 0" class="tree-guides" :width="item.depth * 16 + 16" :height="rowHeight" style="shape-rendering: crispEdges; overflow: visible;">
+    <!-- Tree guide lines (hidden in flat search mode) -->
+    <svg v-if="item.depth > 0 && !item.relativePath" class="tree-guides" :width="item.depth * 16 + 16" :height="rowHeight" style="shape-rendering: crispEdges; overflow: visible;">
       <!-- Vertical continuation lines for ancestors that have more siblings -->
       <template v-for="(hasMore, idx) in item.ancestorHasMoreSiblings" :key="'v-' + idx">
         <line v-if="hasMore" 
@@ -89,8 +90,24 @@
       <WandIcon />
     </button>
 
+    <!-- Dependency Indicator -->
+    <button
+      v-if="hasDependencyLink"
+      class="tree-dependency-indicator"
+      @click.stop="handleAddDependency"
+      :title="dependencyTooltip"
+    >
+      <LinkIcon class="w-3.5 h-3.5" />
+      <span v-if="dependentCount > 1" class="dependency-count">
+        {{ dependentCount }}
+      </span>
+    </button>
+
     <!-- File/Folder Icon -->
-    <div class="tree-icon">
+    <div class="tree-icon" :class="{
+      'tree-icon-critical': isCriticalSize,
+      'tree-icon-heavy': isHeavySize
+    }">
       <FolderOpenIcon v-if="item.node.isDir && item.node.isExpanded" />
       <FolderIcon v-else-if="item.node.isDir" />
       <span v-else class="tree-file-icon">{{ getFileIcon(item.node.name) }}</span>
@@ -183,6 +200,7 @@ import { useSettingsStore } from '@/stores/settings.store'
 import { CheckIcon, ChevronIcon, EyeIcon, FolderIcon, FolderOpenIcon, WandIcon } from '@/components/icons'
 import { computed, ref } from 'vue'
 import type { FuseResultMatch } from 'fuse.js'
+import { Link as LinkIcon } from 'lucide-vue-next'
 
 const { t } = useI18n()
 const hoveredFile = useHoveredFile()
@@ -260,18 +278,61 @@ const fileWeightLevel = computed((): WeightLevel => {
   return 'none'
 })
 
+// Size guard: check if file exceeds size thresholds
+const isCriticalSize = computed(() => {
+  if (props.item.node.isDir) return false
+  const tokens = fileTokens.value
+  return tokens >= TOKEN_THRESHOLDS.CRITICAL
+})
+
+const isHeavySize = computed(() => {
+  if (props.item.node.isDir) return false
+  const tokens = fileTokens.value
+  return tokens >= TOKEN_THRESHOLDS.HEAVY && tokens < TOKEN_THRESHOLDS.CRITICAL
+})
+
 const emit = defineEmits<{
   (e: 'toggle-select', payload: { path: string, shiftKey: boolean }): void
   (e: 'toggle-expand', path: string): void
   (e: 'contextmenu', node: FileNode, event: MouseEvent): void
   (e: 'quicklook', path: string): void
   (e: 'select-related', path: string): void
+  (e: 'add-dependency', path: string): void
   (e: 'checkbox-mousedown', payload: { path: string, isSelected: boolean }): void
   (e: 'row-mouseenter', path: string): void
 }>()
 
 const fileStore = useFileStore()
 const isDragging = ref(false)
+
+// Dependency indicator logic
+const hasDependencyLink = computed(() => {
+  if (props.item.node.isDir) return false
+  return fileStore.selectedFileDependencies.has(props.item.node.path)
+})
+
+const dependentCount = computed(() => {
+  const deps = fileStore.selectedFileDependencies.get(props.item.node.path)
+  return deps?.length || 0
+})
+
+const dependencyTooltip = computed(() => {
+  if (!hasDependencyLink.value) return ''
+
+  const deps = fileStore.selectedFileDependencies.get(props.item.node.path)
+  if (!deps || deps.length === 0) return ''
+
+  const fileNames = deps.map(p => p.substring(p.lastIndexOf('/') + 1))
+
+  if (fileNames.length === 1) {
+    return t('files.importedBy', { file: fileNames[0] })
+  } else {
+    return t('files.importedByMultiple', {
+      count: fileNames.length,
+      files: fileNames.slice(0, 2).join(', ')
+    })
+  }
+})
 
 const isHoveredOrFocused = computed(() => {
   return props.isSelected || hoveredFile.isHovered(props.item.node.path)
@@ -365,6 +426,28 @@ function formatTokens(tokens: number): string {
   return Math.round(tokens / 1000) + 'k'
 }
 
+function getSizeWarningTooltip(): string {
+  if (props.item.node.isDir) {
+    return props.item.node.isIgnored ? `${props.item.node.path} (ignored)` : props.item.node.path
+  }
+  
+  if (isCriticalSize.value) {
+    const tokens = fileTokens.value
+    const percent = Math.round((tokens / TOKEN_THRESHOLDS.MAX_CONTEXT) * 100)
+    return t('files.criticalSizeWarning')
+      .replace('{tokens}', formatTokens(tokens))
+      .replace('{percent}', String(percent))
+  }
+  
+  if (isHeavySize.value) {
+    const tokens = fileTokens.value
+    return t('files.heavySizeWarning')
+      .replace('{tokens}', formatTokens(tokens))
+  }
+  
+  return props.item.node.isIgnored ? `${props.item.node.path} (ignored)` : props.item.node.path
+}
+
 function handleDragStart(e: DragEvent) {
   if (!e.dataTransfer) return
   isDragging.value = true
@@ -386,6 +469,10 @@ function handleDragEnd() {
 
 function handleSelectRelated() {
   emit('select-related', props.item.node.path)
+}
+
+function handleAddDependency() {
+  emit('add-dependency', props.item.node.path)
 }
 </script>
 

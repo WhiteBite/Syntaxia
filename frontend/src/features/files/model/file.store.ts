@@ -3,6 +3,7 @@
  * Composes: useFileTree, useFileSelection, useFileFuzzySearch, useFileFilter, useFilePersistence
  */
 
+import { useDependencyGraph } from '@/composables/useDependencyGraph'
 import { useFileFilter } from '@/composables/useFileFilter'
 import { useFileFuzzySearch } from '@/composables/useFileFuzzySearch'
 import { useFilePersistence } from '@/composables/useFilePersistence'
@@ -10,6 +11,7 @@ import { useFileSelection } from '@/composables/useFileSelection'
 import { useFileTree } from '@/composables/useFileTree'
 import { useLogger } from '@/composables/useLogger'
 import { useSettingsStore } from '@/stores/settings.store'
+import type { FileNode } from '@/types/domain'
 import { walkTree } from '@/utils/fileTreeUtils'
 import { defineStore } from 'pinia'
 import { computed, ref, triggerRef } from 'vue'
@@ -17,7 +19,7 @@ import { filesApi } from '../api/files.api'
 
 const logger = useLogger('FileStore')
 
-// Re-export FileNode for backward compatibility
+// Re-export types for backward compatibility
 export type { WeightFilterLevel } from '@/composables/useFileFilter'
 export type { SelectionPreset } from '@/composables/useFilePersistence'
 export type { FileNode } from '@/types/domain'
@@ -44,6 +46,9 @@ export const useFileStore = defineStore('file', () => {
         getAllFilesInNode: tree.getAllFilesInNode,
     })
 
+    // Selected Only mode: show only selected files in flat list
+    const isSelectedOnlyMode = ref(false)
+
     // Compose: Persistence (depends on tree and selection)
     const persistence = useFilePersistence({
         nodes: tree.nodes,
@@ -51,6 +56,9 @@ export const useFileStore = defineStore('file', () => {
         rootPath: tree.rootPath,
         findNode: tree.findNode,
     })
+
+    // Compose: Dependency Graph
+    const dependencyGraph = useDependencyGraph()
 
     // State for range selection
     const lastSelectedPath = ref<string | null>(null)
@@ -66,11 +74,11 @@ export const useFileStore = defineStore('file', () => {
     // Keyboard navigation: focused path for roving tabindex
     const focusedPath = ref<string | null>(null)
 
-    // Selected Only mode: show only selected files in flat list
-    const isSelectedOnlyMode = ref(false)
-
     // Solo Expansion mode: only one folder expanded per level (accordion)
     const isSoloExpansionMode = ref(false)
+
+    // Folder Focus mode: isolate a single folder as temporary root
+    const focusedFolderPath = ref<string | null>(null)
 
     // Settings
     const settingsStore = useSettingsStore()
@@ -90,6 +98,60 @@ export const useFileStore = defineStore('file', () => {
 
     const estimatedTokenCount = computed(() => Math.round(selectedFilesTotalSize.value / 4))
     const estimatedContextSize = computed(() => selectedFilesTotalSize.value / (1024 * 1024))
+
+    // Flat search mode: when search query is active, show flat list without hierarchy
+    const isFlatSearchMode = computed(() => {
+        return search.searchQuery.value.trim().length > 0
+    })
+
+    // Computed: Filtered nodes with selected-only mode support
+    const filteredNodesWithSelectedOnly = computed(() => {
+        // If selected-only mode is active, show only selected files in flat list
+        if (isSelectedOnlyMode.value) {
+            return tree.flattenedNodes.value
+                .filter(node => !node.isDir && selection.isSelected(node.path))
+                .map(node => ({
+                    ...node,
+                    depth: 0, // Flat display
+                    relativePath: tree.rootPath.value
+                        ? node.path.replace(tree.rootPath.value + '/', '')
+                        : node.path
+                }))
+        }
+
+        // Otherwise, use normal filtered nodes from filter composable
+        return filter.filteredNodes.value
+    })
+
+    // Computed: Get dependencies for selected files
+    // Returns a map of file paths that are dependencies -> array of selected files that depend on them
+    const selectedFileDependencies = computed(() => {
+        const deps = new Map<string, string[]>()
+
+        for (const selectedPath of selection.selectedPaths.value) {
+            const fileDeps = dependencyGraph.findDependencies(
+                selectedPath,
+                getAllFileNodes()
+            )
+
+            for (const dep of fileDeps) {
+                if (!deps.has(dep.path)) {
+                    deps.set(dep.path, [])
+                }
+                deps.get(dep.path)!.push(selectedPath)
+            }
+        }
+
+        return deps
+    })
+
+    function getAllFileNodes(): FileNode[] {
+        const result: FileNode[] = []
+        walkTree(tree.nodes.value, (node) => {
+            if (!node.isDir) result.push(node)
+        })
+        return result
+    }
 
     function getSelectedFilesSize(): number {
         return selectedFilesTotalSize.value
@@ -272,10 +334,28 @@ export const useFileStore = defineStore('file', () => {
         focusedPath.value = path
     }
 
+    function setFocusOnFolder(path: string) {
+        const node = tree.findNode(path)
+        if (node && node.isDir) {
+            focusedFolderPath.value = path
+            // Auto-expand the focused folder
+            tree.expandPath(path)
+        }
+    }
+
+    function clearFolderFocus() {
+        focusedFolderPath.value = null
+    }
+
     function selectRelated(path: string): number {
-        const { findRelatedFiles, getAllFileNodes } = require('@/utils/fileRelations')
-        const allFileNodes = getAllFileNodes(tree.nodes.value)
-        const relatedPaths = findRelatedFiles(path, allFileNodes)
+        // Get all file nodes from the tree
+        const allFileNodes: FileNode[] = []
+        walkTree(tree.nodes.value, (node) => {
+            if (!node.isDir) allFileNodes.push(node)
+        })
+
+        // Find related files using dependency graph
+        const relatedPaths = dependencyGraph.findRelatedFiles(path, allFileNodes)
 
         // Select all related files
         let selectedCount = 0
@@ -332,6 +412,7 @@ export const useFileStore = defineStore('file', () => {
         isSelectedOnlyMode,
         isSoloExpansionMode,
         focusedPath,
+        focusedFolderPath,
 
         // State (from selection)
         selectedPaths: selection.selectedPaths,
@@ -362,11 +443,13 @@ export const useFileStore = defineStore('file', () => {
         searchResults: search.searchResults,
 
         // Computed (from filter)
-        filteredNodes: filter.filteredNodes,
+        filteredNodes: filteredNodesWithSelectedOnly,
 
         // Computed (local)
         estimatedTokenCount,
         estimatedContextSize,
+        selectedFileDependencies,
+        isFlatSearchMode,
 
         // Actions (tree)
         setFileTree: tree.setFileTree,
@@ -426,6 +509,8 @@ export const useFileStore = defineStore('file', () => {
         toggleSelectedOnlyMode,
         toggleSoloExpansionMode,
         setFocusedPath,
+        setFocusOnFolder,
+        clearFolderFocus,
         selectRelated,
 
         // Actions (presets)

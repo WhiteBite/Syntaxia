@@ -51,6 +51,7 @@ export const TOKEN_THRESHOLDS = {
     HEAVY: 50000,      // 50k tokens - orange indicator  
     CRITICAL: 100000,  // 100k tokens - red indicator
     BYTES_PER_TOKEN: 4, // approximate bytes per token
+    MAX_CONTEXT: 200000, // 200k tokens limit (for percentage calculation)
 } as const
 
 // Git Configuration

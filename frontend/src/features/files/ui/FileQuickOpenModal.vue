@@ -21,7 +21,17 @@
             >
               <span class="quick-open-icon">{{ getFileIcon(file.name) }}</span>
               <div class="quick-open-content">
-                <span class="quick-open-name">{{ file.name }}</span>
+                <span class="quick-open-name">
+                  <template v-if="highlightedNames[idx] && highlightedNames[idx].length > 1">
+                    <template v-for="(segment, segIdx) in highlightedNames[idx]" :key="segIdx">
+                      <mark v-if="segment.isMatch" class="quick-open-highlight">{{ segment.text }}</mark>
+                      <span v-else>{{ segment.text }}</span>
+                    </template>
+                  </template>
+                  <template v-else>
+                    {{ file.name }}
+                  </template>
+                </span>
                 <span class="quick-open-path">{{ getRelativePath(file.path) }}</span>
               </div>
               <span v-if="isSelected(file.path)" class="quick-open-badge">✓</span>
@@ -47,6 +57,7 @@
 <script setup lang="ts">
 import { useI18n } from '@/composables/useI18n'
 import { getFileIcon } from '@/utils/fileIcons'
+import { highlightFuzzy, type TextSegment } from '@/utils/searchHighlight'
 import { useFileStore, type FileNode } from '../model/file.store'
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
@@ -63,6 +74,13 @@ const results = computed(() => {
   
   fileStore.setSearchQuery(query.value)
   return fileStore.searchResults.slice(0, 20)
+})
+
+// Compute highlighted names for all results
+const highlightedNames = computed<TextSegment[][]>(() => {
+  if (!query.value) return []
+  
+  return results.value.map(file => highlightFuzzy(file.name, query.value))
 })
 
 watch(results, () => {
@@ -222,6 +240,14 @@ defineExpose({ open, close })
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.quick-open-highlight {
+  background: rgba(168, 85, 247, 0.4);
+  color: white;
+  padding: 0 2px;
+  border-radius: 2px;
+  font-weight: 700;
 }
 
 .quick-open-path {

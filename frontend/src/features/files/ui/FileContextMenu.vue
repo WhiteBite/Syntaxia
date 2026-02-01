@@ -37,6 +37,19 @@
 
         <div v-if="node.isDir" class="h-px bg-gray-700 my-1"></div>
 
+        <!-- Focus on Folder (folders only) -->
+        <button
+          v-if="node.isDir"
+          @click="handleAction('focusOnFolder')"
+          class="w-full px-4 py-2 text-left text-sm text-white hover:bg-gray-700 flex items-center gap-3 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="3" stroke-width="2"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12c0-4.5 4-8 9-8s9 3.5 9 8-4 8-9 8-9-3.5-9-8z"/>
+          </svg>
+          {{ t('files.focusOnFolder') }}
+        </button>
+
         <!-- Copy Actions -->
         <!-- QuickLook (files only) -->
         <button

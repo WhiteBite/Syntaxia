@@ -117,6 +117,45 @@
       </div>
     </div>
 
+    <!-- Folder Focus Mode Banner -->
+    <div v-if="fileStore.focusedFolderPath" class="focus-mode-banner">
+      <div class="focus-mode-content">
+        <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3" stroke-width="2"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12c0-4.5 4-8 9-8s9 3.5 9 8-4 8-9 8-9-3.5-9-8z"/>
+        </svg>
+        <span class="focus-mode-label">{{ t('files.focusedOn', { folder: getFocusedFolderName() }) }}</span>
+      </div>
+      <BaseButton
+        variant="ghost"
+        size="sm"
+        @click="fileStore.clearFolderFocus()"
+        class="focus-mode-back-btn"
+      >
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        {{ t('files.backToRoot') }}
+      </BaseButton>
+    </div>
+
+    <!-- Selected Only Mode Banner -->
+    <div v-if="fileStore.isSelectedOnlyMode" class="selected-only-banner">
+      <div class="selected-only-content">
+        <CheckSquare class="w-4 h-4 text-emerald-400" />
+        <span class="selected-only-label">{{ t('files.selectedOnlyModeActive', { count: fileStore.selectedCount }) }}</span>
+      </div>
+      <BaseButton
+        variant="ghost"
+        size="sm"
+        @click="fileStore.toggleSelectedOnlyMode()"
+        class="selected-only-exit-btn"
+      >
+        <X class="w-4 h-4 mr-1.5" />
+        {{ t('files.exitSelectedOnlyMode') }}
+      </BaseButton>
+    </div>
+
     <!-- Quick Filters -->
     <QuickFiltersBar />
 
@@ -325,6 +364,12 @@ function handleFavoriteSelect(_path: string) {
   // This handler can be used for additional actions if needed
 }
 
+function getFocusedFolderName(): string {
+  if (!fileStore.focusedFolderPath) return ''
+  const parts = fileStore.focusedFolderPath.split(/[/\\]/)
+  return parts[parts.length - 1] || fileStore.focusedFolderPath
+}
+
 onMounted(async () => {
   explorer.initialize()
   
@@ -403,5 +448,87 @@ onUnmounted(() => {
   padding: 0.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   background: #0f111a;
+}
+
+.focus-mode-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-left: 3px solid rgb(99, 102, 241);
+  border-radius: 0.375rem;
+  margin: 0.5rem;
+  gap: 1rem;
+}
+
+.focus-mode-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.focus-mode-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #e5e7eb;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.focus-mode-back-btn {
+  flex-shrink: 0;
+  color: rgb(99, 102, 241);
+  font-weight: 500;
+}
+
+.focus-mode-back-btn:hover {
+  color: rgb(129, 140, 248);
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.selected-only-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-left: 3px solid rgb(16, 185, 129);
+  border-radius: 0.375rem;
+  margin: 0.5rem;
+  gap: 1rem;
+}
+
+.selected-only-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.selected-only-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #d1fae5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.selected-only-exit-btn {
+  flex-shrink: 0;
+  color: rgb(16, 185, 129);
+  font-weight: 500;
+}
+
+.selected-only-exit-btn:hover {
+  color: rgb(52, 211, 153);
+  background: rgba(16, 185, 129, 0.1);
 }
 </style>

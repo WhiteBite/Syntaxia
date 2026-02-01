@@ -12,20 +12,21 @@
     border-radius: var(--radius-sm);
     cursor: pointer;
     color: var(--text-secondary);
-    transition: all var(--transition-fast);
+    transition: background var(--transition-fast), color var(--transition-fast), border-left-color var(--transition-fast);
+    border-left: 3px solid transparent;
+    /* No transform on hover - prevent jitter */
 }
 
 .tree-item:hover {
     background: var(--bg-2);
     color: var(--text-primary);
-    /* Removed transform to prevent text jitter */
-    border-left: 3px solid var(--accent-indigo);
+    border-left-color: var(--accent-indigo);
 }
 
 .tree-item-selected {
     background: var(--accent-indigo-bg);
     color: white;
-    border-left: 2px solid var(--accent-indigo);
+    border-left-color: var(--accent-indigo);
     box-shadow: inset 0 0 0 1px var(--accent-indigo-border);
 }
 
@@ -58,6 +59,9 @@
     white-space: nowrap;
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
+    /* Ensure text never moves on hover */
+    transform: none !important;
+    transition: color 0.15s ease;
 }
 
 .tree-search-path {
@@ -66,6 +70,21 @@
     margin-left: var(--space-2);
     opacity: 0.7;
     font-family: ui-monospace, monospace;
+}
+
+/* Flat Search Mode: clean list without hierarchy */
+.tree-row-flat-search {
+    padding-left: 8px !important;
+}
+
+.tree-row-flat-search .tree-search-path {
+    margin-left: auto;
+    opacity: 0.6;
+    font-size: 11px;
+}
+
+.tree-row-flat-search:hover .tree-search-path {
+    opacity: 0.9;
 }
 
 .tree-count {
@@ -89,7 +108,13 @@
     overflow: visible !important;
 }
 
-/* Tree Row */
+/* ============================================
+   TREE ROW - STABLE HOVER (NO JITTER)
+   Task 4: Hover effects without transform
+   - Uses border-left for visual feedback
+   - Background color transitions only
+   - Text never moves (no translateX)
+   ============================================ */
 .tree-row {
     display: flex;
     align-items: center;
@@ -104,22 +129,27 @@
     min-height: var(--tree-row-height);
     max-height: var(--tree-row-height);
     margin: 0;
-
     box-sizing: border-box;
+    /* Stable hover: left border + background transition only */
+    border-left: 3px solid transparent;
+    transition: background-color 0.15s ease, border-left-color 0.15s ease, color 0.15s ease;
 }
 
 .tree-row:hover {
     background: var(--tree-hover-bg);
     color: var(--text-primary);
+    border-left-color: #6366f1;
 }
 
 .tree-row-selected {
     background: rgba(99, 102, 241, 0.18) !important;
     color: white !important;
+    border-left-color: #818cf8 !important;
 }
 
 .tree-row-selected:hover {
     background: rgba(99, 102, 241, 0.25) !important;
+    border-left-color: #a5b4fc !important;
 }
 
 /* Tree Guide Lines */
@@ -141,49 +171,69 @@
     stroke-width: 1px;
     stroke-linecap: square;
     stroke-linejoin: miter;
-    opacity: 0.15;
+    opacity: 0.1;
     transition: opacity 200ms ease-out, stroke-width 200ms ease-out;
 }
 
+/* Highlight parent guide line on hover */
 .tree-guide-highlight {
     opacity: 0.8 !important;
-    stroke-width: 2px !important;
+    stroke-width: 1.5px !important;
 }
 
-.tree-row-focused .tree-guide-line {
-    opacity: 0.3;
-}
-
+/* Brighten all lines slightly on row hover */
 .tree-row:hover .tree-guide-line {
-    opacity: 0.3;
+    opacity: 0.25;
 }
 
-/* Guide colors by depth - subtle colors */
+/* Brighten parent line more on hover */
+.tree-row:hover .tree-guide-highlight {
+    opacity: 0.8 !important;
+    stroke-width: 1.5px !important;
+}
+
+/* Selected row: highlight parent guide line */
+.tree-row-selected .tree-guide-highlight {
+    opacity: 0.8 !important;
+    stroke-width: 1.5px !important;
+}
+
+/* Focused row (keyboard navigation) */
+.tree-row-focused .tree-guide-line {
+    opacity: 0.25;
+}
+
+.tree-row-focused .tree-guide-highlight {
+    opacity: 0.8 !important;
+    stroke-width: 1.5px !important;
+}
+
+/* Guide colors by depth - subtle colors that pop on highlight */
 .tree-guide-1 {
-    stroke: #60a5fa;
+    stroke: #6366f1;
 }
 
-/* blue */
+/* indigo */
 .tree-guide-2 {
-    stroke: #a78bfa;
+    stroke: #8b5cf6;
 }
 
 /* purple */
 .tree-guide-3 {
-    stroke: #f472b6;
+    stroke: #ec4899;
 }
 
 /* pink */
 .tree-guide-4 {
-    stroke: #34d399;
+    stroke: #f59e0b;
 }
 
-/* green */
+/* amber */
 .tree-guide-5 {
-    stroke: #64748b;
+    stroke: #6b7280;
 }
 
-/* slate */
+/* gray - default for deeper levels */
 
 /* ============================================
    TREE ROW COMPONENTS (VirtualTreeRow)
@@ -198,8 +248,9 @@
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-sm);
-    transition: all var(--transition-fast);
+    transition: color var(--transition-fast), background var(--transition-fast);
     color: #94a3b8;
+    /* No transform on hover - prevent jitter */
 }
 
 .tree-row:hover .tree-expand {
@@ -232,8 +283,9 @@
     justify-content: center;
     border: 1.5px solid #64748b;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: border-color var(--transition-fast), background var(--transition-fast);
     background: transparent;
+    /* No transform on hover - prevent jitter */
 }
 
 .tree-row:hover .tree-cb {
@@ -261,6 +313,12 @@
     width: 0.75rem;
     height: 0.75rem;
     color: white;
+    /* Scale icon slightly on hover for feedback, not the checkbox itself */
+    transition: transform 0.15s ease;
+}
+
+.tree-cb:hover .tree-cb-icon {
+    transform: scale(1.1);
 }
 
 .tree-cb-disabled {
@@ -275,6 +333,10 @@
     background: rgba(71, 85, 105, 0.2);
 }
 
+.tree-cb-disabled:hover .tree-cb-icon {
+    transform: none;
+}
+
 .tree-row:hover .tree-cb-disabled {
     border-color: #475569;
     background: rgba(71, 85, 105, 0.25);
@@ -287,6 +349,41 @@
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* Size Guard: Critical size warning - red with pulse */
+.tree-icon-critical {
+    color: #ef4444 !important;
+    animation: pulse-warning 2s ease-in-out infinite;
+}
+
+.tree-icon-critical .tree-file-icon {
+    color: #ef4444 !important;
+    font-weight: 700;
+}
+
+/* Size Guard: Heavy size warning - orange */
+.tree-icon-heavy {
+    color: #f97316 !important;
+}
+
+.tree-icon-heavy .tree-file-icon {
+    color: #f97316 !important;
+    font-weight: 600;
+}
+
+@keyframes pulse-warning {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.7;
+        transform: scale(1.05);
+    }
 }
 
 .tree-folder-icon {
@@ -466,17 +563,27 @@
     border: 1px solid rgba(248, 113, 113, 0.25);
 }
 
+/* Size badge with critical warning - enhanced visibility */
+.tree-size-critical {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    font-weight: 600;
+}
+
 /* QuickLook Preview Button */
 .tree-preview {
     opacity: 0;
+    visibility: hidden;
     margin-left: auto;
     margin-right: var(--space-1);
     padding: var(--space-1);
     border-radius: var(--radius-sm);
     color: var(--text-muted);
-    transition: opacity 150ms ease-out;
+    transition: opacity 0.2s ease, visibility 0.2s ease, color 0.15s ease, background 0.15s ease;
     transition-delay: 150ms;
     /* Lazy hover - prevent flicker on fast mouse movement */
+    /* No transform on hover - prevent jitter */
 }
 
 .tree-preview:hover {
@@ -484,14 +591,37 @@
     background: var(--bg-2);
 }
 
+.tree-preview svg {
+    transition: transform 0.15s ease;
+}
+
+.tree-preview:hover svg {
+    transform: scale(1.1);
+}
+
 .tree-row:hover .tree-preview,
 .group:hover .tree-preview {
     opacity: 1;
+    visibility: visible;
+    transition-delay: 150ms;
+}
+
+/* Instant hide when mouse leaves */
+.tree-row:not(:hover) .tree-preview {
+    transition-delay: 0ms;
+}
+
+/* Exception: focused row shows buttons immediately */
+.tree-row-focused .tree-preview {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0ms;
 }
 
 /* Magic Wand Button (Select Related) */
 .tree-wand {
     opacity: 0;
+    visibility: hidden;
     flex-shrink: 0;
     width: 20px;
     height: 20px;
@@ -501,9 +631,10 @@
     padding: var(--space-1);
     border-radius: var(--radius-sm);
     color: #a78bfa;
-    transition: opacity 150ms ease-out, background 150ms ease-out, color 150ms ease-out;
+    transition: opacity 0.2s ease, visibility 0.2s ease, background 0.15s ease, color 0.15s ease;
     transition-delay: 150ms;
     /* Lazy hover - prevent flicker on fast mouse movement */
+    /* No transform on hover - prevent jitter */
 }
 
 .tree-wand:hover {
@@ -511,9 +642,103 @@
     background: rgba(167, 139, 250, 0.15);
 }
 
+.tree-wand svg {
+    transition: transform 0.15s ease;
+}
+
+.tree-wand:hover svg {
+    transform: scale(1.1);
+}
+
 .tree-row:hover .tree-wand,
 .group:hover .tree-wand {
     opacity: 1;
+    visibility: visible;
+    transition-delay: 150ms;
+}
+
+/* Instant hide when mouse leaves */
+.tree-row:not(:hover) .tree-wand {
+    transition-delay: 0ms;
+}
+
+/* Exception: focused row shows buttons immediately */
+.tree-row-focused .tree-wand {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0ms;
+}
+
+/* Dependency Indicator */
+.tree-dependency-indicator {
+    opacity: 0;
+    visibility: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #60a5fa;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: opacity 0.2s ease, visibility 0.2s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    transition-delay: 150ms;
+    /* Lazy hover - prevent flicker on fast mouse movement */
+}
+
+.tree-row:hover .tree-dependency-indicator {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 150ms;
+}
+
+/* Instant hide when mouse leaves */
+.tree-row:not(:hover) .tree-dependency-indicator {
+    transition-delay: 0ms;
+}
+
+/* Exception: focused row shows buttons immediately */
+.tree-row-focused .tree-dependency-indicator {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0ms;
+}
+
+.tree-dependency-indicator:hover {
+    background: rgba(59, 130, 246, 0.25);
+    border-color: rgba(59, 130, 246, 0.5);
+    color: #93c5fd;
+}
+
+.dependency-count {
+    font-size: 0.65rem;
+    padding: 0.125rem 0.25rem;
+    background: rgba(59, 130, 246, 0.3);
+    border-radius: 9999px;
+    font-weight: 600;
+    min-width: 1rem;
+    text-align: center;
+}
+
+/* Highlight files with dependencies */
+.tree-row-has-dependency {
+    position: relative;
+}
+
+.tree-row-has-dependency::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom,
+            rgba(59, 130, 246, 0.5),
+            rgba(59, 130, 246, 0.1));
+    border-radius: 1px;
 }
 
 /* Parent folder of selected files - subtle highlight */
@@ -605,23 +830,26 @@
 }
 
 /* Disable animations during scroll to prevent jitter */
-.is-scrolling .tree-row {
+.is-scrolling * {
     animation: none !important;
     transition: none !important;
 }
 
-.is-scrolling .tree-stagger {
-    animation: none !important;
-}
-
 .is-scrolling .tree-preview {
-    transition-delay: 0ms;
     opacity: 0 !important;
 }
 
 .is-scrolling .tree-wand {
-    transition-delay: 0ms;
     opacity: 0 !important;
+}
+
+.is-scrolling .tree-dependency-indicator {
+    opacity: 0 !important;
+}
+
+/* Re-enable smooth transitions after scroll stops */
+.tree-row {
+    transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 /* Tooltip for ignored files */
@@ -710,14 +938,13 @@
     font-weight: 600;
 }
 
-/* ============================================
-   KEYBOARD FOCUS
-   ============================================ */
+/* Keyboard focus with stable left border */
 .tree-row-focused {
     outline: 2px solid var(--accent-indigo);
     outline-offset: -2px;
     background: rgba(99, 102, 241, 0.12) !important;
     box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.3);
+    border-left-color: #6366f1 !important;
 }
 
 .tree-row-focused:not(.tree-row-selected) {
@@ -727,6 +954,7 @@
 .tree-row:focus-visible {
     outline: 2px solid var(--accent-indigo);
     outline-offset: -2px;
+    border-left-color: #6366f1;
 }
 
 /* ============================================
@@ -830,4 +1058,74 @@
 .tree-row-dimmed:hover {
     opacity: 0.6;
     filter: grayscale(0.5);
+}
+
+/* ============================================
+   ANTI-JITTER PROTECTION
+   Ensure no text movement on hover
+   ============================================ */
+.tree-name,
+.tree-count,
+.tree-count-selected,
+.tree-size,
+.tree-weight,
+.tree-token-badge,
+.tree-binary-badge,
+.tree-search-path {
+    transform: none !important;
+}
+
+/* Only allow scale transforms on icons for feedback */
+.tree-cb-icon,
+.tree-preview svg,
+.tree-wand svg {
+    /* Scale is allowed - doesn't cause layout shift */
+}
+
+/* Expand icon rotation is allowed - intentional animation */
+.tree-expand-icon {
+    /* Rotation is allowed for open/close state */
+}
+
+/* ============================================
+   STICKY BREADCRUMB (Task 10)
+   Shows current folder path during scroll
+   ============================================ */
+.tree-sticky-breadcrumb {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(99, 102, 241, 0.1);
+    border-bottom: 1px solid rgba(99, 102, 241, 0.3);
+    color: #a5b4fc;
+    font-size: 0.75rem;
+    font-weight: 500;
+    backdrop-filter: blur(8px);
+    animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tree-sticky-breadcrumb svg {
+    flex-shrink: 0;
+    color: #818cf8;
+}
+
+/* Slightly dim during active scroll for performance */
+.is-scrolling .tree-sticky-breadcrumb {
+    opacity: 0.7;
 }

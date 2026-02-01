@@ -228,6 +228,12 @@ export function useFileExplorer() {
                         favorites.removeFavorite(node.path)
                     }
                     break
+                case 'focusOnFolder':
+                    if (node.isDir) {
+                        fileStore.setFocusOnFolder(node.path)
+                        uiStore.addToast(t('files.focusedOn', { folder: node.name }), 'success')
+                    }
+                    break
             }
         } catch (error) {
             logger.error('Context menu action failed:', error)

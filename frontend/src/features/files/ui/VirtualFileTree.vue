@@ -35,6 +35,7 @@
         @contextmenu="(node, event) => $emit('contextmenu', node, event)"
         @quicklook="$emit('quicklook', $event)"
         @select-related="handleSelectRelated"
+        @add-dependency="handleAddDependency"
         @checkbox-mousedown="handleCheckboxMouseDown"
         @row-mouseenter="handleRowMouseEnter"
       />
@@ -52,7 +53,7 @@ import { useVirtualTree } from '@/composables/useVirtualTree'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useUIStore } from '@/stores/ui.store'
 import { computed, toRef, ref } from 'vue'
-import { FolderIcon } from 'lucide-vue-next'
+import { FolderIcon } from '@heroicons/vue/24/outline'
 
 import { RecycleScroller } from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
@@ -91,7 +92,8 @@ const { flattenedVisibleNodes } = useVirtualTree({
   nodes: nodesRef,
   isSelectedOnlyMode: computed(() => fileStore.isSelectedOnlyMode),
   selectedPaths: computed(() => fileStore.selectedPaths),
-  rootPath: computed(() => fileStore.rootPath)
+  rootPath: computed(() => fileStore.rootPath),
+  focusedFolderPath: computed(() => fileStore.focusedFolderPath)
 })
 
 const flattenedNodes = computed(() => flattenedVisibleNodes.value)
@@ -132,9 +134,24 @@ function handleScroll(event: Event) {
   const firstVisible = flattenedNodes.value[firstVisibleIndex]
   
   if (firstVisible) {
-    const parts = firstVisible.node.path.split('/')
-    const folderPath = parts.slice(0, -1).join(' › ')
-    currentFolderPath.value = folderPath || fileStore.projectName
+    const path = firstVisible.node.path
+    const rootPath = fileStore.rootPath || ''
+    
+    // Get relative path from project root
+    let relativePath = path
+    if (rootPath && path.startsWith(rootPath)) {
+      relativePath = path.slice(rootPath.length).replace(/^[/\\]/, '')
+    }
+    
+    // Split path and get folder path (remove filename if it's a file)
+    const parts = relativePath.split(/[/\\]/).filter(Boolean)
+    if (!firstVisible.node.isDir && parts.length > 0) {
+      parts.pop() // Remove filename
+    }
+    
+    // Show last 3 levels maximum
+    const displayParts = parts.slice(-3)
+    currentFolderPath.value = displayParts.length > 0 ? displayParts.join(' › ') : fileStore.projectName || 'Root'
   }
 }
 
@@ -333,6 +350,18 @@ function handleSelectRelated(path: string) {
   }
 }
 
+function handleAddDependency(path: string) {
+  // Select the dependency file
+  fileStore.selectPath(path)
+  
+  // Show toast notification
+  uiStore.addToast(
+    t('files.dependencyAdded').replace('{count}', '1'),
+    'success',
+    2000
+  )
+}
+
 // Drag-to-select handlers
 function handleCheckboxMouseDown(payload: { path: string, isSelected: boolean }) {
   const node = fileStore.findNode(payload.path)
@@ -436,21 +465,5 @@ function scrollFocusedIntoView() {
   justify-content: center;
   height: 100%;
   color: var(--text-muted);
-}
-
-.tree-sticky-breadcrumb {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: var(--bg-1);
-  border-bottom: 1px solid var(--border-subtle);
-  padding: 0.5rem 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 </style>
