@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <Transition name="modal-fade">
-      <div v-if="isOpen" class="quick-open-overlay" @click="close" @keydown.esc="close">
+      <div v-if="fileStore.isQuickOpenModalVisible" class="quick-open-overlay" @click="handleClose" @keydown.esc="handleClose">
         <div class="quick-open-modal" @click.stop>
           <input
             ref="inputRef"
@@ -59,12 +59,11 @@ import { useI18n } from '@/composables/useI18n'
 import { getFileIcon } from '@/utils/fileIcons'
 import { highlightFuzzy, type TextSegment } from '@/utils/searchHighlight'
 import { useFileStore, type FileNode } from '../model/file.store'
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 
 const { t } = useI18n()
 const fileStore = useFileStore()
 
-const isOpen = ref(false)
 const query = ref('')
 const activeIndex = ref(0)
 const inputRef = ref<HTMLInputElement>()
@@ -87,6 +86,20 @@ watch(results, () => {
   activeIndex.value = 0
 })
 
+// Watch modal visibility to focus input and reset state
+watch(() => fileStore.isQuickOpenModalVisible, (visible) => {
+  if (visible) {
+    query.value = ''
+    activeIndex.value = 0
+    nextTick(() => {
+      inputRef.value?.focus()
+    })
+  } else {
+    // Clear search when closing
+    fileStore.setSearchQuery('')
+  }
+})
+
 function getRelativePath(path: string): string {
   const rootPath = fileStore.rootPath
   if (!rootPath) return path
@@ -97,24 +110,9 @@ function isSelected(path: string): boolean {
   return fileStore.selectedPaths.has(path)
 }
 
-function open() {
-  isOpen.value = true
-  query.value = ''
-  activeIndex.value = 0
-  nextTick(() => {
-    inputRef.value?.focus()
-  })
-}
-
-function close() {
-  isOpen.value = false
-  query.value = ''
-  fileStore.setSearchQuery('')
-}
-
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
-    close()
+    handleClose()
   } else if (e.key === 'ArrowDown') {
     e.preventDefault()
     activeIndex.value = Math.min(activeIndex.value + 1, results.value.length - 1)
@@ -128,35 +126,22 @@ function handleKeydown(e: KeyboardEvent) {
 }
 
 function selectFile(file: FileNode) {
-  fileStore.selectPath(file.path)
+  // Toggle selection in file store
+  fileStore.toggleSelect(file.path)
   
-  // Expand parent folders to make file visible
+  // Expand parent folders to make file visible in tree
   const parts = file.path.split('/')
   for (let i = 1; i < parts.length; i++) {
     const folderPath = parts.slice(0, i).join('/')
     fileStore.expandPath(folderPath)
   }
   
-  close()
+  handleClose()
 }
 
-// Global hotkey handler
-function handleGlobalKeydown(e: KeyboardEvent) {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
-    e.preventDefault()
-    open()
-  }
+function handleClose() {
+  fileStore.closeQuickOpenModal()
 }
-
-onMounted(() => {
-  window.addEventListener('keydown', handleGlobalKeydown)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleGlobalKeydown)
-})
-
-defineExpose({ open, close })
 </script>
 
 <style scoped>

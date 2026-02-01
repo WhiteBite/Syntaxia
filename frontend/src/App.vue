@@ -108,17 +108,8 @@
     <!-- Settings Modal -->
     <SettingsModal v-model="uiStore.showSettingsModal" />
 
-    <!-- File Search Modal (Ctrl+P) -->
-    <FileSearchModal
-      v-if="projectStore.hasProject"
-      :is-open="uiStore.isFileSearchModalOpen"
-    />
-
-    <!-- File Quick Open Modal -->
-    <FileQuickOpenModal
-      v-if="projectStore.hasProject"
-      ref="quickOpenRef"
-    />
+    <!-- File Quick Open Modal (Ctrl+P) -->
+    <FileQuickOpenModal v-if="projectStore.hasProject" />
 
     <!-- Confirm Dialog (global) -->
     <ConfirmDialog />
@@ -132,6 +123,7 @@ import MainWorkspace from '@/components/workspace/MainWorkspace.vue'
 import { useI18n } from '@/composables/useI18n'
 import { useMemoryMonitor } from '@/composables/useMemoryMonitor'
 import { useOnboarding } from '@/composables/useOnboarding'
+import { useFileStore } from '@/features/files/model/file.store'
 import { useProjectStore } from '@/stores/project.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useUIStore } from '@/stores/ui.store'
@@ -142,23 +134,20 @@ import { defineAsyncComponent, onMounted, onUnmounted, ref, watch, watchEffect }
 // Lazy load heavy components
 const CommandPalette = defineAsyncComponent(() => import('@/components/CommandPalette.vue'))
 const KeyboardShortcutsModal = defineAsyncComponent(() => import('@/components/KeyboardShortcutsModal.vue'))
-// ThemeToggle removed - app uses dark theme only
 const MemoryDashboard = defineAsyncComponent(() => import('@/components/MemoryDashboard.vue'))
 const SettingsModal = defineAsyncComponent(() => import('@/components/SettingsModal.vue'))
 const ConfirmDialog = defineAsyncComponent(() => import('@/components/ConfirmDialog.vue'))
-const FileSearchModal = defineAsyncComponent(() => import('@/features/files/ui/FileSearchModal.vue'))
 const FileQuickOpenModal = defineAsyncComponent(() => import('@/features/files/ui/FileQuickOpenModal.vue'))
 
 const { t } = useI18n()
 const projectStore = useProjectStore()
+const fileStore = useFileStore()
 const uiStore = useUIStore()
 const settingsStore = useSettingsStore()
 const globalError = ref<string | null>(null)
 const isCommandPaletteOpen = ref(false)
 const isShortcutsModalOpen = ref(false)
 const showMemoryDashboard = ref(false)
-// @ts-expect-error - Used in template ref binding
-const quickOpenRef = ref<InstanceType<typeof FileQuickOpenModal>>()
 
 // Apply UI scale to root element
 watchEffect(() => {
@@ -184,8 +173,8 @@ watch(ctrlK, (v) => {
 })
 watch(ctrlP, (v) => {
   if (v && projectStore.hasProject) {
-    // Prevent default browser behavior
-    uiStore.openFileSearchModal()
+    // Open Quick Open modal for file selection
+    fileStore.toggleQuickOpenModal()
   }
 })
 watch(ctrlSlash, (v) => {

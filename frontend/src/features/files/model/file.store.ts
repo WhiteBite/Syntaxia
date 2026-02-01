@@ -80,6 +80,9 @@ export const useFileStore = defineStore('file', () => {
     // Folder Focus mode: isolate a single folder as temporary root
     const focusedFolderPath = ref<string | null>(null)
 
+    // Quick Open modal state
+    const isQuickOpenModalVisible = ref(false)
+
     // Settings
     const settingsStore = useSettingsStore()
     const autoSaveSelection = computed(() => settingsStore.settings.fileExplorer.autoSaveSelection)
@@ -322,6 +325,25 @@ export const useFileStore = defineStore('file', () => {
         isZenMode.value = !isZenMode.value
     }
 
+    function shouldDimNode(node: FileNode): boolean {
+        if (!isZenMode.value) return false
+
+        // Don't dim selected files
+        if (!node.isDir && selection.selectedPaths.value.has(node.path)) {
+            return false
+        }
+
+        // Don't dim folders that contain selected files
+        if (node.isDir) {
+            const allFiles = tree.getAllFilesInNode(node)
+            const hasSelectedFiles = allFiles.some(path => selection.selectedPaths.value.has(path))
+            if (hasSelectedFiles) return false
+        }
+
+        // Dim everything else
+        return true
+    }
+
     function toggleSelectedOnlyMode() {
         isSelectedOnlyMode.value = !isSelectedOnlyMode.value
     }
@@ -400,6 +422,18 @@ export const useFileStore = defineStore('file', () => {
         persistence.clearAllPresets()
     }
 
+    function toggleQuickOpenModal() {
+        isQuickOpenModalVisible.value = !isQuickOpenModalVisible.value
+    }
+
+    function openQuickOpenModal() {
+        isQuickOpenModalVisible.value = true
+    }
+
+    function closeQuickOpenModal() {
+        isQuickOpenModalVisible.value = false
+    }
+
     return {
         // State (from tree)
         nodes: tree.nodes,
@@ -413,6 +447,7 @@ export const useFileStore = defineStore('file', () => {
         isSoloExpansionMode,
         focusedPath,
         focusedFolderPath,
+        isQuickOpenModalVisible,
 
         // State (from selection)
         selectedPaths: selection.selectedPaths,
@@ -506,6 +541,7 @@ export const useFileStore = defineStore('file', () => {
         getMemoryUsage,
         pruneUnusedBranches,
         toggleZenMode,
+        shouldDimNode,
         toggleSelectedOnlyMode,
         toggleSoloExpansionMode,
         setFocusedPath,
@@ -519,6 +555,9 @@ export const useFileStore = defineStore('file', () => {
         loadPreset,
         deletePreset,
         clearAllPresets,
+        toggleQuickOpenModal,
+        openQuickOpenModal,
+        closeQuickOpenModal,
 
         // Public utility methods for UI components
         findNode: tree.findNode,

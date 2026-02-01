@@ -134,16 +134,16 @@
     <!-- Folder: file count + selected count + selected tokens weight -->
     <template v-if="item.node.isDir">
       <span 
-        v-if="props.selectedFileCount > 0" 
-        class="tree-count-selected"
-        :title="t('files.selectedFileCountTooltip').replace('{count}', String(props.selectedFileCount))">
-        +{{ props.selectedFileCount }}
-      </span>
-      <span 
         v-if="props.fileCount > 0" 
         class="tree-count"
         :title="t('files.fileCountTooltip').replace('{count}', String(props.fileCount))">
         {{ props.fileCount }}
+      </span>
+      <span 
+        v-if="props.selectedFileCount > 0" 
+        class="tree-count-selected"
+        :title="t('files.selectedFileCountTooltip').replace('{count}', String(props.selectedFileCount))">
+        +{{ props.selectedFileCount }}
       </span>
       <span 
         v-if="props.selectedTokens > 0"
@@ -340,12 +340,7 @@ const isHoveredOrFocused = computed(() => {
 
 const isRelevant = computed(() => {
   if (!fileStore.isZenMode) return true
-  if (props.isSelected) return true
-  if (props.item.node.isDir) {
-    // Folder is relevant if it contains selected files
-    return props.checkboxState !== 'none'
-  }
-  return false
+  return !fileStore.shouldDimNode(props.item.node)
 })
 
 // Search highlighting: split name into segments
