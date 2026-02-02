@@ -2,17 +2,20 @@
   <div class="tpl-editor-content">
     <!-- Section Chips -->
     <div class="tpl-chips">
-      <button 
+      <BaseChip
         v-for="s in sectionsList" 
         :key="s.key" 
-        @click="$emit('toggle-section', s.key)" 
-        class="tpl-chip"
-        :class="{ active: template.sections[s.key] }" 
+        :variant="template.sections[s.key] ? 'primary' : 'default'"
+        clickable
+        size="xs"
+        @click="$emit('toggle-section', s.key)"
         :title="t(`templates.sectionHint.${s.key}`)"
       >
-        <Check v-if="template.sections[s.key]" class="w-3 h-3" />
-        <span>{{ t(`templates.section.${s.key}`) }}</span>
-      </button>
+        <template v-if="template.sections[s.key]" #icon>
+          <Check class="w-3 h-3" />
+        </template>
+        {{ t(`templates.section.${s.key}`) }}
+      </BaseChip>
     </div>
 
     <!-- Cards Stack -->
@@ -120,6 +123,7 @@
 </template>
 
 <script setup lang="ts">
+import { BaseChip } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
 import { 
   Check, ChevronRight, Clipboard, FileCode, 
@@ -188,9 +192,6 @@ defineExpose({
 .tpl-editor-content { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
 
 .tpl-chips { display: flex; align-items: center; gap: 0.375rem; padding: 0.625rem 1rem; background: rgba(255, 255, 255, 0.02); border-bottom: 1px solid rgba(255, 255, 255, 0.06); flex-wrap: wrap; }
-.tpl-chip { display: flex; align-items: center; gap: 0.25rem; padding: 0.375rem 0.75rem; background: transparent; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: var(--radius-full); color: var(--text-muted); font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
-.tpl-chip:hover { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
-.tpl-chip.active { background: var(--accent-indigo-bg); border-color: var(--accent-indigo-border); color: var(--accent-indigo); }
 
 .tpl-cards { flex: 1; overflow-y: auto; padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.625rem; min-height: 0; }
 .tpl-cards::-webkit-scrollbar { width: 4px; }

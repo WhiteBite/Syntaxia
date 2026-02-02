@@ -106,11 +106,11 @@
         />
       </div>
 
-      <div class="preset-info-box">
+      <BaseAlert variant="info">
         <span class="text-xs text-gray-400">
           {{ t('presets.saveWithCount', { count: fileStore.selectedCount }) }}
         </span>
-      </div>
+      </BaseAlert>
 
       <template #footer>
         <BaseButton variant="ghost" @click="showSaveModal = false">
@@ -157,7 +157,7 @@
 import BaseModal from '@/components/ui/BaseModal.vue'
 import { useI18n } from '@/composables/useI18n'
 import { useUIStore } from '@/stores/ui.store'
-import { BaseButton, BaseInput } from '@/components/ui'
+import { BaseButton, BaseInput, BaseAlert } from '@/components/ui'
 import { BookmarkIcon, ChevronDownIcon, PlusIcon, ArrowDownTrayIcon, TrashIcon } from '@heroicons/vue/24/solid'
 import { computed, ref } from 'vue'
 import { useFileStore } from '../model/file.store'
@@ -388,14 +388,6 @@ function confirmDelete() {
   font-weight: 500;
   color: var(--text-secondary);
   margin-bottom: 0.5rem;
-}
-
-.preset-info-box {
-  padding: 0.75rem;
-  background: rgba(99, 102, 241, 0.1);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  border-radius: 0.5rem;
-  margin-top: 1rem;
 }
 
 /* Collapse animation */

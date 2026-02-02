@@ -33,16 +33,20 @@
 
       <!-- File Type Filters -->
       <div class="flex flex-wrap gap-1.5">
-        <button 
+        <BaseChip
           v-for="filter in fileTypeFilters" 
           :key="filter.id" 
+          :variant="activeFilters.has(filter.id) ? 'primary' : 'default'"
+          clickable
+          size="sm"
           @click="toggleFilter(filter.id)"
-          :class="['git-filter-chip', activeFilters.has(filter.id) ? 'git-filter-chip-active' : '']"
         >
-          <span class="git-filter-icon">{{ filter.icon }}</span>
-          <span>{{ filter.label }}</span>
-          <span class="git-filter-count">{{ getFilterCount(filter.id) }}</span>
-        </button>
+          <template #icon>
+            <span>{{ filter.icon }}</span>
+          </template>
+          {{ filter.label }}
+          <span class="ml-1 opacity-70">({{ getFilterCount(filter.id) }})</span>
+        </BaseChip>
       </div>
     </div>
 
@@ -74,7 +78,7 @@ import SimpleFileTree from '@/components/SimpleFileTree.vue'
 import { useI18n } from '@/composables/useI18n'
 import { useLogger } from '@/composables/useLogger'
 import { computed, ref } from 'vue'
-import { BaseButton } from '@/components/ui'
+import { BaseButton, BaseChip } from '@/components/ui'
 
 const logger = useLogger('GitFileList')
 

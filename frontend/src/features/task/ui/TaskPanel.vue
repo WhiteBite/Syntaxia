@@ -22,14 +22,16 @@
     <div v-if="taskStore.suggestions.length > 0 && !taskStore.taskDescription" class="mt-3 space-y-2">
       <p class="text-xs text-gray-400 font-medium">{{ t('task.quickSuggestions') }}</p>
       <div class="flex flex-wrap gap-2">
-        <button
+        <BaseChip
           v-for="suggestion in taskStore.suggestions"
           :key="suggestion"
+          variant="default"
+          clickable
+          size="sm"
           @click="taskStore.applySuggestion(suggestion)"
-          class="chip chip-default"
         >
           {{ suggestion }}
-        </button>
+        </BaseChip>
       </div>
     </div>
 
@@ -68,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { BaseSpinner, BaseTextarea } from '@/components/ui'
+import { BaseChip, BaseSpinner, BaseTextarea } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
 import { computed, onMounted } from 'vue'
 import { useTaskStore } from '../model/task.store'

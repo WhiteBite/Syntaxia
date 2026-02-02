@@ -20,26 +20,24 @@
     </template>
 
     <!-- Tabs -->
-    <div class="ignore-modal__tabs">
-      <button
-        @click="currentTab = 'gitignore'"
-        :class="['ignore-tab', currentTab === 'gitignore' ? 'ignore-tab--active' : '']"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        .gitignore
-      </button>
-      <button
-        @click="currentTab = 'custom'"
-        :class="['ignore-tab', currentTab === 'custom' ? 'ignore-tab--active' : '']"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-        </svg>
-        {{ t('ignoreModal.customRules') }}
-      </button>
-    </div>
+    <BaseTabs v-model="currentTab" class="px-6 py-3 bg-black/10 border-b border-white/6">
+      <BaseTab name="gitignore" label=".gitignore">
+        <template #label>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          .gitignore
+        </template>
+      </BaseTab>
+      <BaseTab name="custom" :label="t('ignoreModal.customRules')">
+        <template #label>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+          </svg>
+          {{ t('ignoreModal.customRules') }}
+        </template>
+      </BaseTab>
+    </BaseTabs>
 
     <!-- Content -->
     <div class="ignore-modal__content">
@@ -146,7 +144,7 @@
 <script setup lang="ts">
 import BaseModal from '@/components/ui/BaseModal.vue'
 import BaseSpinner from '@/components/ui/BaseSpinner.vue'
-import { BaseButton } from '@/components/ui'
+import { BaseButton, BaseTabs, BaseTab } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
 import { apiService } from '@/services/api.service'
 import type { IgnorePreviewResult } from '@/services/api/settings.api'
@@ -330,49 +328,6 @@ defineExpose({ open, close })
 .ignore-modal__close:hover {
   background: rgba(255, 255, 255, 0.05);
   color: #f1f5f9;
-}
-
-/* Tabs */
-.ignore-modal__tabs {
-  display: flex;
-  gap: 0.25rem;
-  padding: 0.75rem 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(0, 0, 0, 0.1);
-}
-
-.ignore-tab {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: #94a3b8;
-  transition: all 150ms;
-  position: relative;
-}
-
-.ignore-tab:hover {
-  color: #e2e8f0;
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.ignore-tab--active {
-  color: #c084fc;
-  background: rgba(168, 85, 247, 0.1);
-}
-
-.ignore-tab--active::after {
-  content: '';
-  position: absolute;
-  bottom: -0.75rem;
-  left: 0.5rem;
-  right: 0.5rem;
-  height: 2px;
-  background: linear-gradient(90deg, #a855f7, #ec4899);
-  border-radius: 1px;
 }
 
 /* Content */

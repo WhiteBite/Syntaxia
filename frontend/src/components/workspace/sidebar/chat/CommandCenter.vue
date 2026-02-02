@@ -3,49 +3,49 @@
     <!-- Context Chips -->
     <Transition name="chips">
       <div v-if="hasAnySelection" class="context-chips">
-        <button class="chip chip--files" @click="toggleContextExpand">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-          </svg>
-          <span>{{ totalFileCount }} {{ t('context.filesShort') }}</span>
-        </button>
+        <BaseChip
+          variant="primary"
+          clickable
+          size="sm"
+          @click="toggleContextExpand"
+        >
+          <template #icon>
+            <Folder class="w-3.5 h-3.5" />
+          </template>
+          {{ totalFileCount }} {{ t('context.filesShort') }}
+        </BaseChip>
         
-        <div class="chip chip--tokens">
-          <span>{{ formattedTokens }} {{ t('context.tokens') }}</span>
-        </div>
+        <BaseChip variant="success" size="sm">
+          {{ formattedTokens }} {{ t('context.tokens') }}
+        </BaseChip>
 
-        <button 
+        <BaseButton
           v-if="hasContext" 
-          class="chip-clear chip-clear--context" 
+          variant="ghost"
+          size="xs"
           @click="clearContext"
           :title="t('context.clearTooltip')"
         >
-          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-              d="M9 12l6 6m0-6l-6 6" />
-          </svg>
+          <template #icon>
+            <X class="w-3 h-3" />
+          </template>
           {{ t('context.clear') }}
-        </button>
+        </BaseButton>
 
         <span v-if="hasContext && hasMessages" class="chip-divider">|</span>
 
-        <button 
+        <BaseButton
           v-if="hasMessages" 
-          class="chip-clear chip-clear--chat" 
+          variant="ghost"
+          size="xs"
           @click="confirmClearChat"
           :title="t('chat.clearTooltip')"
         >
-          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-              d="M9 9l6 6m0-6l-6 6" />
-          </svg>
+          <template #icon>
+            <MessageSquare class="w-3 h-3" />
+          </template>
           {{ t('chat.clear') }}
-        </button>
+        </BaseButton>
       </div>
     </Transition>
 
@@ -158,7 +158,8 @@ import { useI18n } from '@/composables/useI18n'
 import { useMentions } from '@/features/ai-chat/composables/useMentions'
 import { useContextStore } from '@/features/context'
 import { useFileStore } from '@/features/files'
-import { BaseSpinner } from '@/components/ui'
+import { BaseButton, BaseChip, BaseSpinner } from '@/components/ui'
+import { Folder, MessageSquare, X } from 'lucide-vue-next'
 import { computed, nextTick, ref, watch } from 'vue'
 
 const props = defineProps<{
@@ -353,69 +354,11 @@ watch(() => props.isThinking, (thinking) => {
   padding: 0 2px;
 }
 
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  font-size: 11px;
-  font-weight: 500;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.chip--files {
-  background: rgba(99, 102, 241, 0.1);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  color: #a5b4fc;
-}
-
-.chip--files:hover {
-  background: rgba(99, 102, 241, 0.2);
-  border-color: rgba(99, 102, 241, 0.4);
-}
-
-.chip--tokens {
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  color: #6ee7b7;
-}
-
-.chip-clear {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  font-size: 11px;
-  color: #6b7280;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.chip-clear--context {
-  margin-left: auto;
-}
-
-.chip-clear--context:hover {
-  color: #f87171;
-}
-
 .chip-divider {
   color: #4b5563;
   margin: 0 4px;
   font-size: 12px;
   user-select: none;
-}
-
-.chip-clear--chat {
-  color: #9ca3af;
-}
-
-.chip-clear--chat:hover {
-  color: #a78bfa;
 }
 
 /* Context List */

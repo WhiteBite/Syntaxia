@@ -28,35 +28,61 @@
 
 ## Задача 0.1: UI Kit - Новые компоненты (Фаза 2)
 
-**Статус:** ⏳ Ожидает  
+**Статус:** ✅ ЗАВЕРШЕНО  
 **Приоритет:** 🟡 Medium  
-**Оценка:** 35 часов
+**Оценка:** 35 часов  
+**Фактически:** ~3 часа  
+**Прогресс:** 3/3 компонентов (100%)
 
-### Компоненты для создания:
+### ✅ Выполнено:
 
-#### 1. BaseEmptyState (16ч)
-- [ ] Создать компонент (6ч)
-- [ ] Интегрировать в 15+ компонентов (10ч)
+#### 1. BaseEmptyState ✅
+- [x] Создать компонент с 3 размерами (sm/md/lg)
+- [x] Интегрировать в 6 компонентов (SymbolTree, SymbolBrowser, FileExplorer, ContextListEmpty, ChatPanel)
+- [x] 17 unit тестов (все проходят)
+- [x] Example файл с 10 примерами
 
-#### 2. BaseAlert (10ч)
-- [ ] Создать компонент (5ч)
-- [ ] Интегрировать в 7 компонентов (5ч)
+#### 2. BaseAlert ✅
+- [x] Создать компонент с 4 вариантами (info/success/warning/error)
+- [x] Интегрировать в 5 компонентов (PresetsPanel, ContextPanelContent, ChatPanel, QwenCliInfo)
+- [x] 27 unit тестов (все проходят)
+- [x] Example файл с примерами
 
-#### 3. BaseChip (9ч)
-- [ ] Создать компонент (4ч)
-- [ ] Интегрировать в 8 компонентов (5ч)
+#### 3. BaseChip ✅
+- [x] Создать компонент с 5 вариантами и 3 размерами
+- [x] Интегрировать в 3 компонента (CommandCenter, QuickLookModal, GitSourceTabs)
+- [x] Удален FilterChip.vue
+- [x] 41 unit тест (все проходят)
+- [x] Example файл с примерами
 
 ---
 
 ## Задача 0.2: UI Kit - Advanced компоненты (Фаза 3)
 
-**Статус:** ⏳ Ожидает  
+**Статус:** ✅ ЗАВЕРШЕНО  
 **Приоритет:** 🟢 Low  
-**Оценка:** 30 часов
+**Оценка:** 30 часов  
+**Фактически:** ~2 часа  
+**Прогресс:** 2/2 компонентов (100%)
 
-- [ ] BaseTabs (16ч)
-- [ ] BaseLoadingState (4ч)
-- [ ] BaseSkeleton (10ч)
+### ✅ Выполнено:
+
+#### 1. BaseTabs + BaseTab ✅
+- [x] Создать BaseTabs и BaseTab компоненты
+- [x] Keyboard navigation (Arrow keys, Home, End)
+- [x] Интегрировать в 4 компонента (GitLocalPanel, GitSourceTabs, IgnoreRulesModal, SettingsModal)
+- [x] 23 unit теста (все проходят)
+- [x] Example файл с 5 примерами
+
+#### 2. BaseSkeleton ✅
+- [x] Создать BaseSkeleton с 4 вариантами (text/circle/rect/card)
+- [x] Обновить SkeletonFileTree и SkeletonStats
+- [x] Интегрировать в 2 компонента (FileExplorer, FileTypeStats)
+- [x] 30 unit тестов (все проходят)
+- [x] Example файл с 9 примерами
+
+#### 3. BaseLoadingState
+- [x] Не требуется - используется BaseSpinner + BaseEmptyState
 
 ---
 

@@ -66,24 +66,30 @@
 
     <!-- Messages -->
     <div ref="messagesContainer" class="flex-1 overflow-auto p-4 space-y-4 min-h-0">
-      <div v-if="!chatStore.hasMessages" class="empty-state h-full">
-        <div class="empty-state-icon !w-20 !h-20 !rounded-2xl">
-          <svg class="!w-10 !h-10 text-purple-500/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-        </div>
-        <p class="empty-state-title !text-lg">{{ t('chat.emptyTitle') }}</p>
-        <p class="empty-state-text mb-4">{{ t('chat.emptyDesc') }}</p>
-        <div class="info-box text-left text-xs space-y-2">
-          <p class="font-semibold text-gray-300">{{ t('chat.plannedFeatures') }}</p>
-          <ul class="list-disc list-inside text-gray-400 space-y-1">
-            <li>{{ t('chat.feature.realtime') }}</li>
-            <li>{{ t('chat.feature.contextAware') }}</li>
-            <li>{{ t('chat.feature.codeGen') }}</li>
-            <li>{{ t('chat.feature.streaming') }}</li>
-            <li>{{ t('chat.feature.history') }}</li>
-          </ul>
-        </div>
+      <div v-if="!chatStore.hasMessages" class="h-full">
+        <BaseEmptyState
+          :title="t('chat.emptyTitle')"
+          :description="t('chat.emptyDesc')"
+          size="lg"
+        >
+          <template #icon>
+            <svg class="w-16 h-16 text-purple-500/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          </template>
+          <template #action>
+            <BaseAlert variant="info">
+              <template #title>{{ t('chat.plannedFeatures') }}</template>
+              <ul class="list-disc list-inside text-sm space-y-1">
+                <li>{{ t('chat.feature.realtime') }}</li>
+                <li>{{ t('chat.feature.contextAware') }}</li>
+                <li>{{ t('chat.feature.codeGen') }}</li>
+                <li>{{ t('chat.feature.streaming') }}</li>
+                <li>{{ t('chat.feature.history') }}</li>
+              </ul>
+            </BaseAlert>
+          </template>
+        </BaseEmptyState>
       </div>
 
       <MessageItem
@@ -168,7 +174,7 @@ import { useChatStore } from '../model/chat.store'
 import { useSandboxStore } from '@/stores/sandbox.store'
 import { useChatDragDrop } from '../composables/useChatDragDrop'
 import { useAutoSuggest } from '../composables/useAutoSuggest'
-import { BaseButton, BaseBadge } from '@/components/ui'
+import { BaseButton, BaseBadge, BaseEmptyState, BaseAlert } from '@/components/ui'
 import { MessageSquare, Trash2 } from 'lucide-vue-next'
 import MessageItem from './MessageItem.vue'
 

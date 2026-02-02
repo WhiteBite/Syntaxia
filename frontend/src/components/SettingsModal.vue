@@ -21,21 +21,16 @@
         </button>
       </div>
 
-          <!-- Tabs -->
-          <div class="settings-tabs">
-            <div class="settings-tabs-container">
-              <button
-                v-for="tab in tabs"
-                :key="tab.id"
-                @click="activeTab = tab.id"
-                class="settings-tab"
-                :class="{ 'settings-tab-active': activeTab === tab.id }"
-              >
-                <component :is="tab.icon" class="w-4 h-4" />
-                <span>{{ tab.label }}</span>
-              </button>
-            </div>
-          </div>
+      <!-- Tabs -->
+      <BaseTabs v-model="activeTab" class="px-4 py-2 bg-black/10 border-b border-white/6">
+        <BaseTab
+          v-for="tab in tabs"
+          :key="tab.id"
+          :name="tab.id"
+          :label="tab.label"
+          :icon="tab.icon"
+        />
+      </BaseTabs>
 
           <!-- Tab Content -->
           <div class="settings-content">
@@ -294,6 +289,7 @@ import BaseModal from '@/components/ui/BaseModal.vue'
 import AISettings from '@/components/workspace/sidebar/AISettings.vue'
 import ExportSettings from '@/components/workspace/sidebar/ExportSettings.vue'
 import ShellIntegrationSettings from '@/components/ShellIntegrationSettings.vue'
+import { BaseTabs, BaseTab } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
 import { useOnboarding } from '@/composables/useOnboarding'
 import { useSettingsStore } from '@/stores/settings.store'
@@ -408,51 +404,6 @@ function handleStartTour() {
 .settings-close-btn:hover {
   background: var(--bg-3);
   color: var(--text-primary);
-}
-
-.settings-tabs {
-  padding: 0.5rem 1rem;
-  background: var(--bg-0);
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.settings-tabs-container {
-  display: flex;
-  gap: 0.25rem;
-  padding: 0.1875rem;
-  background: var(--bg-1);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-subtle);
-}
-
-.settings-tab {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 200ms ease-out;
-  white-space: nowrap;
-}
-
-.settings-tab:hover:not(.settings-tab-active) {
-  color: var(--text-secondary);
-  background: var(--bg-2);
-}
-
-.settings-tab-active {
-  color: white;
-  background: var(--accent-indigo-bg);
-  border-color: var(--accent-indigo-border);
-  font-weight: 600;
 }
 
 .settings-content {

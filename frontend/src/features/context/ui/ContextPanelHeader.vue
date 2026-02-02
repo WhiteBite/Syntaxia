@@ -30,9 +30,9 @@
         class="hidden xl:flex items-center gap-1.5 flex-shrink-0 stats-chips-btn"
         :title="t('stats.clickToExpand')"
       >
-        <span class="chip-unified chip-unified-accent">{{ fileCount }} {{ t('context.files') }}</span>
-        <span class="chip-unified chip-unified-accent">{{ lineCount }} {{ t('context.lines') }}</span>
-        <span class="chip-unified chip-unified-accent">{{ tokenCount }} {{ t('context.tokens') }}</span>
+        <BaseChip variant="primary" size="xs">{{ fileCount }} {{ t('context.files') }}</BaseChip>
+        <BaseChip variant="primary" size="xs">{{ lineCount }} {{ t('context.lines') }}</BaseChip>
+        <BaseChip variant="primary" size="xs">{{ tokenCount }} {{ t('context.tokens') }}</BaseChip>
       </button>
 
       <!-- Format Selector Dropdown -->
@@ -45,6 +45,7 @@
 </template>
 
 <script setup lang="ts">
+import { BaseChip } from '@/components/ui'
 import FormatDropdown from '@/components/workspace/sidebar/export/FormatDropdown.vue'
 import { useI18n } from '@/composables/useI18n'
 import type { OutputFormat } from '@/stores/settings.store'
@@ -82,6 +83,10 @@ const { t } = useI18n()
 }
 
 .stats-chips-btn:hover .chip-unified {
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+.stats-chips-btn:hover :deep(.base-chip) {
   border-color: rgba(139, 92, 246, 0.4);
 }
 </style>

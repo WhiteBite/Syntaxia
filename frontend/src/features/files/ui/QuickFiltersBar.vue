@@ -140,21 +140,32 @@
     <!-- Active & Excluded Chips -->
     <div v-if="allActiveFilters.length > 0 || allExcludedFilters.length > 0" class="active-filters">
       <TransitionGroup name="chip">
-        <FilterChip
+        <BaseChip
           v-for="filter in allActiveFilters"
           :key="filter.id"
-          :label="filter.shortLabel || filter.label"
-          :icon="filter.icon"
-          :category="filter.category"
+          :variant="getCategoryVariant(filter.category)"
+          removable
+          size="sm"
           @remove="removeFilter(filter)"
-        />
-        <FilterChip
+        >
+          <template v-if="filter.icon" #icon>
+            <span>{{ filter.icon }}</span>
+          </template>
+          {{ filter.shortLabel || filter.label }}
+        </BaseChip>
+        <BaseChip
           v-for="filter in allExcludedFilters"
           :key="'ex-' + filter.id"
-          :label="filter.shortLabel || filter.label"
-          :excluded="true"
+          variant="danger"
+          removable
+          size="sm"
           @remove="removeFilter(filter)"
-        />
+        >
+          <template #icon>
+            <span>⊘</span>
+          </template>
+          <span class="line-through opacity-80">{{ filter.shortLabel || filter.label }}</span>
+        </BaseChip>
       </TransitionGroup>
     </div>
 
@@ -205,11 +216,10 @@
 
 <script setup lang="ts">
 import BaseDropdown from '@/components/ui/BaseDropdown.vue'
-import { BaseButton } from '@/components/ui'
+import { BaseButton, BaseChip } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
 import { h, ref } from 'vue'
 import { useQuickFilters } from '../composables/useQuickFilters'
-import FilterChip from './FilterChip.vue'
 import FilterDropdownItem from './FilterDropdownItem.vue'
 import FilterDropdownMenu from './FilterDropdownMenu.vue'
 import FilterSettingsModal from './FilterSettingsModal.vue'
@@ -251,6 +261,18 @@ function getFilterIcon(category: string) {
   return () => h('svg', { fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
     h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: iconPaths[category] || iconPaths.code })
   ])
+}
+
+// Map category to chip variant
+function getCategoryVariant(category?: string): 'default' | 'primary' | 'success' | 'warning' | 'danger' {
+  switch (category) {
+    case 'code': return 'primary'
+    case 'test': return 'success'
+    case 'config': return 'warning'
+    case 'docs': return 'primary'
+    case 'styles': return 'primary'
+    default: return 'default'
+  }
 }
 </script>
 

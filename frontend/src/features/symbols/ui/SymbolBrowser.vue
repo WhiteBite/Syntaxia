@@ -86,25 +86,37 @@
       </div>
 
       <!-- Error State -->
-      <div v-else-if="store.error" class="error-state">
-        <svg class="error-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-        <p class="error-text">{{ store.error }}</p>
-        <BaseButton variant="ghost" @click="handleRefresh">
-          {{ t('symbols.retry') }}
-        </BaseButton>
-      </div>
+      <BaseEmptyState
+        v-else-if="store.error"
+        :title="store.error"
+        size="md"
+      >
+        <template #icon>
+          <svg class="w-12 h-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </template>
+        <template #action>
+          <BaseButton variant="ghost" @click="handleRefresh">
+            {{ t('symbols.retry') }}
+          </BaseButton>
+        </template>
+      </BaseEmptyState>
 
       <!-- No Project State -->
-      <div v-else-if="!projectStore.hasProject" class="empty-state">
-        <svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
-            d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-        </svg>
-        <p class="empty-text">{{ t('symbols.selectProject') }}</p>
-      </div>
+      <BaseEmptyState
+        v-else-if="!projectStore.hasProject"
+        :title="t('symbols.selectProject')"
+        size="md"
+      >
+        <template #icon>
+          <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
+              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+          </svg>
+        </template>
+      </BaseEmptyState>
 
       <!-- Symbol Tree -->
       <SymbolTree
@@ -134,7 +146,7 @@
 
 <script setup lang="ts">
 import BaseButton from '@/components/ui/BaseButton.vue'
-import { BaseSpinner } from '@/components/ui'
+import { BaseSpinner, BaseEmptyState } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
 import { useProjectStore } from '@/stores/project.store'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -250,9 +262,7 @@ function handleSymbolClick(symbol: Symbol) {
   flex-direction: column;
 }
 
-.loading-state,
-.error-state,
-.empty-state {
+.loading-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -266,25 +276,6 @@ function handleSymbolClick(symbol: Symbol) {
   margin-top: 12px;
   font-size: 13px;
   color: #9ca3af;
-}
-
-.error-icon,
-.empty-icon {
-  width: 48px;
-  height: 48px;
-  color: #4b5563;
-  margin-bottom: 12px;
-}
-
-.error-icon {
-  color: #ef4444;
-}
-
-.error-text,
-.empty-text {
-  font-size: 13px;
-  color: #6b7280;
-  margin-bottom: 16px;
 }
 
 .panel-footer {

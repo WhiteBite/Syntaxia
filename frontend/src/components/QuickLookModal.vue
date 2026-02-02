@@ -11,7 +11,9 @@
         <span class="quicklook-filename">{{ fileName }}</span>
         <span class="quicklook-path">{{ filePath }}</span>
       </div>
-      <span v-if="fileSize" class="chip-unified chip-unified-accent ml-2">{{ formatSize(fileSize) }}</span>
+      <BaseChip v-if="fileSize" variant="primary" size="xs" class="ml-2">
+        {{ formatSize(fileSize) }}
+      </BaseChip>
     </template>
 
     <!-- Content -->
@@ -61,7 +63,7 @@
 
 <script setup lang="ts">
 import BaseModal from '@/components/ui/BaseModal.vue'
-import { BaseSpinner } from '@/components/ui'
+import { BaseChip, BaseSpinner } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
 import { apiService } from '@/services/api.service'
 import { useProjectStore } from '@/stores/project.store'

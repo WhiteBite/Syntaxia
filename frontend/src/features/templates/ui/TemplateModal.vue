@@ -97,11 +97,20 @@
 
                 <!-- Section Chips -->
                 <div class="tpl-chips">
-                  <button v-for="s in sectionsList" :key="s.key" @click="toggleSection(s.key)" class="tpl-chip"
-                    :class="{ active: editingTemplate.sections[s.key] }" :title="t(`templates.sectionHint.${s.key}`)">
-                    <Check v-if="editingTemplate.sections[s.key]" class="w-3 h-3" />
-                    <span>{{ t(`templates.section.${s.key}`) }}</span>
-                  </button>
+                  <BaseChip
+                    v-for="s in sectionsList" 
+                    :key="s.key" 
+                    :variant="editingTemplate.sections[s.key] ? 'primary' : 'default'"
+                    clickable
+                    size="xs"
+                    @click="toggleSection(s.key)"
+                    :title="t(`templates.sectionHint.${s.key}`)"
+                  >
+                    <template v-if="editingTemplate.sections[s.key]" #icon>
+                      <Check class="w-3 h-3" />
+                    </template>
+                    {{ t(`templates.section.${s.key}`) }}
+                  </BaseChip>
                 </div>
 
                 <!-- Cards Stack -->
@@ -331,7 +340,7 @@
 
 
 <script setup lang="ts">
-import { BaseButton, BaseTextarea } from '@/components/ui'
+import { BaseButton, BaseChip, BaseTextarea } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
 import { useContextStore } from '@/features/context'
 import { 
@@ -819,31 +828,6 @@ function handleImport() {
   background: rgba(255, 255, 255, 0.02);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   flex-wrap: wrap;
-}
-
-.tpl-chip {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.375rem 0.75rem;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: var(--radius-full);
-  color: var(--text-muted);
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.tpl-chip:hover { 
-  background: rgba(255, 255, 255, 0.04); 
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
-}
-.tpl-chip.active { 
-  background: var(--accent-indigo-bg); 
-  border-color: var(--accent-indigo-border); 
-  color: var(--accent-indigo); 
 }
 
 /* Cards Stack */

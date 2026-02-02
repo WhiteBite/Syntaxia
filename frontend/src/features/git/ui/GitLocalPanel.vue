@@ -27,14 +27,20 @@
 
       <!-- Branch/Commit Selection -->
       <div class="space-y-3">
-        <div class="flex border-b border-gray-700">
-          <button @click="refType = 'branches'" :class="['tab-btn text-sm', refType === 'branches' ? 'tab-btn-active' : 'tab-btn-inactive']">
-            {{ t('git.branches') }} ({{ branches.length }})
-          </button>
-          <button @click="switchToCommits" :class="['tab-btn text-sm', refType === 'commits' ? 'tab-btn-active' : 'tab-btn-inactive']">
-            {{ t('git.commits') }} {{ commitsLoaded ? `(${commits.length})` : '' }}
-          </button>
-          <BaseButton v-if="branches.length >= 2" @click="$emit('open-diff')" variant="ghost" size="xs" class="ml-auto">
+        <div class="flex items-center gap-2">
+          <BaseTabs v-model="refType" class="flex-1">
+            <BaseTab name="branches" :label="`${t('git.branches')} (${branches.length})`">
+              <template #label>
+                {{ t('git.branches') }} ({{ branches.length }})
+              </template>
+            </BaseTab>
+            <BaseTab name="commits" :label="t('git.commits')">
+              <template #label>
+                {{ t('git.commits') }} {{ commitsLoaded ? `(${commits.length})` : '' }}
+              </template>
+            </BaseTab>
+          </BaseTabs>
+          <BaseButton v-if="branches.length >= 2" @click="$emit('open-diff')" variant="ghost" size="xs">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
@@ -111,9 +117,9 @@
 import { useI18n } from '@/composables/useI18n'
 import { useLogger } from '@/composables/useLogger'
 import type { CommitInfo } from '@/services/api.service'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import GitFileList from './GitFileList.vue'
-import { BaseButton } from '@/components/ui'
+import { BaseButton, BaseTabs, BaseTab } from '@/components/ui'
 
 const logger = useLogger('GitLocalPanel')
 
@@ -143,10 +149,12 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const refType = ref<'branches' | 'commits'>('branches')
 
-function switchToCommits() {
-  refType.value = 'commits'
-  emit('load-commits')
-}
+// Watch for tab changes to load commits when needed
+watch(refType, (newType) => {
+  if (newType === 'commits') {
+    emit('load-commits')
+  }
+})
 
 function formatDate(dateStr: string): string {
   try {

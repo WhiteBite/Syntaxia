@@ -1,7 +1,13 @@
 <template>
   <div class="space-y-4">
+    <!-- Loading State -->
+    <div v-if="contextStore.isBuilding" class="context-stats">
+      <p class="text-xs font-semibold text-gray-400 mb-3">{{ t('stats.totalFiles') }}</p>
+      <SkeletonStats :cards="4" />
+    </div>
+
     <!-- Summary Stats -->
-    <div class="context-stats">
+    <div v-else-if="hasContext" class="context-stats">
       <p class="text-xs font-semibold text-gray-400 mb-3">{{ t('stats.totalFiles') }}</p>
       <div class="stats-grid list-stagger">
         <div class="stat-card-enhanced">
@@ -84,6 +90,7 @@ import { useContextStore } from '@/features/context'
 import { useFileStore } from '@/features/files'
 import { FILE_TYPE_CONFIG } from '@/utils/fileIcons'
 import { computed } from 'vue'
+import SkeletonStats from '@/components/SkeletonStats.vue'
 
 const { t } = useI18n()
 const contextStore = useContextStore()

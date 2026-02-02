@@ -35,14 +35,14 @@
           </div>
         </div>
 
-        <div class="info-box text-left">
-          <p class="text-sm font-medium text-gray-300 mb-2">{{ t('error.suggestions') }}:</p>
-          <ul class="text-sm text-gray-400 space-y-1.5">
+        <BaseAlert variant="warning">
+          <template #title>{{ t('error.suggestions') }}</template>
+          <ul class="text-sm space-y-1.5">
             <li>• {{ t('error.checkFiles') }}</li>
             <li>• {{ t('error.checkPaths') }}</li>
             <li>• {{ t('error.tryRefresh') }}</li>
           </ul>
-        </div>
+        </BaseAlert>
       </div>
     </div>
 
@@ -75,14 +75,14 @@
           <p class="text-xs text-gray-500 mt-1">{{ t('error.tokenLimitOverBy', { amount: formatTokens(tokenLimitError.actual - tokenLimitError.limit) }) }}</p>
         </div>
 
-        <div class="info-box text-left">
-          <p class="text-sm font-medium text-gray-300 mb-2">{{ t('error.tokenLimitSuggestions') }}:</p>
-          <ul class="text-sm text-gray-400 space-y-1.5">
+        <BaseAlert variant="error">
+          <template #title>{{ t('error.tokenLimitSuggestions') }}</template>
+          <ul class="text-sm space-y-1.5">
             <li>• {{ t('error.tokenLimitReduceFiles') }}</li>
             <li>• {{ t('error.tokenLimitIncreaseLimit') }}</li>
             <li>• {{ t('error.tokenLimitDisableLimit') }}</li>
           </ul>
-        </div>
+        </BaseAlert>
       </div>
     </div>
 
@@ -97,14 +97,14 @@
         </div>
         <p class="text-lg font-semibold text-red-400 mb-2">{{ error }}</p>
 
-        <div class="info-box text-left mt-4">
-          <p class="text-sm font-medium text-gray-300 mb-2">{{ t('error.suggestions') }}:</p>
-          <ul class="text-sm text-gray-400 space-y-1.5">
+        <BaseAlert variant="error">
+          <template #title>{{ t('error.suggestions') }}</template>
+          <ul class="text-sm space-y-1.5">
             <li>• {{ t('error.checkFiles') }}</li>
             <li>• {{ t('error.checkPaths') }}</li>
             <li>• {{ t('error.tryRefresh') }}</li>
           </ul>
-        </div>
+        </BaseAlert>
       </div>
     </div>
 
@@ -181,7 +181,7 @@
 import ExportModal from '@/components/ExportModal.vue'
 import { useI18n } from '@/composables/useI18n'
 import { TemplatePreviewBlock } from '@/features/templates'
-import { BaseSpinner } from '@/components/ui'
+import { BaseSpinner, BaseAlert } from '@/components/ui'
 import SkeletonLoader from './SkeletonLoader.vue'
 import VirtualCodeView from './VirtualCodeView.vue'
 import { ref, computed } from 'vue'

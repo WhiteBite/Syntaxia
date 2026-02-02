@@ -193,15 +193,22 @@
 
     <!-- File Tree - MAIN SCROLLABLE AREA -->
     <div class="file-explorer__tree" data-tour="file-tree">
-      <div v-if="fileStore.isLoading" class="flex items-center justify-center h-full">
-        <svg class="loading-spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-        </svg>
+      <div v-if="fileStore.isLoading" class="loading-state">
+        <SkeletonFileTree :rows="10" />
       </div>
 
-      <div v-else-if="fileStore.nodes.length === 0" class="empty-state h-full">
-        <p class="empty-state-text">{{ t('files.noFiles') }}</p>
+      <div v-else-if="fileStore.nodes.length === 0" class="h-full">
+        <BaseEmptyState
+          :title="t('files.noFiles')"
+          size="md"
+        >
+          <template #icon>
+            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
+                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+            </svg>
+          </template>
+        </BaseEmptyState>
       </div>
 
       <template v-else>
@@ -211,16 +218,23 @@
         </div>
 
         <!-- No Search Results -->
-        <div v-if="explorer.searchQuery.value && fileStore.searchResults.length === 0" class="empty-state h-full">
-          <div class="empty-state-content">
-            <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <p class="empty-state-text">{{ t('files.noSearchResults') }}</p>
-            <button class="empty-state-action" @click="explorer.searchQuery.value = ''">
-              {{ t('files.clearSearch') }}
-            </button>
-          </div>
+        <div v-if="explorer.searchQuery.value && fileStore.searchResults.length === 0" class="h-full">
+          <BaseEmptyState
+            :title="t('files.noSearchResults')"
+            :description="t('files.tryAdjustingFilters')"
+            size="md"
+          >
+            <template #icon>
+              <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </template>
+            <template #action>
+              <BaseButton variant="ghost" @click="explorer.searchQuery.value = ''">
+                {{ t('files.clearSearch') }}
+              </BaseButton>
+            </template>
+          </BaseEmptyState>
         </div>
 
         <!-- Virtualized File Tree -->
@@ -275,7 +289,7 @@ import { useContextStore } from '@/features/context'
 import { useProjectStore } from '@/stores/project.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useUIStore } from '@/stores/ui.store'
-import { BaseBadge, BaseButton, BaseCard, BaseSpinner } from '@/components/ui'
+import { BaseBadge, BaseButton, BaseCard, BaseSpinner, BaseEmptyState } from '@/components/ui'
 import { RefreshCw, Search as SearchIcon, X, Eye, CheckSquare, List } from 'lucide-vue-next'
 import { defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
 
@@ -291,6 +305,7 @@ import SettingsPopover from './SettingsPopover.vue'
 import VirtualFileTree from './VirtualFileTree.vue'
 import FavoritesPanel from './FavoritesPanel.vue'
 import PresetsPanel from './PresetsPanel.vue'
+import SkeletonFileTree from '@/components/SkeletonFileTree.vue'
 
 const QuickLookModal = defineAsyncComponent(() => import('@/components/QuickLookModal.vue'))
 const IgnoreRulesModal = defineAsyncComponent(() => import('./IgnoreRulesModal.vue'))
@@ -456,6 +471,11 @@ onUnmounted(() => {
   padding: 0.5rem;
   display: flex;
   flex-direction: column;
+}
+
+.file-explorer__tree .loading-state {
+  flex: 1;
+  overflow-y: auto;
 }
 
 .file-explorer__tree > :deep(.virtual-tree-wrapper) {

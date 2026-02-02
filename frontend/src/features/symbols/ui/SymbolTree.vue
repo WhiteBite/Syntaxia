@@ -1,13 +1,18 @@
 <template>
   <div class="symbol-tree">
     <!-- Empty State -->
-    <div v-if="groups.length === 0" class="empty-state">
-      <svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
-          d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-      </svg>
-      <p class="empty-text">{{ t('symbols.noSymbols') }}</p>
-    </div>
+    <BaseEmptyState
+      v-if="groups.length === 0"
+      :title="t('symbols.noSymbols')"
+      size="md"
+    >
+      <template #icon>
+        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
+            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+      </template>
+    </BaseEmptyState>
 
     <!-- File Groups -->
     <div v-else class="tree-content">
@@ -57,6 +62,7 @@
 
 <script setup lang="ts">
 import { useI18n } from '@/composables/useI18n'
+import { BaseEmptyState } from '@/components/ui'
 import type { Symbol, SymbolGroup } from '../types'
 import SymbolItem from './SymbolItem.vue'
 
@@ -90,28 +96,6 @@ function handleSymbolClick(symbol: Symbol) {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  padding: 32px;
-  text-align: center;
-}
-
-.empty-icon {
-  width: 48px;
-  height: 48px;
-  color: #4b5563;
-  margin-bottom: 12px;
-}
-
-.empty-text {
-  font-size: 13px;
-  color: #6b7280;
 }
 
 .tree-content {
