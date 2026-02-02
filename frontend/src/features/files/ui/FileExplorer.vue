@@ -100,7 +100,8 @@
             @click="explorer.handleRefresh"
             :title="t('files.refresh')"
           >
-            <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': fileStore.isLoading }" />
+            <BaseSpinner v-if="fileStore.isLoading" size="sm" />
+            <RefreshCw v-else class="w-4 h-4" />
           </BaseButton>
         </div>
 
@@ -270,7 +271,7 @@ import { useContextStore } from '@/features/context'
 import { useProjectStore } from '@/stores/project.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useUIStore } from '@/stores/ui.store'
-import { BaseBadge, BaseButton, BaseCard } from '@/components/ui'
+import { BaseBadge, BaseButton, BaseCard, BaseSpinner } from '@/components/ui'
 import { RefreshCw, Search as SearchIcon, X, Eye, CheckSquare, List } from 'lucide-vue-next'
 import { defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
 

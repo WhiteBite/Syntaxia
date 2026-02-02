@@ -33,7 +33,7 @@ describe('Size Guard - Heavy File Warnings', () => {
 
             await wrapper.vm.$nextTick()
 
-            expect(document.querySelector('.modal-backdrop')).toBeTruthy()
+            expect(document.querySelector('.base-modal-backdrop')).toBeTruthy()
             expect(document.querySelector('.modal-title')).toBeTruthy()
             expect(document.body.textContent).toContain('large-file.ts')
             expect(document.body.textContent).toContain('150k')
@@ -53,7 +53,7 @@ describe('Size Guard - Heavy File Warnings', () => {
 
             await wrapper.vm.$nextTick()
 
-            expect(document.querySelector('.modal-backdrop')).toBeFalsy()
+            expect(document.querySelector('.base-modal-backdrop')).toBeFalsy()
 
             wrapper.unmount()
         })

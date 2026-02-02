@@ -1,71 +1,72 @@
 <template>
-  <Teleport to="body">
-    <Transition name="modal">
-      <div v-if="isOpen" class="modal-backdrop" @click="handleBackdropClick">
-        <div class="modal-container" @click.stop>
-          <div class="modal-header">
-            <div class="modal-icon-warning">
-              <AlertTriangleIcon class="w-6 h-6" />
-            </div>
-            <h2 class="modal-title">{{ t('files.sizeGuard.title') }}</h2>
-          </div>
-
-          <div class="modal-content">
-            <div class="warning-message">
-              <p class="warning-text">
-                {{ t('files.sizeGuard.message') }}
-              </p>
-            </div>
-
-            <div class="file-info">
-              <div class="file-info-row">
-                <span class="file-info-label">{{ t('files.sizeGuard.fileName') }}:</span>
-                <span class="file-info-value file-name">{{ fileName }}</span>
-              </div>
-              <div class="file-info-row">
-                <span class="file-info-label">{{ t('files.sizeGuard.fileSize') }}:</span>
-                <span class="file-info-value file-size" :class="sizeClass">
-                  {{ formatTokens(tokens) }} {{ t('files.sizeGuard.tokens') }}
-                </span>
-              </div>
-              <div class="file-info-row">
-                <span class="file-info-label">{{ t('files.sizeGuard.contextUsage') }}:</span>
-                <span class="file-info-value" :class="sizeClass">
-                  {{ percentage }}% {{ t('files.sizeGuard.ofLimit') }}
-                </span>
-              </div>
-            </div>
-
-            <div class="warning-details">
-              <p class="warning-detail-text">
-                {{ t('files.sizeGuard.impact') }}
-              </p>
-            </div>
-
-            <div class="dont-show-again">
-              <label class="checkbox-label">
-                <input
-                  type="checkbox"
-                  v-model="dontShowAgain"
-                  class="checkbox-input"
-                />
-                <span class="checkbox-text">{{ t('files.sizeGuard.dontShowAgain') }}</span>
-              </label>
-            </div>
-          </div>
-
-          <div class="modal-footer">
-            <button class="btn btn-ghost" @click="handleCancel">
-              {{ t('files.sizeGuard.cancel') }}
-            </button>
-            <button class="btn btn-warning" @click="handleConfirm">
-              {{ t('files.sizeGuard.selectAnyway') }}
-            </button>
-          </div>
+  <BaseModal 
+    :model-value="isOpen"
+    @update:model-value="(value) => !value && handleCancel()"
+    :title="t('files.sizeGuard.title')"
+    size="md"
+    :close-on-backdrop="true"
+    :show-close="false"
+  >
+    <template #header>
+      <div class="modal-header-content">
+        <div class="modal-icon-warning">
+          <AlertTriangleIcon class="w-6 h-6" />
         </div>
+        <h2 class="modal-title">{{ t('files.sizeGuard.title') }}</h2>
       </div>
-    </Transition>
-  </Teleport>
+    </template>
+
+    <div class="warning-message">
+      <p class="warning-text">
+        {{ t('files.sizeGuard.message') }}
+      </p>
+    </div>
+
+    <div class="file-info">
+      <div class="file-info-row">
+        <span class="file-info-label">{{ t('files.sizeGuard.fileName') }}:</span>
+        <span class="file-info-value file-name">{{ fileName }}</span>
+      </div>
+      <div class="file-info-row">
+        <span class="file-info-label">{{ t('files.sizeGuard.fileSize') }}:</span>
+        <span class="file-info-value file-size" :class="sizeClass">
+          {{ formatTokens(tokens) }} {{ t('files.sizeGuard.tokens') }}
+        </span>
+      </div>
+      <div class="file-info-row">
+        <span class="file-info-label">{{ t('files.sizeGuard.contextUsage') }}:</span>
+        <span class="file-info-value" :class="sizeClass">
+          {{ percentage }}% {{ t('files.sizeGuard.ofLimit') }}
+        </span>
+      </div>
+    </div>
+
+    <div class="warning-details">
+      <p class="warning-detail-text">
+        {{ t('files.sizeGuard.impact') }}
+      </p>
+    </div>
+
+    <div class="dont-show-again">
+      <label class="checkbox-label">
+        <input
+          type="checkbox"
+          v-model="dontShowAgain"
+          class="checkbox-input"
+        />
+        <span class="checkbox-text">{{ t('files.sizeGuard.dontShowAgain') }}</span>
+      </label>
+    </div>
+
+    <template #footer>
+      <button class="btn btn-ghost" @click="handleCancel">
+        {{ t('files.sizeGuard.cancel') }}
+      </button>
+      <button class="btn btn-warning" @click="handleConfirm">
+        {{ t('files.sizeGuard.selectAnyway') }}
+      </button>
+    </template>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
@@ -73,6 +74,7 @@ import { ref, computed } from 'vue'
 import { useI18n } from '@/composables/useI18n'
 import { TOKEN_THRESHOLDS } from '@/config/constants'
 import { AlertTriangle as AlertTriangleIcon } from 'lucide-vue-next'
+import BaseModal from '@/components/ui/BaseModal.vue'
 
 const { t } = useI18n()
 
@@ -114,46 +116,14 @@ function handleConfirm() {
 function handleCancel() {
   emit('cancel')
 }
-
-function handleBackdropClick() {
-  handleCancel()
-}
 </script>
 
 <style scoped>
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  backdrop-filter: blur(2px);
-}
-
-.modal-container {
-  background: var(--bg-secondary);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  max-width: 500px;
-  width: 90%;
-  max-height: 90vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid var(--border-subtle);
-}
-
-.modal-header {
-  padding: var(--space-6);
-  border-bottom: 1px solid var(--border-subtle);
+.modal-header-content {
   display: flex;
   align-items: center;
   gap: var(--space-4);
+  width: 100%;
 }
 
 .modal-icon-warning {
@@ -175,13 +145,6 @@ function handleBackdropClick() {
   margin: 0;
 }
 
-.modal-content {
-  padding: var(--space-6);
-  overflow-y: auto;
-  flex: 1;
-  min-height: 0;
-}
-
 .warning-message {
   margin-bottom: var(--space-6);
 }
@@ -194,7 +157,7 @@ function handleBackdropClick() {
 }
 
 .file-info {
-  background: var(--bg-tertiary);
+  background: var(--bg-2);
   border-radius: var(--radius-md);
   padding: var(--space-4);
   margin-bottom: var(--space-6);
@@ -314,14 +277,6 @@ function handleBackdropClick() {
   color: var(--text-secondary);
 }
 
-.modal-footer {
-  padding: var(--space-6);
-  border-top: 1px solid var(--border-subtle);
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-3);
-}
-
 .btn-warning {
   background: #fb923c;
   color: white;
@@ -330,26 +285,5 @@ function handleBackdropClick() {
 
 .btn-warning:hover {
   background: #f97316;
-}
-
-/* Transitions */
-.modal-enter-active,
-.modal-leave-active {
-  transition: opacity 0.2s ease;
-}
-
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
-
-.modal-enter-active .modal-container,
-.modal-leave-active .modal-container {
-  transition: transform 0.2s ease;
-}
-
-.modal-enter-from .modal-container,
-.modal-leave-to .modal-container {
-  transform: scale(0.95);
 }
 </style>

@@ -1,66 +1,67 @@
 <template>
-  <Teleport to="body">
-    <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="$emit('close')"></div>
-      <div class="save-modal">
-        <!-- Gradient accent line -->
-        <div class="save-modal-accent"></div>
-        
-        <h3 class="save-modal-title">{{ t('context.saveContext') }}</h3>
-        
-        <form @submit.prevent="handleSubmit" class="save-modal-content">
-          <div class="save-modal-field">
-            <label class="save-modal-label">{{ t('context.topic') }}</label>
-            <input 
-              ref="topicInputRef"
-              v-model="localTopic" 
-              type="text" 
-              class="save-modal-input" 
-              :placeholder="t('context.topicPlaceholder')"
-              @keyup.enter="localTopic.trim() && handleSubmit()"
-            />
-          </div>
-          <div class="save-modal-field">
-            <label class="save-modal-label">{{ t('context.summary') }}</label>
-            <textarea 
-              v-model="localSummary" 
-              class="save-modal-textarea" 
-              :placeholder="t('context.summaryPlaceholder')" 
-            />
-          </div>
-        </form>
-        
-        <div class="save-modal-footer">
-          <!-- File count badge -->
-          <div class="save-modal-badge">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <span>{{ fileCount }} {{ t('context.filesShort') }}</span>
-          </div>
-          
-          <div class="save-modal-actions">
-            <button type="button" @click="$emit('close')" class="save-modal-cancel">
-              {{ t('context.cancel') }}
-            </button>
-            <button 
-              type="submit" 
-              @click="handleSubmit" 
-              class="save-modal-submit" 
-              :disabled="!localTopic.trim()"
-            >
-              {{ t('common.save') }}
-            </button>
-          </div>
-        </div>
+  <BaseModal
+    v-model="localShow"
+    size="sm"
+    :close-on-backdrop="true"
+    @close="emit('close')"
+  >
+    <!-- Gradient accent line -->
+    <div class="save-modal-accent"></div>
+    
+    <h3 class="save-modal-title">{{ t('context.saveContext') }}</h3>
+    
+    <form @submit.prevent="handleSubmit" class="save-modal-content">
+      <div class="save-modal-field">
+        <label class="save-modal-label">{{ t('context.topic') }}</label>
+        <input 
+          ref="topicInputRef"
+          v-model="localTopic" 
+          type="text" 
+          class="save-modal-input" 
+          :placeholder="t('context.topicPlaceholder')"
+          @keyup.enter="localTopic.trim() && handleSubmit()"
+        />
       </div>
-    </div>
-  </Teleport>
+      <div class="save-modal-field">
+        <label class="save-modal-label">{{ t('context.summary') }}</label>
+        <textarea 
+          v-model="localSummary" 
+          class="save-modal-textarea" 
+          :placeholder="t('context.summaryPlaceholder')" 
+        />
+      </div>
+    </form>
+    
+    <template #footer>
+      <!-- File count badge -->
+      <div class="save-modal-badge">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <span>{{ fileCount }} {{ t('context.filesShort') }}</span>
+      </div>
+      
+      <div class="save-modal-actions">
+        <button type="button" @click="emit('close')" class="save-modal-cancel">
+          {{ t('context.cancel') }}
+        </button>
+        <button 
+          type="submit" 
+          @click="handleSubmit" 
+          class="save-modal-submit" 
+          :disabled="!localTopic.trim()"
+        >
+          {{ t('common.save') }}
+        </button>
+      </div>
+    </template>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
+import BaseModal from '@/components/ui/BaseModal.vue'
 import { useI18n } from '@/composables/useI18n'
-import { nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 
 const { t } = useI18n()
 
@@ -73,6 +74,13 @@ const emit = defineEmits<{
   (e: 'close'): void
   (e: 'save', topic: string, summary: string): void
 }>()
+
+const localShow = computed({
+  get: () => props.show,
+  set: (value) => {
+    if (!value) emit('close')
+  }
+})
 
 const localTopic = ref('')
 const localSummary = ref('')
@@ -97,20 +105,6 @@ function handleSubmit() {
 
 <style scoped>
 /* Save Modal - Premium Design */
-.save-modal {
-  position: relative;
-  background: #1c1f2e;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  padding: 28px;
-  max-width: 440px;
-  width: 100%;
-  box-shadow: 
-    0 24px 48px rgba(0, 0, 0, 0.5),
-    0 0 80px rgba(139, 92, 246, 0.15);
-  overflow: hidden;
-}
-
 .save-modal-accent {
   position: absolute;
   top: 0;
@@ -118,6 +112,9 @@ function handleSubmit() {
   right: 0;
   height: 3px;
   background: linear-gradient(90deg, #8b5cf6 0%, #6366f1 50%, #3b82f6 100%);
+  margin: calc(var(--space-6) * -1);
+  margin-bottom: 0;
+  width: calc(100% + var(--space-6) * 2);
 }
 
 .save-modal-title {
@@ -131,6 +128,7 @@ function handleSubmit() {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  margin-top: 24px;
 }
 
 .save-modal-field {
@@ -196,9 +194,7 @@ function handleSubmit() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 28px;
-  padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  width: 100%;
 }
 
 .save-modal-badge {

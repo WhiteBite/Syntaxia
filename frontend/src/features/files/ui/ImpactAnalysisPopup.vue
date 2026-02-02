@@ -1,20 +1,13 @@
 <template>
-  <Teleport to="body">
-    <div v-if="visible" class="popup-overlay" @click.self="$emit('close')">
-      <div class="popup-content popup-impact">
-        <div class="popup-header">
-          <div>
-            <h3 class="popup-title">{{ t('context.impactTitle') }}</h3>
-            <p class="popup-subtitle">{{ t('context.impactSubtitle') }}</p>
-          </div>
-          <button class="popup-close" @click="$emit('close')">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+  <BaseModal :model-value="visible" @update:model-value="val => !val && $emit('close')">
+    <template #header>
+      <div>
+        <h3 class="popup-title">{{ t('context.impactTitle') }}</h3>
+        <p class="popup-subtitle">{{ t('context.impactSubtitle') }}</p>
+      </div>
+    </template>
 
-        <div class="popup-body">
+    <div class="popup-body">
           <!-- Risk Score -->
           <div v-if="impactResult" class="risk-section">
             <div class="risk-header">
@@ -76,12 +69,11 @@
             {{ t('context.noImpactFiles') }}
           </div>
         </div>
-      </div>
-    </div>
-  </Teleport>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
+import BaseModal from '@/components/ui/BaseModal.vue'
 import { useI18n } from '@/composables/useI18n'
 import type { ImpactResult } from '../composables/useAnalysisStatus'
 
@@ -101,38 +93,6 @@ const { t } = useI18n()
 </script>
 
 <style scoped>
-.popup-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  padding: 1rem;
-}
-
-.popup-content {
-  background: var(--bg-1);
-  border: 1px solid var(--border-default);
-  border-radius: 1rem;
-  width: 100%;
-  max-width: min(32rem, 90vw);
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-}
-
-.popup-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--border-default);
-}
-
 .popup-title {
   font-size: 1rem;
   font-weight: 600;
@@ -146,21 +106,7 @@ const { t } = useI18n()
   margin: 0.25rem 0 0;
 }
 
-.popup-close {
-  padding: 0.25rem;
-  border-radius: 0.375rem;
-  color: var(--text-muted);
-  transition: all 150ms;
-}
-
-.popup-close:hover {
-  background: var(--bg-2);
-  color: var(--text-primary);
-}
-
 .popup-body {
-  flex: 1;
-  min-height: 0;
   overflow-y: auto;
   padding: 0.75rem;
 }

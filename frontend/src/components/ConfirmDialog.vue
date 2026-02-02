@@ -1,59 +1,54 @@
 <template>
-  <Teleport to="body">
-    <Transition name="modal">
+  <BaseModal
+    v-model="isOpen"
+    size="sm"
+    :show-close="false"
+    :close-on-backdrop="false"
+    @keydown.enter="handleConfirm"
+  >
+    <!-- Icon -->
+    <div class="flex justify-center mb-4">
       <div 
-        v-if="isOpen" 
-        class="modal-container" 
-        @click.self="handleCancel"
-        @keydown.escape="handleCancel"
-        @keydown.enter="handleConfirm"
+        class="w-12 h-12 rounded-full flex items-center justify-center"
+        :class="iconBgClass"
       >
-        <div class="modal-content max-w-sm" role="alertdialog" aria-modal="true" :aria-labelledby="'confirm-title'">
-          <!-- Icon -->
-          <div class="flex justify-center mb-4">
-            <div 
-              class="w-12 h-12 rounded-full flex items-center justify-center"
-              :class="iconBgClass"
-            >
-              <AlertTriangle v-if="variant === 'warning' || variant === 'danger'" class="w-6 h-6" :class="iconClass" />
-              <Info v-else class="w-6 h-6" :class="iconClass" />
-            </div>
-          </div>
-
-          <!-- Title -->
-          <h3 id="confirm-title" class="text-lg font-semibold text-white text-center mb-2">
-            {{ options?.title }}
-          </h3>
-
-          <!-- Message -->
-          <p class="text-sm text-gray-400 text-center mb-6">
-            {{ options?.message }}
-          </p>
-
-          <!-- Actions -->
-          <div class="flex gap-3">
-            <button
-              ref="cancelBtnRef"
-              @click="handleCancel"
-              class="flex-1 btn-unified btn-unified-secondary"
-            >
-              {{ options?.cancelText || t('common.cancel') }}
-            </button>
-            <button
-              @click="handleConfirm"
-              class="flex-1 btn-unified"
-              :class="confirmBtnClass"
-            >
-              {{ options?.confirmText || t('common.confirm') }}
-            </button>
-          </div>
-        </div>
+        <AlertTriangle v-if="variant === 'warning' || variant === 'danger'" class="w-6 h-6" :class="iconClass" />
+        <Info v-else class="w-6 h-6" :class="iconClass" />
       </div>
-    </Transition>
-  </Teleport>
+    </div>
+
+    <!-- Title -->
+    <h3 class="text-lg font-semibold text-white text-center mb-2">
+      {{ options?.title }}
+    </h3>
+
+    <!-- Message -->
+    <p class="text-sm text-gray-400 text-center mb-6">
+      {{ options?.message }}
+    </p>
+
+    <!-- Actions -->
+    <template #footer>
+      <button
+        ref="cancelBtnRef"
+        @click="handleCancel"
+        class="flex-1 btn-unified btn-unified-secondary"
+      >
+        {{ options?.cancelText || t('common.cancel') }}
+      </button>
+      <button
+        @click="handleConfirm"
+        class="flex-1 btn-unified"
+        :class="confirmBtnClass"
+      >
+        {{ options?.confirmText || t('common.confirm') }}
+      </button>
+    </template>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
+import BaseModal from '@/components/ui/BaseModal.vue'
 import { useConfirm } from '@/composables/useConfirm'
 import { useI18n } from '@/composables/useI18n'
 import { AlertTriangle, Info } from 'lucide-vue-next'

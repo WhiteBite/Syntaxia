@@ -17,7 +17,7 @@
             :disabled="isLoading"
             class="btn-unified btn-unified-primary text-sm"
           >
-            <Loader2 v-if="isLoading" class="w-4 h-4 animate-spin" />
+            <BaseSpinner v-if="isLoading" size="sm" />
             <Plus v-else class="w-4 h-4" />
             {{ t('settings.shellIntegration.enable') }}
           </button>
@@ -28,7 +28,7 @@
             :disabled="isLoading"
             class="btn-unified btn-unified-secondary text-sm"
           >
-            <Loader2 v-if="isLoading" class="w-4 h-4 animate-spin" />
+            <BaseSpinner v-if="isLoading" size="sm" />
             <Trash2 v-else class="w-4 h-4" />
             {{ t('settings.shellIntegration.disable') }}
           </button>
@@ -50,10 +50,11 @@
 </template>
 
 <script setup lang="ts">
+import BaseSpinner from '@/components/ui/BaseSpinner.vue'
 import { useI18n } from '@/composables/useI18n'
 import { shellApi } from '@/services/api/shell.api'
 import { useUIStore } from '@/stores/ui.store'
-import { Loader2, Monitor, Plus, Trash2 } from 'lucide-vue-next'
+import { Monitor, Plus, Trash2 } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
 
 const { t } = useI18n()

@@ -1,89 +1,91 @@
 <template>
-  <Teleport to="body">
-    <Transition name="dropdown">
-      <div
-        v-if="isOpen"
-        ref="dropdownRef"
-        class="mention-dropdown"
-        :style="dropdownStyle"
-        role="listbox"
-        :aria-label="t('mentions.title')"
-        @keydown="handleKeydown"
-      >
-        <!-- Header with categories -->
-        <div class="mention-dropdown-header">
-          <span class="mention-dropdown-title">{{ t('mentions.title') }}</span>
-          <div class="mention-categories">
-            <button
-              v-for="category in categories"
-              :key="category.id"
-              class="category-btn"
-              :class="{ active: activeCategory === category.id }"
-              :title="category.label"
-              @click="setCategory(category.id)"
-            >
-              <span :class="category.icon" />
-            </button>
-          </div>
-        </div>
+  <BaseDropdown
+    :model-value="isOpen"
+    placement="bottom-start"
+    :close-on-click="false"
+    @update:model-value="handleOpenChange"
+  >
+    <template #trigger>
+      <!-- No visible trigger - controlled externally -->
+      <span></span>
+    </template>
 
-        <!-- Loading state -->
-        <div v-if="isLoading" class="mention-loading">
-          <span class="i-lucide-loader-2 animate-spin" />
-          <span>{{ t('common.loading') }}</span>
-        </div>
-
-        <!-- Suggestions list -->
-        <div v-else-if="filteredSuggestions.length > 0" class="mention-suggestions">
+    <div class="mention-dropdown-content">
+      <!-- Header with categories -->
+      <div class="mention-dropdown-header">
+        <span class="mention-dropdown-title">{{ t('mentions.title') }}</span>
+        <div class="mention-categories">
           <button
-            v-for="(suggestion, index) in filteredSuggestions"
-            :key="`${suggestion.type}-${suggestion.value}`"
-            class="mention-item"
-            :class="{ selected: index === selectedIndex }"
-            role="option"
-            :aria-selected="index === selectedIndex"
-            @click="selectSuggestion(suggestion)"
-            @mouseenter="selectedIndex = index"
+            v-for="category in categories"
+            :key="category.id"
+            class="category-btn"
+            :class="{ active: activeCategory === category.id }"
+            :title="category.label"
+            @click="setCategory(category.id)"
           >
-            <span class="mention-icon" :class="suggestion.icon" />
-            <div class="mention-content">
-              <span class="mention-display">{{ suggestion.display }}</span>
-              <span v-if="suggestion.description" class="mention-description">
-                {{ suggestion.description }}
-              </span>
-            </div>
-            <span class="mention-type-badge" :class="`type-${suggestion.type}`">
-              {{ suggestion.type }}
-            </span>
+            <span :class="category.icon" />
           </button>
         </div>
-
-        <!-- Empty state -->
-        <div v-else class="mention-empty">
-          <span class="i-lucide-search" />
-          <span>{{ t('mentions.noResults') }}</span>
-        </div>
-
-        <!-- Footer with hints -->
-        <div class="mention-dropdown-footer">
-          <span class="hint">
-            <kbd>↑↓</kbd> {{ t('mentions.navigate') }}
-          </span>
-          <span class="hint">
-            <kbd>Enter</kbd> {{ t('mentions.select') }}
-          </span>
-          <span class="hint">
-            <kbd>Esc</kbd> {{ t('mentions.close') }}
-          </span>
-        </div>
       </div>
-    </Transition>
-  </Teleport>
+
+      <!-- Loading state -->
+      <div v-if="isLoading" class="mention-loading">
+        <BaseSpinner size="sm" />
+        <span>{{ t('common.loading') }}</span>
+      </div>
+
+      <!-- Suggestions list -->
+      <div v-else-if="filteredSuggestions.length > 0" class="mention-suggestions">
+        <button
+          v-for="(suggestion, index) in filteredSuggestions"
+          :key="`${suggestion.type}-${suggestion.value}`"
+          class="mention-item"
+          :class="{ selected: index === selectedIndex }"
+          role="option"
+          :aria-selected="index === selectedIndex"
+          @click="selectSuggestion(suggestion)"
+          @mouseenter="selectedIndex = index"
+        >
+          <span class="mention-icon" :class="suggestion.icon" />
+          <div class="mention-content">
+            <span class="mention-display">{{ suggestion.display }}</span>
+            <span v-if="suggestion.description" class="mention-description">
+              {{ suggestion.description }}
+            </span>
+          </div>
+          <span class="mention-type-badge" :class="`type-${suggestion.type}`">
+            {{ suggestion.type }}
+          </span>
+        </button>
+      </div>
+
+      <!-- Empty state -->
+      <div v-else class="mention-empty">
+        <span class="i-lucide-search" />
+        <span>{{ t('mentions.noResults') }}</span>
+      </div>
+
+      <!-- Footer with hints -->
+      <div class="mention-dropdown-footer">
+        <span class="hint">
+          <kbd>↑↓</kbd> {{ t('mentions.navigate') }}
+        </span>
+        <span class="hint">
+          <kbd>Enter</kbd> {{ t('mentions.select') }}
+        </span>
+        <span class="hint">
+          <kbd>Esc</kbd> {{ t('mentions.close') }}
+        </span>
+      </div>
+    </div>
+  </BaseDropdown>
 </template>
 
 <script setup lang="ts">
+import BaseDropdown from '@/components/ui/BaseDropdown.vue'
+import BaseSpinner from '@/components/ui/BaseSpinner.vue'
 import { useI18n } from '@/composables/useI18n'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { MentionCategory, MentionSuggestion, MentionType } from '../types/mentions'
 
 const props = defineProps<{
@@ -104,21 +106,12 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const dropdownRef = ref<HTMLElement | null>(null)
 const selectedIndex = ref(props.selectedIndex)
 
 // Sync selectedIndex with prop
 watch(() => props.selectedIndex, (val) => {
   selectedIndex.value = val
 })
-
-/** Computed dropdown style */
-const dropdownStyle = computed(() => ({
-  position: 'fixed' as const,
-  top: `${props.position.top}px`,
-  left: `${props.position.left}px`,
-  zIndex: '1200',
-}))
 
 /** Filter suggestions by active category */
 const filteredSuggestions = computed(() => {
@@ -138,55 +131,16 @@ function setCategory(category: MentionType | 'all') {
   emit('categoryChange', category)
 }
 
-/** Handle keyboard navigation */
-function handleKeydown(e: KeyboardEvent) {
-  switch (e.key) {
-    case 'ArrowDown':
-      e.preventDefault()
-      emit('navigate', 'down')
-      break
-    case 'ArrowUp':
-      e.preventDefault()
-      emit('navigate', 'up')
-      break
-    case 'Enter':
-      e.preventDefault()
-      if (filteredSuggestions.value[selectedIndex.value]) {
-        selectSuggestion(filteredSuggestions.value[selectedIndex.value])
-      }
-      break
-    case 'Escape':
-      e.preventDefault()
-      emit('close')
-      break
-    case 'Tab':
-      emit('close')
-      break
-  }
-}
-
-/** Handle click outside */
-function handleClickOutside(e: MouseEvent) {
-  if (dropdownRef.value && !dropdownRef.value.contains(e.target as Node)) {
+/** Handle open state change */
+function handleOpenChange(open: boolean) {
+  if (!open) {
     emit('close')
   }
 }
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
 </script>
 
 <style scoped>
-.mention-dropdown {
-  @apply rounded-xl overflow-hidden;
-  background: var(--bg-1);
-  border: 1px solid var(--border-default);
-  box-shadow: var(--shadow-xl);
+.mention-dropdown-content {
   min-width: min(320px, 80vw);
   max-width: min(400px, 90vw);
   max-height: min(400px, 50vh);
@@ -322,17 +276,5 @@ onUnmounted(() => {
   @apply px-1 py-0.5 rounded text-[9px] font-mono;
   background: var(--bg-3);
   border: 1px solid var(--border-default);
-}
-
-/* Transitions */
-.dropdown-enter-active,
-.dropdown-leave-active {
-  transition: all 150ms ease-out;
-}
-
-.dropdown-enter-from,
-.dropdown-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
 }
 </style>

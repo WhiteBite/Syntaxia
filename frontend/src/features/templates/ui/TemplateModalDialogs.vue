@@ -7,12 +7,20 @@
         <h3>{{ t('templates.deleteConfirm') }}</h3>
         <p>{{ t('templates.deleteConfirmText') }}</p>
         <div class="tpl-dialog-btns">
-          <button @click="$emit('cancel-delete')" class="tpl-cancel-btn">
+          <BaseButton 
+            variant="secondary" 
+            size="sm"
+            @click="$emit('cancel-delete')"
+          >
             {{ t('common.cancel') }}
-          </button>
-          <button @click="$emit('confirm-delete')" class="tpl-danger-btn">
+          </BaseButton>
+          <BaseButton 
+            variant="danger" 
+            size="sm"
+            @click="$emit('confirm-delete')"
+          >
             {{ t('templates.delete') }}
-          </button>
+          </BaseButton>
         </div>
       </div>
     </div>
@@ -26,12 +34,20 @@
         <h3>{{ t('templates.unsavedChanges') }}</h3>
         <p>{{ t('templates.unsavedChangesText') }}</p>
         <div class="tpl-dialog-btns">
-          <button @click="$emit('discard')" class="tpl-cancel-btn">
+          <BaseButton 
+            variant="secondary" 
+            size="sm"
+            @click="$emit('discard')"
+          >
             {{ t('templates.discard') }}
-          </button>
-          <button @click="$emit('save-and-close')" class="tpl-save-btn">
+          </BaseButton>
+          <BaseButton 
+            variant="primary" 
+            size="sm"
+            @click="$emit('save-and-close')"
+          >
             {{ t('common.save') }}
-          </button>
+          </BaseButton>
         </div>
       </div>
     </div>
@@ -39,6 +55,7 @@
 </template>
 
 <script setup lang="ts">
+import BaseButton from '@/components/ui/BaseButton.vue'
 import { useI18n } from '@/composables/useI18n'
 import { AlertTriangle, Trash2 } from 'lucide-vue-next'
 
@@ -103,58 +120,6 @@ defineEmits<{
   display: flex;
   gap: 0.5rem;
   margin-top: 0.5rem;
-}
-
-.tpl-cancel-btn {
-  padding: 0.5rem 0.75rem;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: var(--radius-md);
-  color: var(--text-muted);
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.tpl-cancel-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-primary);
-}
-
-.tpl-danger-btn {
-  padding: 0.5rem 0.875rem;
-  background: var(--color-danger-soft);
-  border: 1px solid var(--color-danger-border);
-  border-radius: var(--radius-md);
-  color: var(--color-danger);
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.tpl-danger-btn:hover {
-  background: rgba(248, 113, 113, 0.25);
-}
-
-.tpl-save-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.875rem;
-  background: var(--accent-indigo);
-  border: none;
-  border-radius: var(--radius-md);
-  color: white;
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.tpl-save-btn:hover:not(:disabled) { 
-  background: #818cf8;
-  transform: translateY(-1px);
 }
 
 /* Fade Transition */

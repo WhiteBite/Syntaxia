@@ -4,23 +4,31 @@
     <div class="template-header">
       <TemplateSelector class="flex-1" />
       <div class="template-quick-actions">
-        <button
+        <BaseButton
           v-for="tpl in quickTemplates"
           :key="tpl.id"
+          variant="ghost"
+          size="sm"
+          icon-only
           @click="templateStore.setActiveTemplate(tpl.id)"
-          class="quick-template-btn"
-          :class="{ active: tpl.id === templateStore.activeTemplateId }"
+          :class="{ 'quick-template-active': tpl.id === templateStore.activeTemplateId }"
           :title="tpl.name"
         >
-          {{ tpl.icon }}
-        </button>
-        <button
+          <template #icon>
+            <span class="quick-template-icon">{{ tpl.icon }}</span>
+          </template>
+        </BaseButton>
+        <BaseButton
+          variant="ghost"
+          size="sm"
+          icon-only
           @click="templateStore.openModal()"
-          class="template-settings-btn"
           :title="t('templates.settings')"
         >
-          <Settings class="w-4 h-4" />
-        </button>
+          <template #icon>
+            <Settings class="w-4 h-4" />
+          </template>
+        </BaseButton>
       </div>
     </div>
 
@@ -29,9 +37,13 @@
       <div v-if="suggestedTemplate && suggestedTemplate !== templateStore.activeTemplateId" class="template-suggestion">
         <Lightbulb class="w-3.5 h-3.5" />
         <span>{{ t('templates.suggestion') }}</span>
-        <button @click="applySuggestion" class="suggestion-btn">
+        <BaseButton
+          variant="primary"
+          size="sm"
+          @click="applySuggestion"
+        >
           {{ suggestedTemplateName }}
-        </button>
+        </BaseButton>
       </div>
     </Transition>
 
@@ -43,23 +55,31 @@
           {{ t('templates.task') }}
         </label>
         <div class="task-actions">
-          <button 
-            v-if="task" 
-            @click="clearTask" 
-            class="task-action-btn" 
+          <BaseButton
+            v-if="task"
+            variant="ghost"
+            size="sm"
+            icon-only
+            @click="clearTask"
             :title="t('templates.clearTask')"
           >
-            <X class="w-3.5 h-3.5" />
-          </button>
-          <button 
-            v-if="templateStore.taskHistory.length > 0" 
-            @click="showHistory = !showHistory" 
-            class="task-action-btn" 
-            :class="{ active: showHistory }"
+            <template #icon>
+              <X class="w-3.5 h-3.5" />
+            </template>
+          </BaseButton>
+          <BaseButton
+            v-if="templateStore.taskHistory.length > 0"
+            variant="ghost"
+            size="sm"
+            icon-only
+            @click="showHistory = !showHistory"
+            :class="{ 'task-action-active': showHistory }"
             :title="t('templates.history')"
           >
-            <History class="w-3.5 h-3.5" />
-          </button>
+            <template #icon>
+              <History class="w-3.5 h-3.5" />
+            </template>
+          </BaseButton>
         </div>
       </div>
       
@@ -78,9 +98,18 @@
         <div v-if="showHistory" class="task-history">
           <div class="history-header">
             <span>{{ t('templates.recentTasks') }}</span>
-            <button @click="templateStore.clearTaskHistory()" class="clear-history-btn" :title="t('templates.clearHistory')">
-              <Trash2 class="w-3 h-3" />
-            </button>
+            <BaseButton
+              variant="ghost"
+              size="sm"
+              icon-only
+              @click="templateStore.clearTaskHistory()"
+              :title="t('templates.clearHistory')"
+              class="clear-history-btn"
+            >
+              <template #icon>
+                <Trash2 class="w-3 h-3" />
+              </template>
+            </BaseButton>
           </div>
           <button
             v-for="item in templateStore.taskHistory"
@@ -117,6 +146,7 @@
 </template>
 
 <script setup lang="ts">
+import BaseButton from '@/components/ui/BaseButton.vue'
 import { useI18n } from '@/composables/useI18n'
 import { ChevronRight, FileText, History, Lightbulb, Settings, Trash2, X } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
@@ -220,50 +250,13 @@ watch(showHistory, (v) => {
   gap: 0.25rem;
 }
 
-.quick-template-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  background: var(--bg-2);
-  border: 1px solid transparent;
-  border-radius: 0.375rem;
+.quick-template-icon {
   font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.15s;
-  opacity: 0.6;
 }
 
-.quick-template-btn:hover {
-  opacity: 1;
-  background: var(--bg-3);
-}
-
-.quick-template-btn.active {
-  opacity: 1;
-  border-color: var(--color-primary);
-  background: var(--bg-accent-subtle);
-}
-
-.template-settings-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  background: var(--bg-2);
-  border: 1px solid var(--border-default);
-  border-radius: 0.375rem;
-  color: var(--text-2);
-  cursor: pointer;
-  transition: all 0.15s;
-  flex-shrink: 0;
-}
-
-.template-settings-btn:hover {
-  background: var(--bg-3);
-  color: var(--text-1);
+.quick-template-active {
+  border-color: var(--color-primary) !important;
+  background: var(--bg-accent-subtle) !important;
 }
 
 /* Suggestion */
@@ -276,21 +269,6 @@ watch(showHistory, (v) => {
   border-radius: 0.375rem;
   font-size: 0.6875rem;
   color: var(--text-2);
-}
-
-.suggestion-btn {
-  padding: 0.125rem 0.375rem;
-  background: var(--color-primary);
-  border: none;
-  border-radius: 0.25rem;
-  color: white;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.suggestion-btn:hover {
-  opacity: 0.9;
 }
 
 /* Task */
@@ -322,28 +300,9 @@ watch(showHistory, (v) => {
   gap: 0.125rem;
 }
 
-.task-action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  background: transparent;
-  border: none;
-  border-radius: 0.25rem;
-  color: var(--text-3);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.task-action-btn:hover {
-  background: var(--bg-3);
-  color: var(--text-1);
-}
-
-.task-action-btn.active {
-  background: var(--bg-accent-subtle);
-  color: var(--color-primary);
+.task-action-active {
+  background: var(--bg-accent-subtle) !important;
+  color: var(--color-primary) !important;
 }
 
 .task-input-wrapper {
@@ -409,21 +368,9 @@ watch(showHistory, (v) => {
   color: var(--text-3);
 }
 
-.clear-history-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.25rem;
-  background: transparent;
-  border: none;
-  border-radius: 0.25rem;
-  color: var(--text-3);
-  cursor: pointer;
-}
-
 .clear-history-btn:hover {
-  background: var(--color-danger-soft);
-  color: var(--color-danger);
+  background: var(--color-danger-soft) !important;
+  color: var(--color-danger) !important;
 }
 
 .history-item {

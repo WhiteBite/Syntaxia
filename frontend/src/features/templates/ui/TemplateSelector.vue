@@ -1,14 +1,18 @@
 <template>
   <div class="relative" ref="dropdownRef">
-    <button
+    <BaseButton
+      variant="secondary"
+      size="sm"
       @click="isOpen = !isOpen"
-      class="template-selector-btn"
       :title="t('templates.selectTemplate')"
+      class="template-selector-btn"
     >
-      <span class="template-icon">{{ activeTemplate?.icon || '📝' }}</span>
+      <template #icon>
+        <span class="template-icon">{{ activeTemplate?.icon || '📝' }}</span>
+      </template>
       <span class="template-name">{{ activeTemplate?.name || t('templates.select') }}</span>
       <ChevronDown class="w-3.5 h-3.5 text-gray-400 transition-transform" :class="{ 'rotate-180': isOpen }" />
-    </button>
+    </BaseButton>
 
     <Transition name="dropdown">
       <div v-if="isOpen" class="template-dropdown">
@@ -53,6 +57,7 @@
 </template>
 
 <script setup lang="ts">
+import BaseButton from '@/components/ui/BaseButton.vue'
 import { useI18n } from '@/composables/useI18n'
 import { onClickOutside } from '@vueuse/core'
 import { ChevronDown } from 'lucide-vue-next'
@@ -79,23 +84,8 @@ function selectTemplate(id: string) {
 
 <style scoped>
 .template-selector-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.375rem 0.625rem;
-  background: var(--bg-2);
-  border: 1px solid var(--border-default);
-  border-radius: 0.375rem;
-  color: var(--text-1);
-  font-size: 0.8125rem;
-  cursor: pointer;
-  transition: all 0.15s;
   width: 100%;
-}
-
-.template-selector-btn:hover {
-  background: var(--bg-3);
-  border-color: var(--border-hover);
+  justify-content: flex-start;
 }
 
 .template-icon {

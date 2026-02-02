@@ -1,60 +1,62 @@
 <template>
-  <Teleport to="body">
-    <Transition name="modal-fade">
-      <div v-if="fileStore.isQuickOpenModalVisible" class="quick-open-overlay" @click="handleClose" @keydown.esc="handleClose">
-        <div class="quick-open-modal" @click.stop>
-          <input
-            ref="inputRef"
-            v-model="query"
-            class="quick-open-input"
-            :placeholder="t('files.quickOpen.placeholder')"
-            @keydown="handleKeydown"
-            autofocus
-          />
-          <div v-if="results.length > 0" class="quick-open-results">
-            <div
-              v-for="(file, idx) in results"
-              :key="file.path"
-              :class="['quick-open-item', { 'quick-open-item--active': idx === activeIndex }]"
-              @click="selectFile(file)"
-              @mouseenter="activeIndex = idx"
-            >
-              <span class="quick-open-icon">{{ getFileIcon(file.name) }}</span>
-              <div class="quick-open-content">
-                <span class="quick-open-name">
-                  <template v-if="highlightedNames[idx] && highlightedNames[idx].length > 1">
-                    <template v-for="(segment, segIdx) in highlightedNames[idx]" :key="segIdx">
-                      <mark v-if="segment.isMatch" class="quick-open-highlight">{{ segment.text }}</mark>
-                      <span v-else>{{ segment.text }}</span>
-                    </template>
-                  </template>
-                  <template v-else>
-                    {{ file.name }}
-                  </template>
-                </span>
-                <span class="quick-open-path">{{ getRelativePath(file.path) }}</span>
-              </div>
-              <span v-if="isSelected(file.path)" class="quick-open-badge">✓</span>
-            </div>
+  <BaseModal
+    v-model="isOpen"
+    size="lg"
+    :show-close="false"
+    @close="handleClose"
+  >
+    <div class="quick-open-container">
+      <input
+        ref="inputRef"
+        v-model="query"
+        class="quick-open-input"
+        :placeholder="t('files.quickOpen.placeholder')"
+        @keydown="handleKeydown"
+        autofocus
+      />
+      <div v-if="results.length > 0" class="quick-open-results">
+        <div
+          v-for="(file, idx) in results"
+          :key="file.path"
+          :class="['quick-open-item', { 'quick-open-item--active': idx === activeIndex }]"
+          @click="selectFile(file)"
+          @mouseenter="activeIndex = idx"
+        >
+          <span class="quick-open-icon">{{ getFileIcon(file.name) }}</span>
+          <div class="quick-open-content">
+            <span class="quick-open-name">
+              <template v-if="highlightedNames[idx] && highlightedNames[idx].length > 1">
+                <template v-for="(segment, segIdx) in highlightedNames[idx]" :key="segIdx">
+                  <mark v-if="segment.isMatch" class="quick-open-highlight">{{ segment.text }}</mark>
+                  <span v-else>{{ segment.text }}</span>
+                </template>
+              </template>
+              <template v-else>
+                {{ file.name }}
+              </template>
+            </span>
+            <span class="quick-open-path">{{ getRelativePath(file.path) }}</span>
           </div>
-          <div v-else-if="query" class="quick-open-empty">
-            <span class="quick-open-empty-text">{{ t('files.quickOpen.noResults') }}</span>
-          </div>
-          <div v-else class="quick-open-hint">
-            <span class="quick-open-hint-text">{{ t('files.quickOpen.hint') }}</span>
-          </div>
-          <div class="quick-open-footer">
-            <span class="quick-open-shortcut">↑↓ {{ t('files.quickOpen.navigate') }}</span>
-            <span class="quick-open-shortcut">Enter {{ t('files.quickOpen.select') }}</span>
-            <span class="quick-open-shortcut">Esc {{ t('files.quickOpen.close') }}</span>
-          </div>
+          <span v-if="isSelected(file.path)" class="quick-open-badge">✓</span>
         </div>
       </div>
-    </Transition>
-  </Teleport>
+      <div v-else-if="query" class="quick-open-empty">
+        <span class="quick-open-empty-text">{{ t('files.quickOpen.noResults') }}</span>
+      </div>
+      <div v-else class="quick-open-hint">
+        <span class="quick-open-hint-text">{{ t('files.quickOpen.hint') }}</span>
+      </div>
+      <div class="quick-open-footer">
+        <span class="quick-open-shortcut">↑↓ {{ t('files.quickOpen.navigate') }}</span>
+        <span class="quick-open-shortcut">Enter {{ t('files.quickOpen.select') }}</span>
+        <span class="quick-open-shortcut">Esc {{ t('files.quickOpen.close') }}</span>
+      </div>
+    </div>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
+import BaseModal from '@/components/ui/BaseModal.vue'
 import { useI18n } from '@/composables/useI18n'
 import { getFileIcon } from '@/utils/fileIcons'
 import { highlightFuzzy, type TextSegment } from '@/utils/searchHighlight'
@@ -67,6 +69,15 @@ const fileStore = useFileStore()
 const query = ref('')
 const activeIndex = ref(0)
 const inputRef = ref<HTMLInputElement>()
+
+const isOpen = computed({
+  get: () => fileStore.isQuickOpenModalVisible,
+  set: (value: boolean) => {
+    if (!value) {
+      handleClose()
+    }
+  }
+})
 
 const results = computed(() => {
   if (!query.value) return []
@@ -87,7 +98,7 @@ watch(results, () => {
 })
 
 // Watch modal visibility to focus input and reset state
-watch(() => fileStore.isQuickOpenModalVisible, (visible) => {
+watch(isOpen, (visible) => {
   if (visible) {
     query.value = ''
     activeIndex.value = 0
@@ -145,27 +156,10 @@ function handleClose() {
 </script>
 
 <style scoped>
-.quick-open-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  z-index: 9999;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 20vh;
-}
-
-.quick-open-modal {
-  width: min(600px, 90vw);
-  max-height: 70vh;
-  background: var(--bg-1);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+.quick-open-container {
   display: flex;
   flex-direction: column;
+  max-height: 70vh;
   overflow: hidden;
 }
 
@@ -276,27 +270,5 @@ function handleClose() {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-/* Transitions */
-.modal-fade-enter-active,
-.modal-fade-leave-active {
-  transition: opacity 200ms ease-out;
-}
-
-.modal-fade-enter-from,
-.modal-fade-leave-to {
-  opacity: 0;
-}
-
-.modal-fade-enter-active .quick-open-modal,
-.modal-fade-leave-active .quick-open-modal {
-  transition: transform 200ms ease-out, opacity 200ms ease-out;
-}
-
-.modal-fade-enter-from .quick-open-modal,
-.modal-fade-leave-to .quick-open-modal {
-  transform: translateY(-20px);
-  opacity: 0;
 }
 </style>

@@ -1,63 +1,58 @@
 <template>
-  <Teleport to="body">
-    <div v-if="visible" class="smart-hud-overlay" @click.self="$emit('close')">
-      <div class="smart-hud">
-        <!-- Premium Header -->
-        <div class="smart-hud-header">
-          <div class="smart-hud-title-row">
-            <div class="smart-hud-sparkle-icon">✨</div>
-            <div class="smart-hud-title-block">
-              <span class="smart-hud-title">{{ t('context.aiRecommendations') }}</span>
-              <span class="smart-hud-subtitle-inline">{{ t('context.foundFilesAnalysis', { count: suggestions.length }) }}</span>
-            </div>
+  <BaseModal :model-value="visible" @update:model-value="val => !val && $emit('close')">
+    <template #header>
+      <div class="smart-hud-header-content">
+        <div class="smart-hud-title-row">
+          <div class="smart-hud-sparkle-icon">✨</div>
+          <div class="smart-hud-title-block">
+            <span class="smart-hud-title">{{ t('context.aiRecommendations') }}</span>
+            <span class="smart-hud-subtitle-inline">{{ t('context.foundFilesAnalysis', { count: suggestions.length }) }}</span>
           </div>
-          <button class="smart-hud-close" @click="$emit('close')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 6L6 18M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-
-        <!-- File List -->
-        <div class="smart-hud-body">
-          <div v-if="suggestions.length === 0" class="smart-hud-empty">
-            {{ t('context.noRelatedFiles') }}
-          </div>
-          <div v-else class="smart-hud-list">
-            <SmartSuggestionItem
-              v-for="item in suggestions"
-              :key="item.path"
-              :is-selected="selectedPaths.has(item.path)"
-              :icon-class="getFileIconClass(item.path)"
-              :file-name="getFileName(item.path)"
-              :file-path="getFilePath(item.path)"
-              :badge-class="getSourceBadgeClass(item.source)"
-              :source-label="getSourceLabel(item.source)"
-              @toggle="$emit('toggle', item.path)"
-            />
-          </div>
-        </div>
-
-        <!-- Premium Footer -->
-        <div v-if="suggestions.length > 0" class="smart-hud-footer">
-          <button 
-            class="smart-hud-action group"
-            :disabled="selectedPaths.size === 0"
-            @click="$emit('add')"
-          >
-            <svg class="smart-hud-action-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M12 5v14M5 12h14"/>
-            </svg>
-            <span>{{ t('context.addFiles') }} ({{ selectedPaths.size }})</span>
-            <div class="smart-hud-shimmer"></div>
-          </button>
         </div>
       </div>
+    </template>
+
+    <!-- File List -->
+    <div class="smart-hud-body">
+      <div v-if="suggestions.length === 0" class="smart-hud-empty">
+        {{ t('context.noRelatedFiles') }}
+      </div>
+      <div v-else class="smart-hud-list">
+        <SmartSuggestionItem
+          v-for="item in suggestions"
+          :key="item.path"
+          :is-selected="selectedPaths.has(item.path)"
+          :icon-class="getFileIconClass(item.path)"
+          :file-name="getFileName(item.path)"
+          :file-path="getFilePath(item.path)"
+          :badge-class="getSourceBadgeClass(item.source)"
+          :source-label="getSourceLabel(item.source)"
+          @toggle="$emit('toggle', item.path)"
+        />
+      </div>
     </div>
-  </Teleport>
+
+    <template #footer>
+      <!-- Premium Footer -->
+      <div v-if="suggestions.length > 0" class="smart-hud-footer-content">
+        <button 
+          class="smart-hud-action group"
+          :disabled="selectedPaths.size === 0"
+          @click="$emit('add')"
+        >
+          <svg class="smart-hud-action-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+          <span>{{ t('context.addFiles') }} ({{ selectedPaths.size }})</span>
+          <div class="smart-hud-shimmer"></div>
+        </button>
+      </div>
+    </template>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
+import BaseModal from '@/components/ui/BaseModal.vue'
 import { useI18n } from '@/composables/useI18n'
 import type { SmartSuggestion } from '@/services/api.service'
 import SmartSuggestionItem from './SmartSuggestionItem.vue'
@@ -83,41 +78,10 @@ const { t } = useI18n()
 </script>
 
 <style scoped>
-.smart-hud-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(12px);
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 12vh;
-  z-index: 100;
-}
-
-.smart-hud {
-  background: #0f111a;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 0.875rem;
-  width: 100%;
-  max-width: min(40rem, 90vw);
-  max-height: 60vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 
-    0 0 0 1px rgba(139, 92, 246, 0.15),
-    0 25px 60px -10px rgba(139, 92, 246, 0.35),
-    0 15px 40px -5px rgba(0, 0, 0, 0.6);
-  overflow: hidden;
-}
-
-.smart-hud-header {
+.smart-hud-header-content {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0.875rem 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  background: linear-gradient(180deg, rgba(139, 92, 246, 0.03) 0%, transparent 100%);
+  width: 100%;
 }
 
 .smart-hud-title-row {
@@ -157,24 +121,7 @@ const { t } = useI18n()
   line-height: 1.2;
 }
 
-.smart-hud-close {
-  padding: 0.25rem;
-  border-radius: 0.25rem;
-  color: #4b5563;
-  transition: all 100ms;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.smart-hud-close:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #9ca3af;
-}
-
 .smart-hud-body {
-  flex: 1;
-  min-height: 0;
   overflow-y: auto;
   padding: 0.25rem;
 }
@@ -209,11 +156,8 @@ const { t } = useI18n()
   padding: 0.25rem 0.5rem;
 }
 
-.smart-hud-footer {
-  padding: 0.75rem 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(28, 31, 46, 0.5);
-  backdrop-filter: blur(8px);
+.smart-hud-footer-content {
+  width: 100%;
 }
 
 .smart-hud-action {

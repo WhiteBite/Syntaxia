@@ -3,17 +3,21 @@
     <!-- Header -->
     <div class="output-header">
       <h3 class="output-title">{{ t('testing.output') }}</h3>
-      <button
+      <BaseButton
         v-if="hasContent"
-        class="action-btn"
+        variant="ghost"
+        size="sm"
+        icon-only
         :title="t('testing.copy')"
         @click="copyOutput"
       >
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
-          <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2"/>
-          <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" stroke-width="2"/>
-        </svg>
-      </button>
+        <template #icon>
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
+            <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2"/>
+            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" stroke-width="2"/>
+          </svg>
+        </template>
+      </BaseButton>
     </div>
 
     <!-- Empty State -->
@@ -65,6 +69,7 @@
 </template>
 
 <script setup lang="ts">
+import BaseButton from '@/components/ui/BaseButton.vue'
 import { useI18n } from '@/composables/useI18n'
 import { useUIStore } from '@/stores/ui.store'
 import { computed } from 'vue'
@@ -117,25 +122,6 @@ function copyOutput(): void {
   font-weight: 600;
   color: #e5e7eb;
   margin: 0;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: none;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.15s ease-out;
-}
-
-.action-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #e5e7eb;
 }
 
 .output-empty {

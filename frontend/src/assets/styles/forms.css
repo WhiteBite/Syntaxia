@@ -1,14 +1,16 @@
 /* ============================================
-   FORM COMPONENTS - Inputs, Textareas, Toggles
+   FORM COMPONENTS
+   Optimized v3.0 - Inputs, Textareas, Search
    ============================================ */
 
-/* Input */
+/* === BASE INPUT === */
 .input {
-    @apply w-full px-3 py-2.5 text-sm rounded-xl;
+    @apply w-full px-3 py-2.5 text-sm;
     background: var(--bg-1);
     border: 1px solid var(--border-default);
+    border-radius: var(--radius-xl);
     color: var(--text-primary);
-    transition: all 150ms ease-out;
+    transition: all var(--transition-fast);
 }
 
 .input::placeholder {
@@ -28,25 +30,36 @@
     transform: scale(1.01);
 }
 
+/* Input Sizes */
+.input-xs {
+    @apply py-1.5 text-xs;
+}
+
+.input-sm {
+    @apply py-2 text-xs;
+}
+
+.input-md {
+    @apply py-2.5 text-sm;
+}
+
+/* Input with Icon */
 .input-with-icon {
     @apply pl-10;
 }
-
-.input-xs { @apply py-1.5 text-xs; }
-.input-sm { @apply py-2 text-xs; }
-.input-md { @apply py-2.5 text-sm; }
 
 .input-icon {
     @apply absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500;
 }
 
-/* Search Input */
+/* === SEARCH INPUT === */
 .search-input {
-    @apply w-full px-3 py-2.5 pl-10 text-sm rounded-xl;
+    @apply w-full px-3 py-2.5 pl-10 text-sm;
     background: var(--bg-2);
     border: 1px solid var(--border-strong);
+    border-radius: var(--radius-xl);
     color: var(--text-primary);
-    transition: all 150ms ease-out;
+    transition: all var(--transition-fast);
 }
 
 .search-input::placeholder {
@@ -70,7 +83,7 @@
 .search-clear-btn {
     @apply absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded;
     color: var(--text-muted);
-    transition: all 150ms ease-out;
+    transition: all var(--transition-fast);
     opacity: 0.7;
 }
 
@@ -80,21 +93,23 @@
     opacity: 1;
 }
 
-/* Textarea */
+/* === TEXTAREA === */
 .textarea {
-    @apply w-full px-4 py-3 text-sm font-mono;
-    @apply rounded-xl resize-none;
+    @apply w-full px-4 py-3 text-sm font-mono resize-none;
     background: var(--bg-1);
     border: 1px solid var(--border-default);
+    border-radius: var(--radius-xl);
     color: var(--text-primary);
-    transition: all 150ms ease-out;
+    transition: all var(--transition-fast);
 }
 
 .textarea::placeholder {
     color: var(--text-subtle);
 }
 
-.textarea-sm { @apply py-2 text-xs; }
+.textarea-sm {
+    @apply py-2 text-xs;
+}
 
 .textarea:focus {
     @apply outline-none;
@@ -103,13 +118,14 @@
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
-/* Chat Input */
+/* === CHAT INPUT === */
 .input-chat {
-    @apply w-full px-3 py-2 text-sm rounded-xl resize-none;
+    @apply w-full px-3 py-2 text-sm resize-none;
     background: var(--bg-1);
     border: 1px solid var(--border-default);
+    border-radius: var(--radius-xl);
     color: var(--text-primary);
-    transition: all 200ms ease-out;
+    transition: all var(--transition-normal);
 }
 
 .input-chat:focus {

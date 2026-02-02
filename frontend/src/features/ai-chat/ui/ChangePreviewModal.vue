@@ -53,7 +53,7 @@
             <pre class="whitespace-pre-wrap"><code v-html="highlightDiff(currentDiff)"></code></pre>
           </div>
           <div v-else-if="isLoadingDiff" class="flex items-center justify-center h-full">
-            <div class="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full"></div>
+            <BaseSpinner size="lg" class="text-purple-500" />
           </div>
           <div v-else class="empty-state h-full">
             <p class="text-gray-400">{{ t('sandbox.selectFile') }}</p>
@@ -91,6 +91,7 @@
 import { useI18n } from '@/composables/useI18n'
 import { useSandboxStore } from '@/stores/sandbox.store'
 import { ref, watch } from 'vue'
+import BaseSpinner from '@/components/ui/BaseSpinner.vue'
 
 const emit = defineEmits<{
   close: []

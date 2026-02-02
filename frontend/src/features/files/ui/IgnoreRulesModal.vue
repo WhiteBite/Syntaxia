@@ -1,166 +1,146 @@
 <template>
-  <Teleport to="body">
-    <Transition name="modal-backdrop">
-      <div
-        v-if="isOpen"
-        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-4"
-        @click.self="close"
-      >
-        <Transition name="modal">
-          <div
-            v-if="isOpen"
-            class="ignore-modal"
-            @click.stop
-          >
-            <!-- Header -->
-            <div class="ignore-modal__header">
-              <div class="flex items-center gap-3">
-                <div class="ignore-modal__icon">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 class="text-lg font-semibold text-white">{{ t('ignoreModal.title') }}</h3>
-                  <p class="text-xs text-gray-400">{{ t('ignoreModal.subtitle') }}</p>
-                </div>
-              </div>
-              
-              <button @click="close" class="ignore-modal__close">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <!-- Tabs -->
-            <div class="ignore-modal__tabs">
-              <button
-                @click="currentTab = 'gitignore'"
-                :class="['ignore-tab', currentTab === 'gitignore' ? 'ignore-tab--active' : '']"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                .gitignore
-              </button>
-              <button
-                @click="currentTab = 'custom'"
-                :class="['ignore-tab', currentTab === 'custom' ? 'ignore-tab--active' : '']"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                </svg>
-                {{ t('ignoreModal.customRules') }}
-              </button>
-            </div>
-
-            <!-- Content -->
-            <div class="ignore-modal__content">
-              <!-- .gitignore Tab -->
-              <div v-if="currentTab === 'gitignore'" class="ignore-custom-layout">
-                <div class="ignore-editor-section">
-                  <div class="ignore-editor-header">
-                    <span class="ignore-editor-label">{{ t('ignoreModal.rulesCount') }}: <strong>{{ gitignoreRulesCount }}</strong></span>
-                  </div>
-                  <div class="ignore-editor">
-                    <div ref="gitignoreLinesRef" class="ignore-editor__lines">
-                      <span v-for="n in gitignoreLineCount" :key="n" :class="{ 'ignore-editor__line--comment': isGitignoreCommentLine(n) }">{{ n }}</span>
-                    </div>
-                    <textarea
-                      ref="gitignoreTextareaRef"
-                      v-model="gitignoreContent"
-                      readonly
-                      class="ignore-editor__textarea"
-                      :placeholder="t('ignoreModal.gitignorePlaceholder')"
-                      @scroll="syncGitignoreScroll"
-                    ></textarea>
-                  </div>
-                  <p class="ignore-editor__hint">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {{ t('ignoreModal.gitignoreInfo') }}
-                  </p>
-                </div>
-
-                <!-- Gitignore Preview -->
-                <IgnorePreviewPanel :result="gitignorePreview" :loading="gitignoreLoading" />
-              </div>
-
-              <!-- Custom Rules Tab -->
-              <div v-if="currentTab === 'custom'" class="ignore-custom-layout">
-                <div class="ignore-editor-section">
-                  <div class="ignore-editor-header">
-                    <span class="ignore-editor-label">{{ t('ignoreModal.rulesCount') }}: <strong>{{ rulesCount }}</strong></span>
-                  </div>
-                  <div class="ignore-editor">
-                    <div ref="customLinesRef" class="ignore-editor__lines">
-                      <span v-for="n in customLineCount" :key="n" :class="{ 'ignore-editor__line--comment': isCommentLine(n) }">{{ n }}</span>
-                    </div>
-                    <textarea
-                      ref="customTextareaRef"
-                      v-model="customRules"
-                      class="ignore-editor__textarea ignore-editor__textarea--editable"
-                      :placeholder="t('ignoreModal.customPlaceholder')"
-                      spellcheck="false"
-                      @scroll="syncCustomScroll"
-                    ></textarea>
-                  </div>
-                </div>
-
-                <!-- Live Preview -->
-                <IgnorePreviewPanel :result="customPreview" :loading="customLoading" />
-              </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="ignore-modal__footer">
-              <div class="ignore-footer__left">
-                <button 
-                  v-if="currentTab === 'custom'" 
-                  @click="resetToDefaults" 
-                  class="ignore-footer__danger-btn"
-                >
-                  {{ t('ignoreModal.reset') }}
-                </button>
-                <button 
-                  v-if="currentTab === 'custom'" 
-                  @click="clearAll" 
-                  class="ignore-footer__danger-btn"
-                >
-                  {{ t('ignoreModal.clearAll') }}
-                </button>
-              </div>
-              <div class="ignore-footer__right">
-                <button @click="close" class="btn btn-secondary">
-                  {{ t('ignoreModal.cancel') }}
-                </button>
-                <button
-                  v-if="currentTab === 'custom'"
-                  @click="save"
-                  :disabled="isSaving"
-                  class="ignore-footer__save-btn"
-                >
-                  <svg v-if="!isSaving" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                  </svg>
-                  <svg v-else class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                  </svg>
-                  {{ t('ignoreModal.save') }}
-                </button>
-              </div>
-            </div>
-          </div>
-        </Transition>
+  <BaseModal
+    v-model="isOpen"
+    size="xl"
+    :title="t('ignoreModal.title')"
+    @close="close"
+  >
+    <template #header>
+      <div class="flex items-center gap-3">
+        <div class="ignore-modal__icon">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold text-white">{{ t('ignoreModal.title') }}</h3>
+          <p class="text-xs text-gray-400">{{ t('ignoreModal.subtitle') }}</p>
+        </div>
       </div>
-    </Transition>
-  </Teleport>
+    </template>
+
+    <!-- Tabs -->
+    <div class="ignore-modal__tabs">
+      <button
+        @click="currentTab = 'gitignore'"
+        :class="['ignore-tab', currentTab === 'gitignore' ? 'ignore-tab--active' : '']"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        .gitignore
+      </button>
+      <button
+        @click="currentTab = 'custom'"
+        :class="['ignore-tab', currentTab === 'custom' ? 'ignore-tab--active' : '']"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+        </svg>
+        {{ t('ignoreModal.customRules') }}
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="ignore-modal__content">
+      <!-- .gitignore Tab -->
+      <div v-if="currentTab === 'gitignore'" class="ignore-custom-layout">
+        <div class="ignore-editor-section">
+          <div class="ignore-editor-header">
+            <span class="ignore-editor-label">{{ t('ignoreModal.rulesCount') }}: <strong>{{ gitignoreRulesCount }}</strong></span>
+          </div>
+          <div class="ignore-editor">
+            <div ref="gitignoreLinesRef" class="ignore-editor__lines">
+              <span v-for="n in gitignoreLineCount" :key="n" :class="{ 'ignore-editor__line--comment': isGitignoreCommentLine(n) }">{{ n }}</span>
+            </div>
+            <textarea
+              ref="gitignoreTextareaRef"
+              v-model="gitignoreContent"
+              readonly
+              class="ignore-editor__textarea"
+              :placeholder="t('ignoreModal.gitignorePlaceholder')"
+              @scroll="syncGitignoreScroll"
+            ></textarea>
+          </div>
+          <p class="ignore-editor__hint">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {{ t('ignoreModal.gitignoreInfo') }}
+          </p>
+        </div>
+
+        <!-- Gitignore Preview -->
+        <IgnorePreviewPanel :result="gitignorePreview" :loading="gitignoreLoading" />
+      </div>
+
+      <!-- Custom Rules Tab -->
+      <div v-if="currentTab === 'custom'" class="ignore-custom-layout">
+        <div class="ignore-editor-section">
+          <div class="ignore-editor-header">
+            <span class="ignore-editor-label">{{ t('ignoreModal.rulesCount') }}: <strong>{{ rulesCount }}</strong></span>
+          </div>
+          <div class="ignore-editor">
+            <div ref="customLinesRef" class="ignore-editor__lines">
+              <span v-for="n in customLineCount" :key="n" :class="{ 'ignore-editor__line--comment': isCommentLine(n) }">{{ n }}</span>
+            </div>
+            <textarea
+              ref="customTextareaRef"
+              v-model="customRules"
+              class="ignore-editor__textarea ignore-editor__textarea--editable"
+              :placeholder="t('ignoreModal.customPlaceholder')"
+              spellcheck="false"
+              @scroll="syncCustomScroll"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Live Preview -->
+        <IgnorePreviewPanel :result="customPreview" :loading="customLoading" />
+      </div>
+    </div>
+
+    <template #footer>
+      <div class="ignore-footer__left">
+        <button 
+          v-if="currentTab === 'custom'" 
+          @click="resetToDefaults" 
+          class="ignore-footer__danger-btn"
+        >
+          {{ t('ignoreModal.reset') }}
+        </button>
+        <button 
+          v-if="currentTab === 'custom'" 
+          @click="clearAll" 
+          class="ignore-footer__danger-btn"
+        >
+          {{ t('ignoreModal.clearAll') }}
+        </button>
+      </div>
+      <div class="ignore-footer__right">
+        <button @click="close" class="btn btn-secondary">
+          {{ t('ignoreModal.cancel') }}
+        </button>
+        <button
+          v-if="currentTab === 'custom'"
+          @click="save"
+          :disabled="isSaving"
+          class="ignore-footer__save-btn"
+        >
+          <svg v-if="!isSaving" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          <BaseSpinner v-else size="sm" />
+          {{ t('ignoreModal.save') }}
+        </button>
+      </div>
+    </template>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
+import BaseModal from '@/components/ui/BaseModal.vue'
+import BaseSpinner from '@/components/ui/BaseSpinner.vue'
 import { useI18n } from '@/composables/useI18n'
 import { apiService } from '@/services/api.service'
 import type { IgnorePreviewResult } from '@/services/api/settings.api'

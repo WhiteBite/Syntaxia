@@ -1,25 +1,38 @@
 <template>
   <div class="tpl-footer">
     <div class="tpl-footer-left">
-      <button @click="$emit('import')" class="tpl-footer-btn" :title="t('templates.import')">
-        <Upload class="w-3.5 h-3.5" />
-      </button>
-      <button 
+      <BaseButton 
+        variant="ghost" 
+        size="sm"
+        @click="$emit('import')" 
+        :title="t('templates.import')"
+      >
+        <template #icon>
+          <Upload class="w-3.5 h-3.5" />
+        </template>
+      </BaseButton>
+      <BaseButton 
+        variant="ghost" 
+        size="sm"
         @click="$emit('export')" 
-        class="tpl-footer-btn" 
         :title="t('templates.export')" 
         :disabled="!hasSelectedTemplate"
       >
-        <Download class="w-3.5 h-3.5" />
-      </button>
-      <button 
+        <template #icon>
+          <Download class="w-3.5 h-3.5" />
+        </template>
+      </BaseButton>
+      <BaseButton 
+        variant="ghost" 
+        size="sm"
         @click="$emit('duplicate')" 
-        class="tpl-footer-btn" 
         :disabled="!hasSelectedTemplate"
       >
-        <Copy class="w-3.5 h-3.5" />
+        <template #icon>
+          <Copy class="w-3.5 h-3.5" />
+        </template>
         <span>{{ t('templates.duplicate') }}</span>
-      </button>
+      </BaseButton>
     </div>
     <div class="tpl-footer-center">
       <Transition name="fade" mode="out-in">
@@ -43,26 +56,35 @@
         </span>
         <span>{{ t('templates.autosave') }}</span>
       </label>
-      <button 
+      <BaseButton 
         v-if="canApply" 
-        @click="$emit('apply')" 
-        class="tpl-apply-btn"
+        variant="secondary"
+        size="sm"
+        @click="$emit('apply')"
       >
-        <Sparkles class="w-3.5 h-3.5" />{{ t('templates.apply') }}
-      </button>
-      <button 
+        <template #icon>
+          <Sparkles class="w-3.5 h-3.5" />
+        </template>
+        {{ t('templates.apply') }}
+      </BaseButton>
+      <BaseButton 
+        variant="primary"
+        size="sm"
         @click="$emit('save')" 
-        class="tpl-save-btn" 
         :class="{ pulse: hasChanges && !isEditingBuiltIn }"
         :disabled="!hasChanges || isEditingBuiltIn"
       >
-        <Save class="w-3.5 h-3.5" />{{ t('common.save') }}
-      </button>
+        <template #icon>
+          <Save class="w-3.5 h-3.5" />
+        </template>
+        {{ t('common.save') }}
+      </BaseButton>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import BaseButton from '@/components/ui/BaseButton.vue'
 import { useI18n } from '@/composables/useI18n'
 import { Check, Copy, Download, Save, Sparkles, Upload } from 'lucide-vue-next'
 
@@ -108,31 +130,6 @@ defineEmits<{
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.tpl-footer-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.375rem 0.625rem;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.tpl-footer-btn:hover:not(:disabled) { 
-  background: rgba(255, 255, 255, 0.05); 
-  border-color: rgba(255, 255, 255, 0.2);
-  color: var(--text-primary);
-}
-
-.tpl-footer-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 
 .tpl-saved-msg {
@@ -190,57 +187,6 @@ defineEmits<{
   transform: translateX(12px);
 }
 
-/* Action Buttons */
-.tpl-apply-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.875rem;
-  background: var(--accent-purple-bg);
-  border: 1px solid var(--accent-purple-border);
-  border-radius: var(--radius-md);
-  color: var(--accent-purple);
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.tpl-apply-btn:hover { 
-  background: rgba(168, 85, 247, 0.25);
-  transform: translateY(-1px);
-}
-
-.tpl-save-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.875rem;
-  background: var(--accent-indigo);
-  border: none;
-  border-radius: var(--radius-md);
-  color: white;
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.tpl-save-btn:hover:not(:disabled) { 
-  background: #818cf8;
-  transform: translateY(-1px);
-}
-
-.tpl-save-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.tpl-save-btn.pulse {
-  animation: btnPulse 0.5s;
-}
-
 /* Fade Transition */
 .fade-enter-active,
 .fade-leave-active {
@@ -250,6 +196,10 @@ defineEmits<{
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.pulse {
+  animation: btnPulse 0.5s;
 }
 
 @keyframes btnPulse {

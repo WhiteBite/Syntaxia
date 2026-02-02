@@ -10,10 +10,7 @@
     <!-- Status Icon -->
     <div class="test-status">
       <!-- Running -->
-      <svg v-if="test.status === 'running'" class="status-icon animate-spin" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity="0.25"/>
-        <path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      </svg>
+      <BaseSpinner v-if="test.status === 'running'" size="sm" class="status-icon" />
       <!-- Passed -->
       <svg v-else-if="test.status === 'passed'" class="status-icon" viewBox="0 0 24 24" fill="none">
         <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -39,20 +36,26 @@
     </div>
 
     <!-- Run Button -->
-    <button
-      class="run-btn"
+    <BaseButton
+      variant="ghost"
+      size="sm"
+      icon-only
       :disabled="isRunning"
       :title="t('testing.runTest')"
       @click.stop="$emit('run', test.id)"
+      class="run-btn"
     >
-      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
-        <path d="M5 3l14 9-14 9V3z" fill="currentColor"/>
-      </svg>
-    </button>
+      <template #icon>
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
+          <path d="M5 3l14 9-14 9V3z" fill="currentColor"/>
+        </svg>
+      </template>
+    </BaseButton>
   </div>
 </template>
 
 <script setup lang="ts">
+import { BaseButton, BaseSpinner } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
 import type { TestResult } from '../types'
 
@@ -162,41 +165,11 @@ function formatDuration(ms: number): string {
 }
 
 .run-btn {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  background: none;
-  border: none;
-  border-radius: 4px;
-  color: #6b7280;
-  cursor: pointer;
   opacity: 0;
-  transition: all 0.15s ease-out;
+  transition: opacity 0.15s ease-out;
 }
 
 .test-item:hover .run-btn {
   opacity: 1;
-}
-
-.run-btn:hover:not(:disabled) {
-  background: rgba(139, 92, 246, 0.15);
-  color: #a78bfa;
-}
-
-.run-btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.3;
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 </style>

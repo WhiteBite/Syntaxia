@@ -1,125 +1,106 @@
 <template>
-  <Teleport to="body">
-    <Transition name="modal">
-      <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-75"
-        @click.self="$emit('close')" @keydown.esc="$emit('close')">
-        <div
-          class="bg-gray-900 rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col border border-gray-700"
-          @click.stop>
-          <!-- Header -->
-          <div class="flex items-center justify-between px-4 py-3 border-b border-gray-700">
-            <div class="flex items-center gap-3 flex-1 min-w-0">
-              <!-- File Icon -->
-              <svg class="w-5 h-5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-
-              <!-- File Info -->
-              <div class="flex-1 min-w-0">
-                <h3 class="text-sm font-semibold text-white truncate" :title="filePath">
-                  {{ fileName }}
-                </h3>
-                <p class="text-xs text-gray-400 truncate" :title="filePath">
-                  {{ filePath }}
-                </p>
-              </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="flex items-center gap-2">
-              <button v-if="!isLoading && !error" @click="copyToClipboard"
-                class="p-2 hover:bg-gray-800 rounded transition-colors" title="Копировать">
-                <svg class="w-4 h-4 text-gray-400 hover:text-white" fill="none" stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-              </button>
-
-              <button @click="$emit('close')" class="p-2 hover:bg-gray-800 rounded transition-colors" title="Закрыть">
-                <svg class="w-4 h-4 text-gray-400 hover:text-white" fill="none" stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <!-- Stats Bar -->
-          <div v-if="stats && !isLoading" class="px-4 py-2 bg-gray-850 border-b border-gray-700">
-            <div class="flex items-center gap-6 text-xs text-gray-400">
-              <div class="flex items-center gap-2">
-                <span class="text-gray-400">Размер:</span>
-                <span class="text-white">{{ formatBytes(stats.size) }}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="text-gray-400">Строк:</span>
-                <span class="text-white">{{ formatNumber(stats.lines) }}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="text-gray-400">Токены:</span>
-                <span class="text-white">{{ formatNumber(stats.tokens) }}</span>
-              </div>
-              <div v-if="stats.language" class="flex items-center gap-2">
-                <span class="text-gray-400">Язык:</span>
-                <span class="text-white">{{ stats.language }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Content -->
-          <div class="flex-1 overflow-hidden">
-            <!-- Loading State -->
-            <div v-if="isLoading" class="flex items-center justify-center h-full">
-              <div class="flex flex-col items-center gap-3">
-                <div class="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full"></div>
-                <div class="text-gray-400 text-sm">Загрузка файла...</div>
-              </div>
-            </div>
-
-            <!-- Error State -->
-            <div v-else-if="error" class="flex items-center justify-center h-full">
-              <div class="text-center text-red-400">
-                <svg class="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p class="text-sm font-semibold mb-1">Ошибка загрузки файла</p>
-                <p class="text-xs text-gray-400">{{ error }}</p>
-              </div>
-            </div>
-
-            <!-- File Content -->
-            <div v-else class="h-full overflow-auto bg-gray-900">
-              <pre
-                class="p-4 text-sm font-mono text-gray-300 whitespace-pre-wrap break-words"><code>{{ content }}</code></pre>
-            </div>
-          </div>
-
-          <!-- Footer -->
-          <div class="flex items-center justify-between px-4 py-3 border-t border-gray-700">
-            <div class="text-xs text-gray-400">
-              ESC для закрытия
-            </div>
-            <div class="flex items-center gap-2">
-              <button @click="close"
-                class="px-4 py-2 text-sm bg-gray-800 hover:bg-gray-700 text-white rounded transition-colors">
-                Закрыть
-              </button>
-            </div>
-          </div>
+  <BaseModal
+    v-model="isOpen"
+    size="xl"
+    :close-on-backdrop="true"
+    :close-on-esc="true"
+    @close="$emit('close')"
+  >
+    <template #header>
+      <div class="flex items-center gap-3 flex-1 min-w-0">
+        <svg class="w-5 h-5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <div class="flex-1 min-w-0">
+          <h3 class="text-sm font-semibold text-white truncate" :title="filePath">
+            {{ fileName }}
+          </h3>
+          <p class="text-xs text-gray-400 truncate" :title="filePath">
+            {{ filePath }}
+          </p>
         </div>
       </div>
-    </Transition>
-  </Teleport>
+      <button v-if="!isLoading && !error" @click="copyToClipboard"
+        class="p-2 hover:bg-gray-800 rounded transition-colors" title="Копировать">
+        <svg class="w-4 h-4 text-gray-400 hover:text-white" fill="none" stroke="currentColor"
+          viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg>
+      </button>
+    </template>
+
+    <!-- Stats Bar -->
+    <div v-if="stats && !isLoading" class="px-4 py-2 bg-gray-850 border-b border-gray-700 -mt-6 -mx-6 mb-4">
+      <div class="flex items-center gap-6 text-xs text-gray-400">
+        <div class="flex items-center gap-2">
+          <span class="text-gray-400">Размер:</span>
+          <span class="text-white">{{ formatBytes(stats.size) }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-gray-400">Строк:</span>
+          <span class="text-white">{{ formatNumber(stats.lines) }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-gray-400">Токены:</span>
+          <span class="text-white">{{ formatNumber(stats.tokens) }}</span>
+        </div>
+        <div v-if="stats.language" class="flex items-center gap-2">
+          <span class="text-gray-400">Язык:</span>
+          <span class="text-white">{{ stats.language }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-hidden">
+      <!-- Loading State -->
+      <div v-if="isLoading" class="flex items-center justify-center h-full min-h-[300px]">
+        <div class="flex flex-col items-center gap-3">
+          <BaseSpinner size="lg" class="text-blue-500" />
+          <div class="text-gray-400 text-sm">Загрузка файла...</div>
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="error" class="flex items-center justify-center h-full min-h-[300px]">
+        <div class="text-center text-red-400">
+          <svg class="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p class="text-sm font-semibold mb-1">Ошибка загрузки файла</p>
+          <p class="text-xs text-gray-400">{{ error }}</p>
+        </div>
+      </div>
+
+      <!-- File Content -->
+      <div v-else class="h-full overflow-auto bg-gray-900">
+        <pre
+          class="p-4 text-sm font-mono text-gray-300 whitespace-pre-wrap break-words"><code>{{ content }}</code></pre>
+      </div>
+    </div>
+
+    <template #footer>
+      <div class="text-xs text-gray-400">
+        ESC для закрытия
+      </div>
+      <button @click="close"
+        class="px-4 py-2 text-sm bg-gray-800 hover:bg-gray-700 text-white rounded transition-colors">
+        Закрыть
+      </button>
+    </template>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
+import BaseModal from '@/components/ui/BaseModal.vue'
+import BaseSpinner from '@/components/ui/BaseSpinner.vue'
 import { useLogger } from '@/composables/useLogger'
 import { useProjectStore } from '@/stores/project.store'
 import { useUIStore } from '@/stores/ui.store'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { ReadFileContent } from '../../wailsjs/go/main/App'
 
 const logger = useLogger('QuickLook')
@@ -161,21 +142,6 @@ watch(() => props.filePath, async (newPath) => {
   if (newPath && isOpen.value) {
     await loadFile()
   }
-})
-
-// Keyboard shortcuts
-function handleKeyDown(event: KeyboardEvent) {
-  if (event.key === 'Escape' && isOpen.value) {
-    close()
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('keydown', handleKeyDown)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeyDown)
 })
 
 /**
@@ -322,16 +288,6 @@ defineExpose({
 </script>
 
 <style scoped>
-.modal-enter-active>div,
-.modal-leave-active>div {
-  transition: transform 0.2s ease;
-}
-
-.modal-enter-from>div,
-.modal-leave-to>div {
-  transform: scale(0.95);
-}
-
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
@@ -351,4 +307,4 @@ defineExpose({
   background: #6b7280;
 }
 </style>
-/style>
+

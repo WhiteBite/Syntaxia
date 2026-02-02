@@ -164,11 +164,7 @@
         :output-format="outputFormat"
       />
       <div v-else-if="isLoading" class="text-center py-8">
-        <svg class="animate-spin h-6 w-6 text-blue-500 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none"
-          viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-        </svg>
+        <BaseSpinner size="lg" class="mx-auto mb-2 text-blue-500" />
         <p class="text-gray-400">{{ t('context.loading') }}</p>
       </div>
       <div v-else class="text-center py-8">
@@ -185,6 +181,7 @@
 import ExportModal from '@/components/ExportModal.vue'
 import { useI18n } from '@/composables/useI18n'
 import { TemplatePreviewBlock } from '@/features/templates'
+import { BaseSpinner } from '@/components/ui'
 import SkeletonLoader from './SkeletonLoader.vue'
 import VirtualCodeView from './VirtualCodeView.vue'
 import { ref, computed } from 'vue'

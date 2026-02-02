@@ -2,26 +2,28 @@
   <div class="filters-bar">
     <div class="filter-groups">
       <!-- Types Dropdown -->
-      <div class="filter-dropdown" ref="typesDropdownRef">
-        <button
-          @click="toggleDropdown('types')"
-          :class="['filter-trigger', { 'filter-trigger-active': hasActiveTypeFilters }]"
-          :aria-label="t('quickFilters.filterByType')"
-          :aria-expanded="openDropdown === 'types'"
-          aria-haspopup="listbox"
-        >
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-          </svg>
-          <span>{{ t('quickFilters.types') }}</span>
-          <span v-if="activeTypeFilters.length > 0" class="filter-badge">{{ activeTypeFilters.length }}</span>
-          <ChevronIcon :open="openDropdown === 'types'" />
-        </button>
+      <BaseDropdown
+        v-model="isTypesOpen"
+        placement="bottom-start"
+        :close-on-click="false"
+        aria-label="File types filter"
+      >
+        <template #trigger="{ isOpen }">
+          <button
+            :class="['filter-trigger', { 'filter-trigger-active': hasActiveTypeFilters }]"
+            :aria-label="t('quickFilters.filterByType')"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            <span>{{ t('quickFilters.types') }}</span>
+            <span v-if="activeTypeFilters.length > 0" class="filter-badge">{{ activeTypeFilters.length }}</span>
+            <ChevronIcon :open="isOpen" />
+          </button>
+        </template>
         <FilterDropdownMenu
-          :is-open="openDropdown === 'types'"
           :title="t('quickFilters.fileTypes')"
-          :style="dropdownStyle"
           :has-active-filters="activeTypeFilters.length > 0"
           :hint="true"
           @clear="clearTypeFilters"
@@ -43,29 +45,32 @@
             </template>
           </FilterDropdownItem>
         </FilterDropdownMenu>
-      </div>
+      </BaseDropdown>
 
       <!-- Languages Dropdown -->
-      <div v-if="languageFilters.length > 0" class="filter-dropdown" ref="langsDropdownRef">
-        <button
-          @click="toggleDropdown('langs')"
-          :class="['filter-trigger', { 'filter-trigger-active': hasActiveLanguageFilters }]"
-          :aria-label="t('quickFilters.filterByLanguage')"
-          :aria-expanded="openDropdown === 'langs'"
-          aria-haspopup="listbox"
-        >
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-          </svg>
-          <span>{{ t('quickFilters.languages') }}</span>
-          <span class="filter-badge">{{ languageFilters.length }}</span>
-          <ChevronIcon :open="openDropdown === 'langs'" />
-        </button>
+      <BaseDropdown
+        v-if="languageFilters.length > 0"
+        v-model="isLangsOpen"
+        placement="bottom-start"
+        :close-on-click="false"
+        aria-label="Languages filter"
+      >
+        <template #trigger="{ isOpen }">
+          <button
+            :class="['filter-trigger', { 'filter-trigger-active': hasActiveLanguageFilters }]"
+            :aria-label="t('quickFilters.filterByLanguage')"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+            </svg>
+            <span>{{ t('quickFilters.languages') }}</span>
+            <span class="filter-badge">{{ languageFilters.length }}</span>
+            <ChevronIcon :open="isOpen" />
+          </button>
+        </template>
         <FilterDropdownMenu
-          :is-open="openDropdown === 'langs'"
           :title="t('quickFilters.projectLanguages')"
-          :style="dropdownStyle"
           :has-active-filters="activeLanguageFilters.length > 0"
           :footer="t('quickFilters.autoDetected') + ' ✨'"
           @clear="clearLanguageFilters"
@@ -83,29 +88,32 @@
             @toggle="toggleFilter(filter, $event)"
           />
         </FilterDropdownMenu>
-      </div>
+      </BaseDropdown>
 
       <!-- Smart Filters Dropdown -->
-      <div v-if="smartFilters.length > 0" class="filter-dropdown" ref="smartDropdownRef">
-        <button
-          @click="toggleDropdown('smart')"
-          :class="['filter-trigger filter-trigger-smart', { 'filter-trigger-active': hasActiveSmartFilters }]"
-          :aria-label="t('quickFilters.smartFilters')"
-          :aria-expanded="openDropdown === 'smart'"
-          aria-haspopup="listbox"
-        >
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-          </svg>
-          <span>{{ t('quickFilters.smart') }}</span>
-          <span class="filter-badge filter-badge-smart">{{ smartFilters.length }}</span>
-          <ChevronIcon :open="openDropdown === 'smart'" />
-        </button>
+      <BaseDropdown
+        v-if="smartFilters.length > 0"
+        v-model="isSmartOpen"
+        placement="bottom-start"
+        :close-on-click="false"
+        aria-label="Smart filters"
+      >
+        <template #trigger="{ isOpen }">
+          <button
+            :class="['filter-trigger filter-trigger-smart', { 'filter-trigger-active': hasActiveSmartFilters }]"
+            :aria-label="t('quickFilters.smartFilters')"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+            <span>{{ t('quickFilters.smart') }}</span>
+            <span class="filter-badge filter-badge-smart">{{ smartFilters.length }}</span>
+            <ChevronIcon :open="isOpen" />
+          </button>
+        </template>
         <FilterDropdownMenu
-          :is-open="openDropdown === 'smart'"
           :title="t('quickFilters.smartFilters')"
-          :style="dropdownStyle"
           :has-active-filters="activeSmartFilters.length > 0"
           :footer="t('quickFilters.basedOnFramework') + ' 🧠'"
           menu-class="filter-menu-smart"
@@ -126,7 +134,7 @@
             @toggle="toggleFilter(filter, $event)"
           />
         </FilterDropdownMenu>
-      </div>
+      </BaseDropdown>
     </div>
 
     <!-- Active & Excluded Chips -->
@@ -185,8 +193,9 @@
 </template>
 
 <script setup lang="ts">
+import BaseDropdown from '@/components/ui/BaseDropdown.vue'
 import { useI18n } from '@/composables/useI18n'
-import { h, onMounted, onUnmounted } from 'vue'
+import { h, ref } from 'vue'
 import { useQuickFilters } from '../composables/useQuickFilters'
 import FilterChip from './FilterChip.vue'
 import FilterDropdownItem from './FilterDropdownItem.vue'
@@ -194,18 +203,22 @@ import FilterDropdownMenu from './FilterDropdownMenu.vue'
 import FilterSettingsModal from './FilterSettingsModal.vue'
 
 const { t } = useI18n()
+
+const isTypesOpen = ref(false)
+const isLangsOpen = ref(false)
+const isSmartOpen = ref(false)
+
 const {
-  openDropdown, dropdownStyle, showSettingsModal,
+  showSettingsModal,
   typeFilters, languageFilters, smartFilters, editableFilters,
   activeTypeFilters, activeLanguageFilters, activeSmartFilters,
   allActiveFilters, allExcludedFilters,
   hasActiveTypeFilters, hasActiveLanguageFilters, hasActiveSmartFilters,
-  toggleDropdown, toggleFilter, removeFilter,
+  toggleFilter, removeFilter,
   isFilterActive, isFilterExcluded,
   clearTypeFilters, clearLanguageFilters, clearSmartFilters, clearAllFilters,
   getFilterCount, getFilterPercentage,
   updateFilterExtensions, resetFilters,
-  setupEventListeners, cleanupEventListeners,
 } = useQuickFilters()
 
 // Icon components
@@ -227,9 +240,6 @@ function getFilterIcon(category: string) {
     h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: iconPaths[category] || iconPaths.code })
   ])
 }
-
-onMounted(() => setupEventListeners())
-onUnmounted(() => cleanupEventListeners())
 </script>
 
 <style scoped>

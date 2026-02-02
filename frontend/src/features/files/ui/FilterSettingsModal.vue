@@ -1,57 +1,50 @@
 <template>
-  <Teleport to="body">
-    <Transition name="modal">
-      <div v-if="isOpen" class="modal-overlay" @click.self="$emit('close')">
-        <div class="modal-content filter-settings-modal">
-          <div class="modal-header">
-            <h3>{{ t('quickFilters.settingsTitle') }}</h3>
-            <button @click="$emit('close')" class="icon-btn" :aria-label="t('common.close')">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-          <div class="modal-body">
-            <div class="settings-section">
-              <h4>{{ t('quickFilters.customFilters') }}</h4>
-              <div v-for="filter in filters" :key="filter.id" class="settings-filter-card">
-                <div class="settings-filter-header">
-                  <label class="settings-toggle">
-                    <input type="checkbox" v-model="filter.enabled" />
-                    <span class="settings-toggle-track"></span>
-                  </label>
-                  <span class="settings-filter-name">{{ filter.label }}</span>
-                  <span class="settings-filter-count">{{ getCount(filter) }}</span>
-                </div>
-                <div class="settings-filter-inputs">
-                  <input
-                    type="text"
-                    :value="filter.extensions?.join(', ')"
-                    @change="$emit('updateExtensions', filter, ($event.target as HTMLInputElement).value)"
-                    class="input input-sm"
-                    :placeholder="t('quickFilters.extensionsPlaceholder')"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button @click="$emit('reset')" class="btn btn-secondary btn-sm">
-              {{ t('quickFilters.reset') }}
-            </button>
-            <button @click="$emit('close')" class="btn btn-primary btn-sm">
-              {{ t('quickFilters.done') }}
-            </button>
-          </div>
+  <BaseModal 
+    :model-value="isOpen"
+    @update:model-value="(value) => !value && $emit('close')"
+    :title="t('quickFilters.settingsTitle')"
+    size="md"
+    :close-on-backdrop="true"
+    @close="$emit('close')"
+  >
+    <div class="settings-section">
+      <h4>{{ t('quickFilters.customFilters') }}</h4>
+      <div v-for="filter in filters" :key="filter.id" class="settings-filter-card">
+        <div class="settings-filter-header">
+          <label class="settings-toggle">
+            <input type="checkbox" v-model="filter.enabled" />
+            <span class="settings-toggle-track"></span>
+          </label>
+          <span class="settings-filter-name">{{ filter.label }}</span>
+          <span class="settings-filter-count">{{ getCount(filter) }}</span>
+        </div>
+        <div class="settings-filter-inputs">
+          <input
+            type="text"
+            :value="filter.extensions?.join(', ')"
+            @change="$emit('updateExtensions', filter, ($event.target as HTMLInputElement).value)"
+            class="input input-sm"
+            :placeholder="t('quickFilters.extensionsPlaceholder')"
+          />
         </div>
       </div>
-    </Transition>
-  </Teleport>
+    </div>
+
+    <template #footer>
+      <button @click="$emit('reset')" class="btn btn-secondary btn-sm">
+        {{ t('quickFilters.reset') }}
+      </button>
+      <button @click="$emit('close')" class="btn btn-primary btn-sm">
+        {{ t('quickFilters.done') }}
+      </button>
+    </template>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
 import { useI18n } from '@/composables/useI18n';
 import type { QuickFilterConfig } from '@/stores/settings.store';
+import BaseModal from '@/components/ui/BaseModal.vue';
 
 const { t } = useI18n()
 
@@ -69,42 +62,95 @@ defineEmits<{
 </script>
 
 <style scoped>
-.filter-settings-modal { @apply max-w-md; }
-.modal-header {
-  @apply flex items-center justify-between px-4 py-3;
-  border-bottom: 1px solid var(--border-default);
+.settings-section h4 { 
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-3);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
-.modal-header h3 { @apply text-lg font-semibold; color: var(--text-primary); }
-.modal-body { @apply p-4 max-h-[60vh] overflow-y-auto; }
-.settings-section h4 { @apply text-xs font-semibold mb-3; color: var(--text-muted); }
+
 .settings-filter-card {
-  @apply p-3 rounded-xl mb-2;
+  padding: var(--space-3);
+  border-radius: var(--radius-xl);
+  margin-bottom: var(--space-2);
   background: var(--bg-2);
   border: 1px solid var(--border-default);
+  transition: all var(--transition-fast);
 }
-.settings-filter-header { @apply flex items-center gap-3 mb-2; }
-.settings-toggle { @apply relative inline-flex cursor-pointer; }
-.settings-toggle input { @apply sr-only; }
-.settings-toggle-track {
-  @apply w-8 h-4 rounded-full;
+
+.settings-filter-card:hover {
   background: var(--bg-3);
-  transition: all 200ms ease-out;
 }
-.settings-toggle input:checked + .settings-toggle-track { background: var(--accent-indigo); }
+
+.settings-filter-header { 
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.settings-toggle { 
+  position: relative;
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.settings-toggle input { 
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.settings-toggle-track {
+  width: 2rem;
+  height: 1rem;
+  border-radius: var(--radius-full);
+  background: var(--bg-3);
+  transition: all var(--transition-normal);
+  position: relative;
+}
+
+.settings-toggle input:checked + .settings-toggle-track { 
+  background: var(--accent-indigo);
+}
+
 .settings-toggle-track::after {
   content: '';
-  @apply absolute left-0.5 top-0.5 w-3 h-3 rounded-full bg-white;
-  transition: transform 200ms ease-out;
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: var(--radius-full);
+  background: white;
+  transition: transform var(--transition-normal);
 }
-.settings-toggle input:checked + .settings-toggle-track::after { transform: translateX(16px); }
-.settings-filter-name { @apply flex-1 text-sm font-medium; color: var(--text-primary); }
-.settings-filter-count { @apply text-xs; color: var(--text-muted); }
-.settings-filter-inputs { @apply mt-2; }
-.modal-footer {
-  @apply flex justify-end gap-2 px-4 py-3;
-  border-top: 1px solid var(--border-default);
+
+.settings-toggle input:checked + .settings-toggle-track::after { 
+  transform: translateX(16px);
 }
-.modal-enter-active, .modal-leave-active { transition: all 200ms ease-out; }
-.modal-enter-from, .modal-leave-to { opacity: 0; }
-.modal-enter-from .modal-content, .modal-leave-to .modal-content { transform: scale(0.95); }
+
+.settings-filter-name { 
+  flex: 1;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.settings-filter-count { 
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.settings-filter-inputs { 
+  margin-top: var(--space-2);
+}
 </style>

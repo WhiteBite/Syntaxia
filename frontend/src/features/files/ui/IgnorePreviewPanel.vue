@@ -29,10 +29,7 @@
 
     <!-- Loading -->
     <div v-if="loading" class="preview-panel__loading">
-      <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-      </svg>
+      <BaseSpinner size="sm" />
       <span>Анализ...</span>
     </div>
 
@@ -82,6 +79,7 @@
 </template>
 
 <script setup lang="ts">
+import BaseSpinner from '@/components/ui/BaseSpinner.vue'
 import { useI18n } from '@/composables/useI18n'
 import type { IgnorePreviewResult } from '@/services/api/settings.api'
 import { computed, ref } from 'vue'

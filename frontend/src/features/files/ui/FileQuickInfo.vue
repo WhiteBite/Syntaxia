@@ -1,10 +1,7 @@
 <template>
   <div class="file-quick-info" v-if="info || isLoading">
     <div v-if="isLoading" class="flex items-center justify-center py-2">
-      <svg class="animate-spin h-4 w-4 text-indigo-400" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-      </svg>
+      <BaseSpinner size="sm" color="#a78bfa" />
     </div>
     
     <template v-else-if="info">
@@ -48,6 +45,7 @@
 </template>
 
 <script setup lang="ts">
+import BaseSpinner from '@/components/ui/BaseSpinner.vue'
 import { useFileQuickInfo, type FileQuickInfo } from '@/composables/useFileQuickInfo';
 import { useI18n } from '@/composables/useI18n';
 import { computed, onMounted, ref, watch } from 'vue';

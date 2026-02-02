@@ -1,85 +1,81 @@
 <template>
-  <Teleport to="body">
-    <Transition name="modal">
-      <div
-        v-if="isOpen"
-        class="modal-overlay file-search-overlay"
-        @click.self="quickOpen.close()"
+  <BaseModal
+    :model-value="isOpen"
+    size="lg"
+    :show-close="false"
+    @update:model-value="(val) => !val && quickOpen.close()"
+  >
+    <!-- Search Input -->
+    <div class="search-header">
+      <MagnifyingGlassIcon class="search-icon" />
+      <input
+        ref="inputRef"
+        v-model="quickOpen.query.value"
+        type="text"
+        class="search-input"
+        :placeholder="t('fileSearch.placeholder')"
+        autocomplete="off"
+        spellcheck="false"
         @keydown="quickOpen.handleKeyDown"
+      />
+      <kbd class="search-hint">ESC</kbd>
+    </div>
+
+    <!-- Results List -->
+    <div class="search-results" v-if="quickOpen.results.value.length > 0">
+      <div
+        v-for="(result, index) in quickOpen.results.value"
+        :key="result.item.path"
+        :class="['search-result-item', { 'is-selected': index === quickOpen.selectedIndex.value }]"
+        @click="quickOpen.selectItem(index)"
+        @mouseenter="quickOpen.selectedIndex.value = index"
       >
-        <div class="file-search-modal">
-          <!-- Search Input -->
-          <div class="search-header">
-            <MagnifyingGlassIcon class="search-icon" />
-            <input
-              ref="inputRef"
-              v-model="quickOpen.query.value"
-              type="text"
-              class="search-input"
-              :placeholder="t('fileSearch.placeholder')"
-              autocomplete="off"
-              spellcheck="false"
-            />
-            <kbd class="search-hint">ESC</kbd>
-          </div>
-
-          <!-- Results List -->
-          <div class="search-results" v-if="quickOpen.results.value.length > 0">
-            <div
-              v-for="(result, index) in quickOpen.results.value"
-              :key="result.item.path"
-              :class="['search-result-item', { 'is-selected': index === quickOpen.selectedIndex.value }]"
-              @click="quickOpen.selectItem(index)"
-              @mouseenter="quickOpen.selectedIndex.value = index"
-            >
-              <span class="file-icon">{{ getFileIcon(result.item.name) }}</span>
-              <div class="file-info">
-                <span class="file-name" v-html="highlightMatches(result.item.name, result.matches, 'name')"></span>
-                <span class="file-path" v-html="highlightMatches(result.item.path, result.matches, 'path')"></span>
-              </div>
-              <span v-if="isFileSelected(result.item.path)" class="selected-badge">
-                {{ t('fileSearch.inContext') }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Empty State -->
-          <div v-else-if="quickOpen.query.value && !quickOpen.isSearching.value" class="search-empty">
-            <span>{{ t('fileSearch.noResults') }}</span>
-          </div>
-
-          <!-- Initial State -->
-          <div v-else-if="!quickOpen.query.value" class="search-empty search-hint-text">
-            <span>{{ t('fileSearch.hint') }}</span>
-          </div>
-
-          <!-- Loading -->
-          <div v-else-if="quickOpen.isSearching.value" class="search-empty">
-            <span>{{ t('common.loading') }}</span>
-          </div>
-
-          <!-- Footer -->
-          <div class="search-footer">
-            <div class="footer-hint">
-              <kbd>↑↓</kbd>
-              <span>{{ t('fileSearch.navigate') }}</span>
-            </div>
-            <div class="footer-hint">
-              <kbd>Enter</kbd>
-              <span>{{ t('fileSearch.select') }}</span>
-            </div>
-            <div class="footer-hint">
-              <kbd>Esc</kbd>
-              <span>{{ t('fileSearch.close') }}</span>
-            </div>
-          </div>
+        <span class="file-icon">{{ getFileIcon(result.item.name) }}</span>
+        <div class="file-info">
+          <span class="file-name" v-html="highlightMatches(result.item.name, result.matches, 'name')"></span>
+          <span class="file-path" v-html="highlightMatches(result.item.path, result.matches, 'path')"></span>
         </div>
+        <span v-if="isFileSelected(result.item.path)" class="selected-badge">
+          {{ t('fileSearch.inContext') }}
+        </span>
       </div>
-    </Transition>
-  </Teleport>
+    </div>
+
+    <!-- Empty State -->
+    <div v-else-if="quickOpen.query.value && !quickOpen.isSearching.value" class="search-empty">
+      <span>{{ t('fileSearch.noResults') }}</span>
+    </div>
+
+    <!-- Initial State -->
+    <div v-else-if="!quickOpen.query.value" class="search-empty search-hint-text">
+      <span>{{ t('fileSearch.hint') }}</span>
+    </div>
+
+    <!-- Loading -->
+    <div v-else-if="quickOpen.isSearching.value" class="search-empty">
+      <span>{{ t('common.loading') }}</span>
+    </div>
+
+    <!-- Footer -->
+    <div class="search-footer">
+      <div class="footer-hint">
+        <kbd>↑↓</kbd>
+        <span>{{ t('fileSearch.navigate') }}</span>
+      </div>
+      <div class="footer-hint">
+        <kbd>Enter</kbd>
+        <span>{{ t('fileSearch.select') }}</span>
+      </div>
+      <div class="footer-hint">
+        <kbd>Esc</kbd>
+        <span>{{ t('fileSearch.close') }}</span>
+      </div>
+    </div>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
+import BaseModal from '@/components/ui/BaseModal.vue'
 import { useI18n } from '@/composables/useI18n'
 import { useFileStore } from '@/features/files/model/file.store'
 import { getFileIcon } from '@/utils/fileIcons'
@@ -152,17 +148,6 @@ function escapeHtml(text: string): string {
 </script>
 
 <style scoped>
-.file-search-overlay { @apply flex items-start justify-center pt-[15vh]; }
-
-.file-search-modal {
-  @apply w-full flex flex-col rounded-xl overflow-hidden;
-  max-width: min(600px, 90vw);
-  max-height: 60vh;
-  background: var(--bg-1);
-  border: 1px solid var(--border-default);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-}
-
 .search-header {
   @apply flex items-center gap-3 px-4 py-3;
   border-bottom: 1px solid var(--border-default);
@@ -184,7 +169,7 @@ function escapeHtml(text: string): string {
   font-family: inherit;
 }
 
-.search-results { @apply flex-1 overflow-y-auto py-2; min-height: 0; }
+.search-results { @apply flex-1 overflow-y-auto py-2; min-height: 0; max-height: 50vh; }
 
 .search-result-item {
   @apply flex items-center gap-3 px-4 py-2 cursor-pointer;
@@ -226,15 +211,5 @@ function escapeHtml(text: string): string {
   @apply px-0.5 rounded;
   background: var(--accent-amber-muted);
   color: var(--accent-amber);
-}
-
-.modal-enter-active, .modal-leave-active { transition: opacity 150ms ease; }
-.modal-enter-active .file-search-modal, .modal-leave-active .file-search-modal {
-  transition: transform 150ms ease, opacity 150ms ease;
-}
-.modal-enter-from, .modal-leave-to { opacity: 0; }
-.modal-enter-from .file-search-modal, .modal-leave-to .file-search-modal {
-  transform: scale(0.95) translateY(-10px);
-  opacity: 0;
 }
 </style>

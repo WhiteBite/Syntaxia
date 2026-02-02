@@ -1,12 +1,17 @@
 <template>
   <div class="tpl-editor-header">
-    <button 
-      class="tpl-icon-btn" 
-      @click="$emit('toggle-emoji-picker')" 
+    <BaseButton
+      variant="ghost"
+      size="sm"
+      icon-only
+      @click="$emit('toggle-emoji-picker')"
       :disabled="template.isBuiltIn"
+      class="tpl-icon-btn"
     >
-      <span class="tpl-icon-display">{{ template.icon }}</span>
-    </button>
+      <template #icon>
+        <span class="tpl-icon-display">{{ template.icon }}</span>
+      </template>
+    </BaseButton>
     <div class="tpl-name-group">
       <input 
         :value="template.name"
@@ -30,6 +35,7 @@
 </template>
 
 <script setup lang="ts">
+import BaseButton from '@/components/ui/BaseButton.vue'
 import { useI18n } from '@/composables/useI18n'
 import { Check } from 'lucide-vue-next'
 import type { PromptTemplate } from '../model/template.types'
@@ -59,24 +65,6 @@ defineEmits<{
 .tpl-icon-btn {
   width: 2.5rem;
   height: 2.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.tpl-icon-btn:hover:not(:disabled) { 
-  background: rgba(255, 255, 255, 0.08); 
-  border-color: rgba(255, 255, 255, 0.2); 
-}
-
-.tpl-icon-btn:disabled {
-  cursor: default;
-  opacity: 0.6;
 }
 
 .tpl-icon-display {

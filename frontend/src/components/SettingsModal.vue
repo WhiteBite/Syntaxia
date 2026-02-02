@@ -1,24 +1,25 @@
 <template>
-  <Teleport to="body">
-    <Transition name="modal">
-      <div v-if="modelValue" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <!-- Backdrop -->
-        <div class="absolute inset-0 bg-black/70 backdrop-blur-md" @click="close"></div>
-
-        <!-- Modal Content -->
-        <div class="settings-modal relative">
-          <!-- Header -->
-          <div class="settings-header">
-            <div class="flex items-center gap-2">
-              <div class="settings-header-icon">
-                <Settings class="w-4 h-4" />
-              </div>
-              <h2 class="text-base font-semibold text-white">{{ t('settings.modal.title') }}</h2>
-            </div>
-            <button @click="close" class="settings-close-btn">
-              <X class="w-4 h-4" />
-            </button>
+  <BaseModal
+    :model-value="modelValue"
+    size="lg"
+    :close-on-backdrop="true"
+    :close-on-esc="true"
+    :show-close="false"
+    @update:model-value="(val) => !val && close()"
+  >
+    <div class="settings-modal-wrapper">
+      <!-- Header -->
+      <div class="settings-header">
+        <div class="flex items-center gap-2">
+          <div class="settings-header-icon">
+            <Settings class="w-4 h-4" />
           </div>
+          <h2 class="text-base font-semibold text-white">{{ t('settings.modal.title') }}</h2>
+        </div>
+        <button @click="close" class="settings-close-btn">
+          <X class="w-4 h-4" />
+        </button>
+      </div>
 
           <!-- Tabs -->
           <div class="settings-tabs">
@@ -193,19 +194,18 @@
             </Transition>
           </div>
 
-          <!-- Footer -->
-          <div class="settings-footer">
-            <button @click="close" class="settings-close-action">
-              {{ t('settings.modal.cancel') }}
-            </button>
-          </div>
-        </div>
+      <!-- Footer -->
+      <div class="settings-footer">
+        <button @click="close" class="settings-close-action">
+          {{ t('settings.modal.cancel') }}
+        </button>
       </div>
-    </Transition>
-  </Teleport>
+    </div>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
+import BaseModal from '@/components/ui/BaseModal.vue'
 import AISettings from '@/components/workspace/sidebar/AISettings.vue'
 import ExportSettings from '@/components/workspace/sidebar/ExportSettings.vue'
 import ShellIntegrationSettings from '@/components/ShellIntegrationSettings.vue'
@@ -214,7 +214,7 @@ import { useOnboarding } from '@/composables/useOnboarding'
 import { useSettingsStore } from '@/stores/settings.store'
 import { FileText, Filter, FolderTree, Globe, HelpCircle, Lightbulb, Maximize, Monitor, Settings, Sparkles, X } from 'lucide-vue-next'
 
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 const props = defineProps<{
   modelValue: boolean
@@ -268,34 +268,14 @@ function handleStartTour() {
     startTour()
   }, 300)
 }
-
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape' && props.modelValue) {
-    close()
-  }
-}
-
-onMounted(() => {
-  window.addEventListener('keydown', handleKeydown)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown)
-})
 </script>
 
 <style scoped>
-.settings-modal {
-  width: 100%;
-  max-width: min(680px, 90vw);
-  max-height: 85vh;
+.settings-modal-wrapper {
   display: flex;
   flex-direction: column;
-  background: var(--bg-1);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-2xl);
-  box-shadow: var(--shadow-xl), 0 0 60px rgba(99, 102, 241, 0.1);
-  overflow: hidden;
+  height: 100%;
+  max-height: 70vh;
 }
 
 .settings-header {
@@ -613,28 +593,6 @@ onUnmounted(() => {
 .settings-close-action:hover {
   color: var(--text-primary);
   background: var(--bg-2);
-}
-
-/* Modal Animation */
-.modal-enter-active,
-.modal-leave-active {
-  transition: opacity 0.25s ease;
-}
-
-.modal-enter-active .settings-modal,
-.modal-leave-active .settings-modal {
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
-}
-
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
-
-.modal-enter-from .settings-modal,
-.modal-leave-to .settings-modal {
-  transform: scale(0.95) translateY(-10px);
-  opacity: 0;
 }
 
 /* Tab Content Animation */

@@ -1,0 +1,134 @@
+/* ============================================
+   SYNTAXIA UI KIT - Unified Component Styles
+   Version: 3.0
+   
+   This file consolidates common patterns across:
+   - Buttons, Forms, Badges, Cards, Modals
+   
+   Design Principles:
+   - DRY (Don't Repeat Yourself)
+   - Consistent transitions
+   - Unified hover/active states
+   - Responsive by default
+   ============================================ */
+
+/* === SHARED TRANSITIONS === */
+.ui-transition-fast {
+    transition: all var(--transition-fast);
+}
+
+.ui-transition-normal {
+    transition: all var(--transition-normal);
+}
+
+.ui-transition-slow {
+    transition: all var(--transition-slow);
+}
+
+/* === SHARED FOCUS STATES === */
+.ui-focus-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900;
+}
+
+.ui-focus-indigo {
+    @apply focus:outline-none;
+    border-color: var(--accent-indigo);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.ui-focus-purple {
+    @apply focus:outline-none;
+    border-color: var(--accent-purple);
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+}
+
+/* === SHARED DISABLED STATES === */
+.ui-disabled {
+    @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none;
+}
+
+/* === SHARED HOVER EFFECTS === */
+.ui-hover-lift:hover:not(:disabled) {
+    transform: translateY(-2px);
+}
+
+.ui-hover-lift-sm:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.ui-hover-scale:hover:not(:disabled) {
+    transform: scale(1.02);
+}
+
+.ui-active-press:active:not(:disabled) {
+    transform: scale(0.98);
+    transition-duration: 50ms;
+}
+
+/* === SHARED SHADOWS === */
+.ui-shadow-glow-primary {
+    box-shadow: var(--shadow-glow-accent);
+}
+
+.ui-shadow-glow-indigo {
+    box-shadow: var(--shadow-glow-indigo);
+}
+
+.ui-shadow-glow-emerald {
+    box-shadow: var(--shadow-glow-emerald);
+}
+
+.ui-shadow-glow-orange {
+    box-shadow: var(--shadow-glow-orange);
+}
+
+/* === SHARED BORDERS === */
+.ui-border-default {
+    border: 1px solid var(--border-default);
+}
+
+.ui-border-strong {
+    border: 1px solid var(--border-strong);
+}
+
+.ui-border-subtle {
+    border: 1px solid var(--border-subtle);
+}
+
+/* === SHARED BACKGROUNDS === */
+.ui-bg-1 {
+    background: var(--bg-1);
+}
+
+.ui-bg-2 {
+    background: var(--bg-2);
+}
+
+.ui-bg-3 {
+    background: var(--bg-3);
+}
+
+/* === SHARED RADIUS === */
+.ui-radius-sm {
+    border-radius: var(--radius-sm);
+}
+
+.ui-radius-md {
+    border-radius: var(--radius-md);
+}
+
+.ui-radius-lg {
+    border-radius: var(--radius-lg);
+}
+
+.ui-radius-xl {
+    border-radius: var(--radius-xl);
+}
+
+.ui-radius-2xl {
+    border-radius: var(--radius-2xl);
+}
+
+.ui-radius-full {
+    border-radius: var(--radius-full);
+}

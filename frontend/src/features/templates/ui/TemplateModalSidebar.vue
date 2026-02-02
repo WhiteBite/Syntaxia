@@ -63,13 +63,22 @@
       <div v-if="noResults" class="tpl-no-results">{{ t('templates.noResults') }}</div>
     </nav>
     
-    <button @click="$emit('create-new')" class="tpl-new-btn">
-      <Plus class="w-3.5 h-3.5" />{{ t('templates.create') }}
-    </button>
+    <BaseButton 
+      variant="ghost" 
+      size="sm"
+      @click="$emit('create-new')"
+      class="tpl-new-btn"
+    >
+      <template #icon>
+        <Plus class="w-3.5 h-3.5" />
+      </template>
+      {{ t('templates.create') }}
+    </BaseButton>
   </aside>
 </template>
 
 <script setup lang="ts">
+import BaseButton from '@/components/ui/BaseButton.vue'
 import { useI18n } from '@/composables/useI18n'
 import { Plus, Search, Star, User, Zap } from 'lucide-vue-next'
 import { computed } from 'vue'
@@ -222,24 +231,11 @@ const noResults = computed(() =>
 }
 
 .tpl-new-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.375rem;
   margin: 0.75rem;
-  padding: 0.625rem;
-  background: transparent;
-  border: 1px dashed rgba(255, 255, 255, 0.15);
-  border-radius: var(--radius-md);
-  color: var(--text-muted);
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.2s;
+  border: 1px dashed rgba(255, 255, 255, 0.15) !important;
 }
 
 .tpl-new-btn:hover { 
-  background: rgba(255, 255, 255, 0.04); 
-  border-color: var(--accent-indigo-border); 
-  color: var(--accent-indigo); 
+  border-color: var(--accent-indigo-border) !important;
 }
 </style>

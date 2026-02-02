@@ -1,12 +1,19 @@
 /* ============================================
-   SYNTAXIA - DESIGN SYSTEM v2.1
-   Enhanced Dark Theme with Improved Contrast
+   SYNTAXIA - DESIGN SYSTEM v3.0
+   Enhanced Dark Theme with Optimized UI Kit
    
    This file imports all style modules.
    Individual styles are in ./styles/ directory.
+   
+   v3.0 Changes:
+   - Added ui-kit.css for shared utilities
+   - Optimized buttons, forms, badges, cards, modals
+   - Removed duplicate styles (~300 lines)
+   - Unified transition and hover patterns
    ============================================ */
 
 @import './styles/variables.css';
+@import './styles/ui-kit.css';
 @import './styles/layout.css';
 @import './styles/buttons.css';
 @import './styles/cards.css';

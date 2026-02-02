@@ -6,42 +6,48 @@
 
       <!-- Action Buttons -->
       <div class="header-actions">
-        <button
-          class="btn btn-primary"
+        <BaseButton
+          variant="primary"
+          size="sm"
           :disabled="running"
+          :loading="running"
           @click="runAllTests"
         >
-          <svg v-if="running" class="btn-icon animate-spin" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity="0.25"/>
-            <path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          <svg v-else class="btn-icon" viewBox="0 0 24 24" fill="none">
-            <path d="M5 3l14 9-14 9V3z" fill="currentColor"/>
-          </svg>
+          <template #icon>
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
+              <path d="M5 3l14 9-14 9V3z" fill="currentColor"/>
+            </svg>
+          </template>
           {{ t('testing.runAll') }}
-        </button>
+        </BaseButton>
 
-        <button
-          class="btn btn-ghost"
+        <BaseButton
+          variant="ghost"
+          size="sm"
           :disabled="running || !hasFailedTests"
           @click="runFailedTests"
         >
-          <svg class="btn-icon" viewBox="0 0 24 24" fill="none">
-            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+          <template #icon>
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
+              <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </template>
           {{ t('testing.runFailed') }}
-        </button>
+        </BaseButton>
 
-        <button
+        <BaseButton
           v-if="running"
-          class="btn btn-ghost btn-danger"
+          variant="danger"
+          size="sm"
           @click="stopTests"
         >
-          <svg class="btn-icon" viewBox="0 0 24 24" fill="none">
-            <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>
-          </svg>
+          <template #icon>
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
+              <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>
+            </svg>
+          </template>
           {{ t('testing.stop') }}
-        </button>
+        </BaseButton>
       </div>
     </div>
 
@@ -103,33 +109,45 @@
       <div class="filter-spacer"></div>
 
       <!-- Expand/Collapse -->
-      <button
-        class="toolbar-btn"
+      <BaseButton
+        variant="ghost"
+        size="sm"
+        icon-only
         :title="t('testing.expandAll')"
         @click="expandAllSuites"
       >
-        <svg class="toolbar-icon" viewBox="0 0 24 24" fill="none">
-          <path d="M19 9l-7 7-7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-      <button
-        class="toolbar-btn"
+        <template #icon>
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
+            <path d="M19 9l-7 7-7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </template>
+      </BaseButton>
+      <BaseButton
+        variant="ghost"
+        size="sm"
+        icon-only
         :title="t('testing.collapseAll')"
         @click="collapseAllSuites"
       >
-        <svg class="toolbar-icon" viewBox="0 0 24 24" fill="none">
-          <path d="M5 15l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-      <button
-        class="toolbar-btn"
+        <template #icon>
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
+            <path d="M5 15l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </template>
+      </BaseButton>
+      <BaseButton
+        variant="ghost"
+        size="sm"
+        icon-only
         :title="t('testing.clearResults')"
         @click="clearResults"
       >
-        <svg class="toolbar-icon" viewBox="0 0 24 24" fill="none">
-          <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
+        <template #icon>
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
+            <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </template>
+      </BaseButton>
     </div>
 
     <!-- Content -->
@@ -162,6 +180,7 @@
 </template>
 
 <script setup lang="ts">
+import BaseButton from '@/components/ui/BaseButton.vue'
 import { useI18n } from '@/composables/useI18n'
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
@@ -238,58 +257,6 @@ const filterOptions = computed(() => [
 .header-actions {
   display: flex;
   gap: 8px;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease-out;
-}
-
-.btn-primary {
-  background: rgba(139, 92, 246, 0.9);
-  border: 1px solid rgba(139, 92, 246, 0.5);
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: rgba(139, 92, 246, 1);
-}
-
-.btn-ghost {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #d1d5db;
-}
-
-.btn-ghost:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
-  color: #e5e7eb;
-}
-
-.btn-danger {
-  color: #f87171;
-  border-color: rgba(239, 68, 68, 0.3);
-}
-
-.btn-danger:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.15);
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-icon {
-  width: 14px;
-  height: 14px;
 }
 
 /* Stats Bar */
@@ -409,30 +376,6 @@ const filterOptions = computed(() => [
   flex: 1;
 }
 
-.toolbar-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: none;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.15s ease-out;
-}
-
-.toolbar-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #e5e7eb;
-}
-
-.toolbar-icon {
-  width: 16px;
-  height: 16px;
-}
-
 /* Content */
 .panel-content {
   flex: 1;
@@ -457,15 +400,5 @@ const filterOptions = computed(() => [
   width: 40%;
   min-width: 250px;
   max-width: min(500px, 45%);
-}
-
-/* Animation */
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 </style>

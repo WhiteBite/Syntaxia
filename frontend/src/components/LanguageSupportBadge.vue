@@ -1,6 +1,6 @@
 <template>
     <div class="language-badge-wrapper">
-        <Tooltip :content="tooltipContent" placement="top" :max-width="'320px'">
+        <BaseTooltip :text="tooltipContent" position="top" multiline>
             <template #default>
                 <button 
                     class="language-badge" 
@@ -40,7 +40,7 @@
                     </div>
                 </div>
             </template>
-        </Tooltip>
+        </BaseTooltip>
 
         <!-- Expanded panel (optional detailed view) -->
         <Transition name="panel">
@@ -93,7 +93,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from '@/composables/useI18n'
-import Tooltip from '@/components/Tooltip.vue'
+import { BaseTooltip } from '@/components/ui'
 
 interface SupportedLanguage {
     id: string

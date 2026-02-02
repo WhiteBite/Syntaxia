@@ -54,9 +54,17 @@
                 <div v-if="noResults" class="tpl-no-results">{{ t('templates.noResults') }}</div>
               </nav>
               
-              <button @click="createNew" class="tpl-new-btn">
-                <Plus class="w-3.5 h-3.5" />{{ t('templates.create') }}
-              </button>
+              <BaseButton 
+                variant="ghost" 
+                size="sm"
+                @click="createNew"
+                class="tpl-new-btn"
+              >
+                <template #icon>
+                  <Plus class="w-3.5 h-3.5" />
+                </template>
+                {{ t('templates.create') }}
+              </BaseButton>
             </aside>
 
             <!-- Editor (Builder) -->
@@ -64,9 +72,18 @@
               <template v-if="editingTemplate">
                 <!-- Combo Header: Icon + Name -->
                 <div class="tpl-editor-header">
-                  <button class="tpl-icon-btn" @click="showEmojiPicker = !showEmojiPicker" :disabled="editingTemplate.isBuiltIn">
-                    <span class="tpl-icon-display">{{ editingTemplate.icon }}</span>
-                  </button>
+                  <BaseButton
+                    variant="ghost"
+                    size="sm"
+                    icon-only
+                    @click="showEmojiPicker = !showEmojiPicker"
+                    :disabled="editingTemplate.isBuiltIn"
+                    class="tpl-icon-btn"
+                  >
+                    <template #icon>
+                      <span class="tpl-icon-display">{{ editingTemplate.icon }}</span>
+                    </template>
+                  </BaseButton>
                   <div class="tpl-name-group">
                     <input v-model="editingTemplate.name" class="tpl-name-input" 
                       :placeholder="t('templates.namePlaceholder')" :disabled="editingTemplate.isBuiltIn" />
@@ -168,15 +185,38 @@
           <!-- Footer -->
           <div class="tpl-footer">
             <div class="tpl-footer-left">
-              <button @click="handleImport" class="tpl-footer-btn" :title="t('templates.import')">
-                <Upload class="w-3.5 h-3.5" />
-              </button>
-              <button @click="handleExport" class="tpl-footer-btn" :title="t('templates.export')" :disabled="!selectedTemplate">
-                <Download class="w-3.5 h-3.5" />
-              </button>
-              <button @click="duplicateSelected" class="tpl-footer-btn" :disabled="!selectedTemplate">
-                <Copy class="w-3.5 h-3.5" /><span>{{ t('templates.duplicate') }}</span>
-              </button>
+              <BaseButton 
+                variant="ghost" 
+                size="sm"
+                @click="handleImport" 
+                :title="t('templates.import')"
+              >
+                <template #icon>
+                  <Upload class="w-3.5 h-3.5" />
+                </template>
+              </BaseButton>
+              <BaseButton 
+                variant="ghost" 
+                size="sm"
+                @click="handleExport" 
+                :title="t('templates.export')" 
+                :disabled="!selectedTemplate"
+              >
+                <template #icon>
+                  <Download class="w-3.5 h-3.5" />
+                </template>
+              </BaseButton>
+              <BaseButton 
+                variant="ghost" 
+                size="sm"
+                @click="duplicateSelected" 
+                :disabled="!selectedTemplate"
+              >
+                <template #icon>
+                  <Copy class="w-3.5 h-3.5" />
+                </template>
+                <span>{{ t('templates.duplicate') }}</span>
+              </BaseButton>
             </div>
             <div class="tpl-footer-center">
               <Transition name="fade" mode="out-in">
@@ -190,13 +230,29 @@
                 <span class="tpl-autosave-track"><span class="tpl-autosave-thumb" /></span>
                 <span>{{ t('templates.autosave') }}</span>
               </label>
-              <button v-if="canApply" @click="applyTemplate" class="tpl-apply-btn">
-                <Sparkles class="w-3.5 h-3.5" />{{ t('templates.apply') }}
-              </button>
-              <button @click="saveChanges" class="tpl-save-btn" :class="{ pulse: hasChanges && !isEditingBuiltIn }"
-                :disabled="!hasChanges || isEditingBuiltIn">
-                <Save class="w-3.5 h-3.5" />{{ t('common.save') }}
-              </button>
+              <BaseButton 
+                v-if="canApply" 
+                variant="secondary"
+                size="sm"
+                @click="applyTemplate"
+              >
+                <template #icon>
+                  <Sparkles class="w-3.5 h-3.5" />
+                </template>
+                {{ t('templates.apply') }}
+              </BaseButton>
+              <BaseButton 
+                variant="primary"
+                size="sm"
+                @click="saveChanges" 
+                :class="{ pulse: hasChanges && !isEditingBuiltIn }"
+                :disabled="!hasChanges || isEditingBuiltIn"
+              >
+                <template #icon>
+                  <Save class="w-3.5 h-3.5" />
+                </template>
+                {{ t('common.save') }}
+              </BaseButton>
             </div>
           </div>
         </div>
@@ -209,8 +265,20 @@
               <h3>{{ t('templates.deleteConfirm') }}</h3>
               <p>{{ t('templates.deleteConfirmText') }}</p>
               <div class="tpl-dialog-btns">
-                <button @click="deleteConfirmId = null" class="tpl-cancel-btn">{{ t('common.cancel') }}</button>
-                <button @click="executeDelete" class="tpl-danger-btn">{{ t('templates.delete') }}</button>
+                <BaseButton 
+                  variant="secondary" 
+                  size="sm"
+                  @click="deleteConfirmId = null"
+                >
+                  {{ t('common.cancel') }}
+                </BaseButton>
+                <BaseButton 
+                  variant="danger" 
+                  size="sm"
+                  @click="executeDelete"
+                >
+                  {{ t('templates.delete') }}
+                </BaseButton>
               </div>
             </div>
           </div>
@@ -224,8 +292,20 @@
               <h3>{{ t('templates.unsavedChanges') }}</h3>
               <p>{{ t('templates.unsavedChangesText') }}</p>
               <div class="tpl-dialog-btns">
-                <button @click="discardAndClose" class="tpl-cancel-btn">{{ t('templates.discard') }}</button>
-                <button @click="saveAndClose" class="tpl-save-btn">{{ t('common.save') }}</button>
+                <BaseButton 
+                  variant="secondary" 
+                  size="sm"
+                  @click="discardAndClose"
+                >
+                  {{ t('templates.discard') }}
+                </BaseButton>
+                <BaseButton 
+                  variant="primary" 
+                  size="sm"
+                  @click="saveAndClose"
+                >
+                  {{ t('common.save') }}
+                </BaseButton>
               </div>
             </div>
           </div>
@@ -237,6 +317,7 @@
 
 
 <script setup lang="ts">
+import BaseButton from '@/components/ui/BaseButton.vue'
 import { useI18n } from '@/composables/useI18n'
 import { useContextStore } from '@/features/context'
 import { 
@@ -685,20 +766,7 @@ function handleImport() {
 .tpl-icon-btn {
   width: 2.5rem;
   height: 2.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.15s;
 }
-.tpl-icon-btn:hover:not(:disabled) { 
-  background: rgba(255, 255, 255, 0.08); 
-  border-color: rgba(255, 255, 255, 0.2); 
-}
-.tpl-icon-btn:disabled { cursor: default; opacity: 0.6; }
 
 .tpl-icon-display { font-size: 1.25rem; line-height: 1; }
 

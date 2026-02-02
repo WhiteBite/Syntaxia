@@ -75,97 +75,82 @@
     </Transition>
 
     <!-- Save Preset Modal -->
-    <Teleport to="body">
-      <div v-if="showSaveModal" class="modal-overlay" @click.self="showSaveModal = false">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h3 class="modal-title">{{ t('presets.savePresetTitle') }}</h3>
-            <button class="modal-close" @click="showSaveModal = false">
-              <XMarkIcon class="w-5 h-5" />
-            </button>
-          </div>
-          
-          <div class="modal-body">
-            <div class="form-group">
-              <label class="form-label">{{ t('presets.nameLabel') }}</label>
-              <BaseInput
-                v-model="newPresetName"
-                :placeholder="t('presets.namePlaceholder')"
-                @keydown.enter="handleSave"
-              />
-            </div>
-            
-            <div class="form-group">
-              <label class="form-label">{{ t('presets.descriptionLabel') }}</label>
-              <BaseInput
-                v-model="newPresetDescription"
-                :placeholder="t('presets.descriptionPlaceholder')"
-              />
-            </div>
-
-            <div class="preset-info-box">
-              <span class="text-xs text-gray-400">
-                {{ t('presets.saveWithCount', { count: fileStore.selectedCount }) }}
-              </span>
-            </div>
-          </div>
-
-          <div class="modal-footer">
-            <BaseButton variant="ghost" @click="showSaveModal = false">
-              {{ t('presets.cancel') }}
-            </BaseButton>
-            <BaseButton 
-              variant="primary" 
-              @click="handleSave"
-              :disabled="!newPresetName.trim()"
-            >
-              {{ t('presets.save', { count: fileStore.selectedCount }) }}
-            </BaseButton>
-          </div>
-        </div>
+    <BaseModal
+      v-model="showSaveModal"
+      :title="t('presets.savePresetTitle')"
+      size="sm"
+      :close-on-backdrop="true"
+    >
+      <div class="form-group">
+        <label class="form-label">{{ t('presets.nameLabel') }}</label>
+        <BaseInput
+          v-model="newPresetName"
+          :placeholder="t('presets.namePlaceholder')"
+          @keydown.enter="handleSave"
+        />
       </div>
-    </Teleport>
+      
+      <div class="form-group">
+        <label class="form-label">{{ t('presets.descriptionLabel') }}</label>
+        <BaseInput
+          v-model="newPresetDescription"
+          :placeholder="t('presets.descriptionPlaceholder')"
+        />
+      </div>
+
+      <div class="preset-info-box">
+        <span class="text-xs text-gray-400">
+          {{ t('presets.saveWithCount', { count: fileStore.selectedCount }) }}
+        </span>
+      </div>
+
+      <template #footer>
+        <BaseButton variant="ghost" @click="showSaveModal = false">
+          {{ t('presets.cancel') }}
+        </BaseButton>
+        <BaseButton 
+          variant="primary" 
+          @click="handleSave"
+          :disabled="!newPresetName.trim()"
+        >
+          {{ t('presets.save', { count: fileStore.selectedCount }) }}
+        </BaseButton>
+      </template>
+    </BaseModal>
 
     <!-- Delete Confirmation Modal -->
-    <Teleport to="body">
-      <div v-if="showDeleteModal" class="modal-overlay" @click.self="showDeleteModal = false">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h3 class="modal-title">{{ t('presets.confirmDelete') }}</h3>
-            <button class="modal-close" @click="showDeleteModal = false">
-              <XMarkIcon class="w-5 h-5" />
-            </button>
-          </div>
-          
-          <div class="modal-body">
-            <p class="text-sm text-gray-300">
-              {{ t('presets.confirmDeleteMessage', { name: presetToDelete?.name || '' }) }}
-            </p>
-          </div>
+    <BaseModal
+      v-model="showDeleteModal"
+      :title="t('presets.confirmDelete')"
+      size="sm"
+      :close-on-backdrop="true"
+    >
+      <p class="text-sm text-gray-300">
+        {{ t('presets.confirmDeleteMessage', { name: presetToDelete?.name || '' }) }}
+      </p>
 
-          <div class="modal-footer">
-            <BaseButton variant="ghost" @click="showDeleteModal = false">
-              {{ t('presets.cancel') }}
-            </BaseButton>
-            <BaseButton 
-              variant="primary" 
-              class="bg-red-600 hover:bg-red-700"
-              @click="confirmDelete"
-            >
-              {{ t('presets.delete') }}
-            </BaseButton>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+      <template #footer>
+        <BaseButton variant="ghost" @click="showDeleteModal = false">
+          {{ t('presets.cancel') }}
+        </BaseButton>
+        <BaseButton 
+          variant="primary" 
+          class="bg-red-600 hover:bg-red-700"
+          @click="confirmDelete"
+        >
+          {{ t('presets.delete') }}
+        </BaseButton>
+      </template>
+    </BaseModal>
   </div>
 </template>
 
 <script setup lang="ts">
+import BaseModal from '@/components/ui/BaseModal.vue'
 import { useI18n } from '@/composables/useI18n'
 import { useUIStore } from '@/stores/ui.store'
 import { BaseButton, BaseInput } from '@/components/ui'
-import { BookmarkIcon, ChevronDownIcon, PlusIcon, ArrowDownTrayIcon, TrashIcon, XMarkIcon } from '@heroicons/vue/24/solid'
+import { BookmarkIcon, ChevronDownIcon, PlusIcon, ArrowDownTrayIcon, TrashIcon } from '@heroicons/vue/24/solid'
 import { computed, ref } from 'vue'
 import { useFileStore } from '../model/file.store'
 import type { SelectionPreset } from '@/composables/useFilePersistence'
@@ -400,60 +385,7 @@ function confirmDelete() {
   color: rgb(239, 68, 68);
 }
 
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  padding: 1rem;
-}
-
-.modal-content {
-  background: #1a1d2e;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0.75rem;
-  width: 100%;
-  max-width: 28rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.modal-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.modal-close {
-  padding: 0.25rem;
-  border-radius: 0.375rem;
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.modal-close:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-primary);
-}
-
-.modal-body {
-  padding: 1.25rem;
-}
-
+/* Form styles for modal content */
 .form-group {
   margin-bottom: 1rem;
 }
@@ -476,15 +408,6 @@ function confirmDelete() {
   border: 1px solid rgba(99, 102, 241, 0.2);
   border-radius: 0.5rem;
   margin-top: 1rem;
-}
-
-.modal-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Collapse animation */

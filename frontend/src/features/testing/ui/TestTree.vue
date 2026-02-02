@@ -35,10 +35,7 @@
 
           <!-- Suite Status Icon -->
           <div class="suite-status">
-            <svg v-if="suite.status === 'running'" class="status-icon animate-spin" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity="0.25"/>
-              <path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
+            <BaseSpinner v-if="suite.status === 'running'" size="sm" class="status-icon" />
             <svg v-else-if="suite.status === 'passed'" class="status-icon" viewBox="0 0 24 24" fill="none">
               <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
@@ -82,6 +79,7 @@
 </template>
 
 <script setup lang="ts">
+import { BaseSpinner } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
 import type { TestSuiteUI } from '../types'
 import TestItem from './TestItem.vue'
@@ -264,14 +262,5 @@ function getFailedCount(suite: TestSuiteUI): number {
   gap: 2px;
   padding: 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 </style>

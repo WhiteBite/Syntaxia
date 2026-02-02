@@ -7,52 +7,113 @@
       `base-button--${variant}`,
       `base-button--${size}`,
       { 'base-button--loading': loading },
-      { 'base-button--icon-only': iconOnly }
+      { 'base-button--icon-only': iconOnly },
+      { 'base-button--block': block },
+      { 'base-button--outline': outline }
     ]"
     @click="$emit('click', $event)"
   >
-    <span v-if="loading" class="base-button__loader">
-      <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-      </svg>
-    </span>
-    <span v-else-if="$slots.icon || icon" class="base-button__icon">
-      <slot name="icon">
-        <component :is="icon" />
+    <!-- Icon Left or Loading Spinner -->
+    <span 
+      v-if="loading || (($slots.icon || icon) && iconPosition === 'left')" 
+      class="base-button__icon base-button__icon--left"
+    >
+      <BaseSpinner v-if="loading" :size="spinnerSize" />
+      <slot v-else name="icon">
+        <BaseIcon v-if="icon" :icon="icon" :size="iconSize" />
       </slot>
     </span>
+
+    <!-- Button Text -->
     <span v-if="!iconOnly" class="base-button__text">
       <slot />
+    </span>
+
+    <!-- Icon Right -->
+    <span 
+      v-if="!loading && ($slots.icon || icon) && iconPosition === 'right'" 
+      class="base-button__icon base-button__icon--right"
+    >
+      <slot name="icon">
+        <BaseIcon v-if="icon" :icon="icon" :size="iconSize" />
+      </slot>
     </span>
   </button>
 </template>
 
 <script setup lang="ts">
-import type { Component } from 'vue'
+/**
+ * BaseButton - Enhanced button component with comprehensive features
+ * 
+ * @example
+ * // Primary button with loading state
+ * <BaseButton variant="primary" :loading="isLoading" :icon="PlayIcon">
+ *   Run Tests
+ * </BaseButton>
+ * 
+ * @example
+ * // Outline button with icon on right
+ * <BaseButton variant="outline" size="sm" :icon="SettingsIcon" icon-position="right">
+ *   Settings
+ * </BaseButton>
+ * 
+ * @example
+ * // Link variant for cancel actions
+ * <BaseButton variant="link" @click="cancel">
+ *   Cancel
+ * </BaseButton>
+ * 
+ * @example
+ * // Full width success button
+ * <BaseButton variant="success" block>
+ *   Save Changes
+ * </BaseButton>
+ */
+import { computed, type Component } from 'vue'
+import BaseIcon from './BaseIcon.vue'
+import BaseSpinner from './BaseSpinner.vue'
 
 interface Props {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'success' | 'warning'
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'success' | 'warning' | 'outline' | 'link' | 'text'
   size?: 'xs' | 'sm' | 'md' | 'lg'
   type?: 'button' | 'submit' | 'reset'
   disabled?: boolean
   loading?: boolean
   icon?: Component
   iconOnly?: boolean
+  iconPosition?: 'left' | 'right'
+  block?: boolean
+  outline?: boolean
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   variant: 'secondary',
   size: 'md',
   type: 'button',
   disabled: false,
   loading: false,
-  iconOnly: false
+  iconOnly: false,
+  iconPosition: 'left',
+  block: false,
+  outline: false
 })
 
 defineEmits<{
   (e: 'click', event: MouseEvent): void
 }>()
+
+// Map button size to icon/spinner size
+const iconSize = computed(() => {
+  const sizeMap: Record<string, 'xs' | 'sm' | 'md' | 'lg'> = {
+    xs: 'xs',
+    sm: 'sm',
+    md: 'sm',
+    lg: 'md'
+  }
+  return sizeMap[props.size]
+})
+
+const spinnerSize = computed(() => iconSize.value)
 </script>
 
 <style scoped>
@@ -121,6 +182,105 @@ defineEmits<{
   border-color: var(--color-danger);
 }
 
+.base-button--success {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+  border-color: var(--color-success-border);
+}
+.base-button--success:hover:not(:disabled) {
+  background: rgba(74, 222, 128, 0.25);
+  border-color: var(--color-success);
+}
+
+.base-button--warning {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+  border-color: var(--color-warning-border);
+}
+.base-button--warning:hover:not(:disabled) {
+  background: rgba(251, 191, 36, 0.25);
+  border-color: var(--color-warning);
+}
+
+.base-button--link {
+  background: transparent;
+  color: var(--accent-indigo);
+  border: none;
+  padding-left: 0;
+  padding-right: 0;
+  text-decoration: none;
+}
+.base-button--link:hover:not(:disabled) {
+  text-decoration: underline;
+  color: var(--accent-purple);
+}
+
+.base-button--text {
+  background: transparent;
+  color: var(--text-primary);
+  border: none;
+  padding-left: 0;
+  padding-right: 0;
+}
+.base-button--text:hover:not(:disabled) {
+  color: var(--text-primary);
+  opacity: 0.8;
+}
+
+/* Outline variants */
+.base-button--outline.base-button--primary {
+  background: transparent;
+  color: var(--accent-indigo);
+  border-color: var(--accent-indigo);
+  box-shadow: none;
+}
+.base-button--outline.base-button--primary:hover:not(:disabled) {
+  background: var(--accent-indigo-bg);
+  border-color: var(--accent-purple);
+  color: var(--accent-purple);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+.base-button--outline.base-button--secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+.base-button--outline.base-button--secondary:hover:not(:disabled) {
+  background: var(--bg-2);
+  border-color: var(--text-muted);
+}
+
+.base-button--outline.base-button--danger {
+  background: transparent;
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+.base-button--outline.base-button--danger:hover:not(:disabled) {
+  background: var(--color-danger-soft);
+  border-color: var(--color-danger);
+}
+
+.base-button--outline.base-button--success {
+  background: transparent;
+  color: var(--color-success);
+  border-color: var(--color-success);
+}
+.base-button--outline.base-button--success:hover:not(:disabled) {
+  background: var(--color-success-soft);
+  border-color: var(--color-success);
+}
+
+.base-button--outline.base-button--warning {
+  background: transparent;
+  color: var(--color-warning);
+  border-color: var(--color-warning);
+}
+.base-button--outline.base-button--warning:hover:not(:disabled) {
+  background: var(--color-warning-soft);
+  border-color: var(--color-warning);
+}
+
 /* Sizes */
 .base-button--xs {
   padding: var(--space-1) var(--space-2);
@@ -150,26 +310,63 @@ defineEmits<{
   padding: var(--space-2);
 }
 
+.base-button--icon-only.base-button--xs {
+  padding: var(--space-1);
+}
+
+.base-button--icon-only.base-button--lg {
+  padding: var(--space-3);
+}
+
+.base-button--block {
+  width: 100%;
+}
+
 .base-button__icon {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
-.base-button__icon :deep(svg) {
-  width: 1.1em;
-  height: 1.1em;
+.base-button__text {
+  flex: 1;
+  min-width: 0;
 }
 
 .base-button:focus-visible {
   box-shadow: 0 0 0 2px var(--bg-0), 0 0 0 4px var(--accent-indigo);
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+/* Loading state - preserve button size */
+.base-button--loading {
+  position: relative;
 }
-.animate-spin {
-  animation: spin 1s linear infinite;
+
+.base-button--loading .base-button__text {
+  visibility: visible;
+  opacity: 0.7;
+}
+
+/* Ripple effect (optional) */
+.base-button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+  pointer-events: none;
+}
+
+.base-button:active:not(:disabled)::after {
+  width: 200px;
+  height: 200px;
+  opacity: 0;
+  transition: width 0s, height 0s, opacity 0.6s;
 }
 </style>

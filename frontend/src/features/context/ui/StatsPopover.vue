@@ -1,83 +1,85 @@
 <template>
-  <Teleport to="body">
-    <Transition name="popover">
-      <div v-if="visible" class="stats-popover-overlay" @click.self="$emit('close')">
-        <div class="stats-popover" :style="popoverStyle">
-          <!-- Header -->
-          <div class="stats-popover-header">
-            <div class="stats-popover-title">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              <span>{{ t('stats.title') }}</span>
-            </div>
-            <button @click="$emit('close')" class="stats-popover-close">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+  <BasePopover :model-value="visible" @update:model-value="val => !val && $emit('close')" trigger="click" placement="top" :arrow="false">
+    <template #trigger>
+      <!-- Trigger is external, this is just a placeholder -->
+      <span></span>
+    </template>
 
-          <!-- Main Stats Grid -->
-          <div class="stats-popover-grid">
-            <div class="stats-popover-card">
-              <div class="stats-popover-value">{{ fileCount }}</div>
-              <div class="stats-popover-label">{{ t('context.files') }}</div>
-            </div>
-            <div class="stats-popover-card">
-              <div class="stats-popover-value">{{ formatNumber(lineCount) }}</div>
-              <div class="stats-popover-label">{{ t('context.lines') }}</div>
-            </div>
-            <div class="stats-popover-card">
-              <div class="stats-popover-value stats-popover-value--accent">{{ formatNumber(tokenCount) }}</div>
-              <div class="stats-popover-label">{{ t('action.tokens') }}</div>
-            </div>
-            <div class="stats-popover-card">
-              <div class="stats-popover-value stats-popover-value--success">${{ estimatedCost.toFixed(4) }}</div>
-              <div class="stats-popover-label">{{ t('action.cost') }}</div>
-            </div>
-          </div>
+    <div class="stats-popover-content">
+      <!-- Header -->
+      <div class="stats-popover-header">
+        <div class="stats-popover-title">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          <span>{{ t('stats.title') }}</span>
+        </div>
+        <button @click="$emit('close')" class="stats-popover-close">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
 
-          <!-- File Types Section -->
-          <div v-if="fileTypeStats.length > 0" class="stats-popover-section">
-            <div class="stats-popover-section-title">{{ t('stats.byType') }}</div>
-            <div class="stats-popover-list">
-              <div v-for="stat in fileTypeStats" :key="stat.extension" class="stats-popover-item">
-                <span class="stats-popover-item-icon">{{ stat.icon }}</span>
-                <span class="stats-popover-item-name">.{{ stat.extension }}</span>
-                <span class="stats-popover-item-count">{{ stat.count }}</span>
-                <div class="stats-popover-item-bar">
-                  <div class="stats-popover-item-fill" :class="stat.colorClass" :style="{ width: `${stat.percentage}%` }"></div>
-                </div>
-              </div>
-            </div>
-          </div>
+      <!-- Main Stats Grid -->
+      <div class="stats-popover-grid">
+        <div class="stats-popover-card">
+          <div class="stats-popover-value">{{ fileCount }}</div>
+          <div class="stats-popover-label">{{ t('context.files') }}</div>
+        </div>
+        <div class="stats-popover-card">
+          <div class="stats-popover-value">{{ formatNumber(lineCount) }}</div>
+          <div class="stats-popover-label">{{ t('context.lines') }}</div>
+        </div>
+        <div class="stats-popover-card">
+          <div class="stats-popover-value stats-popover-value--accent">{{ formatNumber(tokenCount) }}</div>
+          <div class="stats-popover-label">{{ t('action.tokens') }}</div>
+        </div>
+        <div class="stats-popover-card">
+          <div class="stats-popover-value stats-popover-value--success">${{ estimatedCost.toFixed(4) }}</div>
+          <div class="stats-popover-label">{{ t('action.cost') }}</div>
+        </div>
+      </div>
 
-          <!-- Top Folders Section -->
-          <div v-if="folderStats.length > 0" class="stats-popover-section">
-            <div class="stats-popover-section-title">{{ t('stats.byFolder') }}</div>
-            <div class="stats-popover-list">
-              <div v-for="stat in folderStats.slice(0, 5)" :key="stat.folder" class="stats-popover-item">
-                <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                </svg>
-                <span class="stats-popover-item-name">{{ stat.folder || '/' }}</span>
-                <span class="stats-popover-item-count">{{ stat.count }}</span>
-                <div class="stats-popover-item-bar">
-                  <div class="stats-popover-item-fill stats-popover-item-fill--folder" :style="{ width: `${stat.percentage}%` }"></div>
-                </div>
-              </div>
+      <!-- File Types Section -->
+      <div v-if="fileTypeStats.length > 0" class="stats-popover-section">
+        <div class="stats-popover-section-title">{{ t('stats.byType') }}</div>
+        <div class="stats-popover-list">
+          <div v-for="stat in fileTypeStats" :key="stat.extension" class="stats-popover-item">
+            <span class="stats-popover-item-icon">{{ stat.icon }}</span>
+            <span class="stats-popover-item-name">.{{ stat.extension }}</span>
+            <span class="stats-popover-item-count">{{ stat.count }}</span>
+            <div class="stats-popover-item-bar">
+              <div class="stats-popover-item-fill" :class="stat.colorClass" :style="{ width: `${stat.percentage}%` }"></div>
             </div>
           </div>
         </div>
       </div>
-    </Transition>
-  </Teleport>
+
+      <!-- Top Folders Section -->
+      <div v-if="folderStats.length > 0" class="stats-popover-section">
+        <div class="stats-popover-section-title">{{ t('stats.byFolder') }}</div>
+        <div class="stats-popover-list">
+          <div v-for="stat in folderStats.slice(0, 5)" :key="stat.folder" class="stats-popover-item">
+            <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+            </svg>
+            <span class="stats-popover-item-name">{{ stat.folder || '/' }}</span>
+            <span class="stats-popover-item-count">{{ stat.count }}</span>
+            <div class="stats-popover-item-bar">
+              <div class="stats-popover-item-fill stats-popover-item-fill--folder" :style="{ width: `${stat.percentage}%` }"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </BasePopover>
 </template>
 
 <script setup lang="ts">
+import BasePopover from '@/components/ui/BasePopover.vue'
 import { useI18n } from '@/composables/useI18n'
 import { useContextStore } from '@/features/context/model/context.store'
 import { useFileStore } from '@/features/files/model/file.store'
@@ -91,6 +93,7 @@ defineProps<{
 
 defineEmits<{
   close: []
+  'update:visible': [value: boolean]
 }>()
 
 const { t } = useI18n()
@@ -101,10 +104,6 @@ const fileCount = computed(() => contextStore.fileCount)
 const lineCount = computed(() => contextStore.lineCount)
 const tokenCount = computed(() => contextStore.tokenCount)
 const estimatedCost = computed(() => contextStore.estimatedCost)
-
-const popoverStyle = computed(() => ({
-  // Center in viewport
-}))
 
 const fileTypeStats = computed(() => {
   const selected = Array.from(fileStore.selectedPaths)

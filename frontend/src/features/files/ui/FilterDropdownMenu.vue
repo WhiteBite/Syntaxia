@@ -1,25 +1,21 @@
 <template>
-  <Teleport to="body">
-    <Transition name="dropdown">
-      <div v-if="isOpen" class="filter-dropdown-menu" :class="menuClass" :style="style">
-        <div class="filter-dropdown-header" :class="headerClass">
-          <span>{{ title }}</span>
-          <button v-if="hasActiveFilters" @click="$emit('clear')" class="filter-clear-btn">
-            {{ t('quickFilters.clearAll') }}
-          </button>
-        </div>
-        <div class="filter-dropdown-items">
-          <slot />
-        </div>
-        <div v-if="hint" class="filter-dropdown-hint">
-          <kbd>Ctrl</kbd> {{ t('quickFilters.multiSelect') }} · <kbd>Shift</kbd> {{ t('quickFilters.exclude') }}
-        </div>
-        <div v-if="footer" class="filter-dropdown-footer" :class="footerClass">
-          <span class="filter-dropdown-footer-text">{{ footer }}</span>
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
+  <div class="filter-dropdown-menu" :class="menuClass">
+    <div class="filter-dropdown-header" :class="headerClass">
+      <span>{{ title }}</span>
+      <button v-if="hasActiveFilters" @click="$emit('clear')" class="filter-clear-btn">
+        {{ t('quickFilters.clearAll') }}
+      </button>
+    </div>
+    <div class="filter-dropdown-items">
+      <slot />
+    </div>
+    <div v-if="hint" class="filter-dropdown-hint">
+      <kbd>Ctrl</kbd> {{ t('quickFilters.multiSelect') }} · <kbd>Shift</kbd> {{ t('quickFilters.exclude') }}
+    </div>
+    <div v-if="footer" class="filter-dropdown-footer" :class="footerClass">
+      <span class="filter-dropdown-footer-text">{{ footer }}</span>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -28,9 +24,7 @@ import { useI18n } from '@/composables/useI18n';
 const { t } = useI18n()
 
 defineProps<{
-  isOpen: boolean
   title: string
-  style: Record<string, string>
   hasActiveFilters?: boolean
   hint?: boolean
   footer?: string
@@ -47,9 +41,6 @@ defineEmits<{
 <style scoped>
 .filter-dropdown-menu {
   @apply rounded-xl overflow-hidden;
-  background: var(--bg-1);
-  border: 1px solid var(--border-default);
-  box-shadow: var(--shadow-xl);
   min-width: min(260px, 80vw);
   max-width: min(320px, 40vw);
 }
@@ -83,7 +74,4 @@ defineEmits<{
   border-top: 1px solid var(--border-default);
 }
 .filter-dropdown-footer-text { @apply text-[10px]; color: var(--accent-emerald); }
-
-.dropdown-enter-active, .dropdown-leave-active { transition: all 150ms ease-out; }
-.dropdown-enter-from, .dropdown-leave-to { opacity: 0; transform: translateY(-8px); }
 </style>

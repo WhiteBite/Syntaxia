@@ -14,9 +14,17 @@
       <span class="tpl-block-separator">|</span>
       <span class="tpl-block-preview">{{ truncatedRole }}</span>
       <div class="tpl-block-actions">
-        <button @click.stop="openEditor" class="tpl-block-btn" :title="t('templates.settings')">
-          <Pencil class="w-3 h-3" />
-        </button>
+        <BaseButton 
+          variant="ghost" 
+          size="sm"
+          icon-only
+          @click.stop="openEditor" 
+          :title="t('templates.settings')"
+        >
+          <template #icon>
+            <Pencil class="w-3 h-3" />
+          </template>
+        </BaseButton>
       </div>
       <ChevronDown class="tpl-block-chevron" :class="{ rotated: isExpanded }" />
     </div>
@@ -46,6 +54,7 @@
 </template>
 
 <script setup lang="ts">
+import BaseButton from '@/components/ui/BaseButton.vue'
 import { useI18n } from '@/composables/useI18n'
 import { useContextStore } from '@/features/context'
 import { useTemplateStore } from '../model/template.store'
@@ -179,25 +188,6 @@ function openEditor() {
 
 .tpl-block:hover .tpl-block-actions {
   opacity: 1;
-}
-
-.tpl-block-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  color: var(--text-subtle);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.tpl-block-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-primary);
 }
 
 /* Chevron - always visible */

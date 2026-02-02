@@ -21,41 +21,48 @@
           </div>
 
           <!-- Toolbar Buttons -->
-          <button
-            class="toolbar-btn"
+          <BaseButton
+            variant="ghost"
+            size="sm"
+            icon-only
             :title="t('symbols.expandAll')"
             @click="store.expandAll"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          <button
-            class="toolbar-btn"
+            <template #icon>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </template>
+          </BaseButton>
+          <BaseButton
+            variant="ghost"
+            size="sm"
+            icon-only
             :title="t('symbols.collapseAll')"
             @click="store.collapseAll"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-            </svg>
-          </button>
-          <button
-            class="toolbar-btn"
+            <template #icon>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+              </svg>
+            </template>
+          </BaseButton>
+          <BaseButton
+            variant="ghost"
+            size="sm"
+            icon-only
             :title="t('symbols.refresh')"
             :disabled="store.isLoading"
+            :loading="store.isLoading"
             @click="handleRefresh"
           >
-            <svg 
-              class="w-4 h-4" 
-              :class="{ 'animate-spin': store.isLoading }"
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </button>
+            <template #icon>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </template>
+          </BaseButton>
         </div>
       </div>
     </div>
@@ -88,9 +95,9 @@
             d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
         <p class="error-text">{{ store.error }}</p>
-        <button class="btn btn-ghost" @click="handleRefresh">
+        <BaseButton variant="ghost" @click="handleRefresh">
           {{ t('symbols.retry') }}
-        </button>
+        </BaseButton>
       </div>
 
       <!-- No Project State -->
@@ -116,18 +123,20 @@
       <span class="footer-stats">
         {{ store.fileCount }} {{ t('symbols.files') }} · {{ store.filteredCount }} {{ t('symbols.symbols') }}
       </span>
-      <button
+      <BaseButton
         v-if="store.hasFilter"
-        class="btn btn-ghost btn-sm"
+        variant="ghost"
+        size="sm"
         @click="handleClearFilter"
       >
         {{ t('symbols.clearFilter') }}
-      </button>
+      </BaseButton>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import BaseButton from '@/components/ui/BaseButton.vue'
 import { useI18n } from '@/composables/useI18n'
 import { useProjectStore } from '@/stores/project.store'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -235,30 +244,6 @@ function handleSymbolClick(symbol: Symbol) {
   color: #9ca3af;
 }
 
-.toolbar-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: none;
-  border: none;
-  border-radius: 6px;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.15s ease-out;
-}
-
-.toolbar-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.06);
-  color: #e5e7eb;
-}
-
-.toolbar-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .panel-content {
   flex: 1;
   min-height: 0;
@@ -324,11 +309,6 @@ function handleSymbolClick(symbol: Symbol) {
 .footer-stats {
   font-size: 11px;
   color: #6b7280;
-}
-
-.btn-sm {
-  padding: 4px 8px;
-  font-size: 11px;
 }
 
 @keyframes spin {

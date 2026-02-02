@@ -8,10 +8,7 @@
         :class="[`status-item--${status.build}`]"
         :title="`${t('verification.build')}: ${t(`verification.${status.build}`)}`"
       >
-        <svg v-if="status.build === 'running'" class="status-icon animate-spin" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity="0.25"/>
-          <path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
+        <BaseSpinner v-if="status.build === 'running'" size="sm" class="status-icon" />
         <svg v-else-if="status.build === 'passed'" class="status-icon" viewBox="0 0 24 24" fill="none">
           <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -31,10 +28,7 @@
         :class="[`status-item--${status.lint}`]"
         :title="`${t('verification.lint')}: ${t(`verification.${status.lint}`)}`"
       >
-        <svg v-if="status.lint === 'running'" class="status-icon animate-spin" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity="0.25"/>
-          <path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
+        <BaseSpinner v-if="status.lint === 'running'" size="sm" class="status-icon" />
         <svg v-else-if="status.lint === 'passed'" class="status-icon" viewBox="0 0 24 24" fill="none">
           <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -54,10 +48,7 @@
         :class="[`status-item--${status.test}`]"
         :title="`${t('verification.tests')}: ${t(`verification.${status.test}`)}`"
       >
-        <svg v-if="status.test === 'running'" class="status-icon animate-spin" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity="0.25"/>
-          <path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
+        <BaseSpinner v-if="status.test === 'running'" size="sm" class="status-icon" />
         <svg v-else-if="status.test === 'passed'" class="status-icon" viewBox="0 0 24 24" fill="none">
           <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -111,6 +102,7 @@
 </template>
 
 <script setup lang="ts">
+import { BaseSpinner } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
 import type { VerificationStatus } from '../model/verification.store'
 
@@ -238,13 +230,4 @@ defineProps<{
   color: #4ade80;
 }
 
-/* Animation */
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
 </style>

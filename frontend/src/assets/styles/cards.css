@@ -1,12 +1,14 @@
 /* ============================================
    CARD & PANEL COMPONENTS
+   Optimized v3.0
    ============================================ */
 
+/* === BASE CARD === */
 .card {
     background: var(--bg-1);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-xl);
-    transition: all 150ms ease-out;
+    transition: all var(--transition-fast);
 }
 
 .card-hover:hover {
@@ -25,7 +27,7 @@
     box-shadow: 0 0 0 1px var(--accent-indigo-border), var(--shadow-glow-indigo);
 }
 
-/* Panel Components */
+/* === PANEL COMPONENTS === */
 .panel {
     background: var(--bg-1);
     border: 1px solid var(--border-default);
@@ -49,7 +51,8 @@
 }
 
 .panel-header-unified-icon {
-    @apply w-8 h-8 rounded-lg flex items-center justify-center;
+    @apply w-8 h-8 flex items-center justify-center;
+    border-radius: var(--radius-lg);
 }
 
 .panel-header-unified-icon svg {
@@ -72,9 +75,11 @@
     color: var(--accent-indigo);
 }
 
-/* Breadcrumbs */
+/* === BREADCRUMBS === */
 .breadcrumb-segment {
-    @apply px-2 py-1 rounded flex items-center gap-1.5 transition-colors;
+    @apply px-2 py-1 flex items-center gap-1.5;
+    border-radius: var(--radius-md);
+    transition: colors var(--transition-fast);
 }
 
 .breadcrumb-segment-active {
@@ -92,8 +97,10 @@
 }
 
 .breadcrumb-action {
-    @apply ml-1 p-1.5 rounded transition-colors;
+    @apply ml-1 p-1.5;
+    border-radius: var(--radius-md);
     color: var(--text-muted);
+    transition: all var(--transition-fast);
 }
 
 .breadcrumb-action:hover {

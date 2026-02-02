@@ -139,27 +139,33 @@
       </div>
 
       <!-- Context Menu -->
-      <Teleport to="body">
-        <Transition name="fade">
-          <div v-if="contextMenu.visible" class="context-menu"
-            :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }" @click.stop>
-            <button @click="copyProjectPath" class="context-menu-item">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-              </svg>
-              {{ t('welcome.copyPath') }}
-            </button>
-            <button @click="removeProjectFromMenu" class="context-menu-item context-menu-item-danger">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-              {{ t('welcome.removeProject') }}
-            </button>
-          </div>
-        </Transition>
-      </Teleport>
+      <BaseDropdown
+        :model-value="contextMenu.visible"
+        placement="bottom-start"
+        @update:model-value="val => !val && hideContextMenu()"
+      >
+        <template #trigger>
+          <!-- No visible trigger - controlled externally -->
+          <span></span>
+        </template>
+
+        <div class="context-menu-content">
+          <button @click="copyProjectPath" class="context-menu-item">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+            </svg>
+            {{ t('welcome.copyPath') }}
+          </button>
+          <button @click="removeProjectFromMenu" class="context-menu-item context-menu-item-danger">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            {{ t('welcome.removeProject') }}
+          </button>
+        </div>
+      </BaseDropdown>
 
     </div>
 
@@ -172,6 +178,7 @@
 
 
 <script setup lang="ts">
+import BaseDropdown from '@/components/ui/BaseDropdown.vue'
 import VersionBadge from '@/components/VersionBadge.vue';
 import { useI18n } from '@/composables/useI18n';
 import { useLogger } from '@/composables/useLogger';
@@ -688,10 +695,9 @@ if (typeof window !== 'undefined') {
 }
 
 /* Context Menu */
-.context-menu {
-  @apply fixed z-50 py-1 min-w-[180px] rounded-xl;
-  @apply bg-gray-800 border border-gray-700/50;
-  @apply shadow-2xl backdrop-blur-md;
+.context-menu-content {
+  min-width: 180px;
+  padding: 0.25rem 0;
 }
 
 .context-menu-item {
