@@ -117,3 +117,37 @@ func (a *App) StartFileWatcher(rootDirPath string) error {
 func (a *App) StopFileWatcher() {
 	a.projectHandler.StopFileWatcher()
 }
+
+// GetFileDependencies returns dependencies for a single file
+func (a *App) GetFileDependencies(projectRoot, filePath string) ([]domain.FileDependency, error) {
+	if projectRoot == "" {
+		return nil, fmt.Errorf("projectRoot is required")
+	}
+	if err := validateRelativePath(projectRoot, filePath); err != nil {
+		return nil, err
+	}
+	if a.container.DependencyAnalyzer == nil {
+		return nil, fmt.Errorf("dependency analyzer not initialized")
+	}
+	return a.container.DependencyAnalyzer.AnalyzeFile(projectRoot, filePath)
+}
+
+// GetProjectDependencyGraph returns the complete dependency graph for a project
+func (a *App) GetProjectDependencyGraph(projectRoot string, ignorePatterns []string) (*domain.DependencyGraph, error) {
+	if projectRoot == "" {
+		return nil, fmt.Errorf("projectRoot is required")
+	}
+	if a.container.DependencyAnalyzer == nil {
+		return nil, fmt.Errorf("dependency analyzer not initialized")
+	}
+	return a.container.DependencyAnalyzer.BuildGraph(projectRoot, ignorePatterns)
+}
+
+// ClearDependencyCache clears the cached dependency graph
+func (a *App) ClearDependencyCache() error {
+	if a.container.DependencyAnalyzer == nil {
+		return fmt.Errorf("dependency analyzer not initialized")
+	}
+	a.container.DependencyAnalyzer.ClearCache()
+	return nil
+}

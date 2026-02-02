@@ -1,0 +1,103 @@
+/* Dependency Visualization Styles */
+
+.tree-row-deps {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    opacity: 0;
+    transition: opacity 200ms ease-out;
+}
+
+.tree-row:hover .tree-row-deps,
+.tree-row:focus-within .tree-row-deps {
+    opacity: 1;
+}
+
+.dep-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: var(--radius-sm);
+    transition: background 150ms ease-out;
+}
+
+.dep-group:hover {
+    background: var(--bg-hover);
+}
+
+.dep-icon {
+    transition: transform 150ms ease-out;
+}
+
+.dep-icon.dep-outgoing {
+    color: var(--color-success);
+}
+
+.dep-icon.dep-incoming {
+    color: var(--color-info);
+}
+
+.dep-group:hover .dep-icon {
+    transform: scale(1.15);
+}
+
+.dep-count {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    min-width: 12px;
+    text-align: center;
+}
+
+/* Highlight styles */
+.tree-row-dependency-highlight {
+    background: var(--bg-hover) !important;
+    border-left: 3px solid var(--color-primary);
+}
+
+.tree-row-dependency-outgoing {
+    border-left-color: var(--color-success);
+}
+
+.tree-row-dependency-incoming {
+    border-left-color: var(--color-info);
+}
+
+/* Tooltip content */
+.dep-tooltip-content {
+    max-width: min(400px, 40vw);
+    padding: 8px;
+}
+
+.dep-tooltip-section {
+    margin-bottom: 8px;
+}
+
+.dep-tooltip-section:last-child {
+    margin-bottom: 0;
+}
+
+.dep-tooltip-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.dep-tooltip-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px;
+    font-size: 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+.dep-tooltip-item:hover {
+    background: var(--bg-hover);
+}

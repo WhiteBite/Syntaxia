@@ -2,6 +2,7 @@
 
 /* Import design tokens first */
 @import './design-tokens.css';
+@import './styles/dependencies.css';
 
 @tailwind base;
 @tailwind components;

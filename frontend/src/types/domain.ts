@@ -133,3 +133,22 @@ export interface BatchRequest<T, D = unknown> {
  * Generic function type for debounce/throttle
  */
 export type AnyFunction = (...args: unknown[]) => unknown
+
+/**
+ * File dependency information
+ */
+export interface FileDependency {
+    sourcePath: string
+    targetPath: string
+    type: 'import' | 'style' | 'test' | 'type'
+    importName?: string
+    line?: number
+}
+
+/**
+ * Dependency graph for the project
+ */
+export interface DependencyGraph {
+    files: Record<string, FileDependency[]>
+    lastAnalyzed: string // ISO date
+}

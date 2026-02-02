@@ -60,6 +60,8 @@ export function CleanupTempFiles(arg1:string):Promise<void>;
 
 export function CleanupTempRepository(arg1:string):Promise<void>;
 
+export function ClearDependencyCache():Promise<void>;
+
 export function ClearFileTreeCache():Promise<void>;
 
 export function ClearStartupPath():Promise<void>;
@@ -176,6 +178,8 @@ export function GetFileAtRef(arg1:string,arg2:string,arg3:string):Promise<string
 
 export function GetFileContentAtCommit(arg1:string,arg2:string,arg3:string):Promise<string>;
 
+export function GetFileDependencies(arg1:string,arg2:string):Promise<Array<domain.FileDependency>>;
+
 export function GetFileQuickInfo(arg1:string,arg2:string):Promise<main.FileQuickInfo>;
 
 export function GetFileStats(arg1:string):Promise<string>;
@@ -195,6 +199,8 @@ export function GetImports(arg1:string,arg2:string):Promise<main.ImportInfo>;
 export function GetMetricsSummary():Promise<Record<string, any>>;
 
 export function GetProjectContexts(arg1:string):Promise<string>;
+
+export function GetProjectDependencyGraph(arg1:string,arg2:Array<string>):Promise<domain.DependencyGraph>;
 
 export function GetProjectStructure(arg1:string):Promise<domain.ProjectStructure>;
 

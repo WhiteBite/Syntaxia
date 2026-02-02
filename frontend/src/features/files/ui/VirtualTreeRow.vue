@@ -7,7 +7,10 @@
       props.isFocused ? 'tree-row-focused' : '',
       !isRelevant ? 'tree-row-dimmed' : '',
       props.isDraggingSelection ? 'tree-row-drag-selecting' : '',
-      item.relativePath ? 'tree-row-flat-search' : ''
+      item.relativePath ? 'tree-row-flat-search' : '',
+      isHighlightedByDependency ? 'tree-row-dependency-highlight' : '',
+      isOutgoingHighlight ? 'tree-row-dependency-outgoing' : '',
+      isIncomingHighlight ? 'tree-row-dependency-incoming' : ''
     ]"
     :style="item.relativePath ? { paddingLeft: '8px' } : { paddingLeft: `${item.depth * 16 + 8}px` }"
     :tabindex="props.isFocused ? 0 : -1"
@@ -148,6 +151,13 @@
       </template>
     </span>
     
+    <!-- Dependency Indicator -->
+    <DependencyIndicator
+      v-if="fileStore.showDependencyIndicators && !item.node.isDir"
+      :file-path="item.node.path"
+      @show-dependencies="handleShowDependencies"
+    />
+    
     <!-- Search mode: show relative path -->
     <span v-if="item.relativePath" class="tree-search-path">
       {{ item.relativePath }}
@@ -223,6 +233,7 @@ import { CheckIcon, ChevronIcon, EyeIcon, FolderIcon, FolderOpenIcon, WandIcon }
 import { computed, ref } from 'vue'
 import type { FuseResultMatch } from 'fuse.js'
 import { Link as LinkIcon, AlertTriangle as AlertTriangleIcon, Plus as PlusIcon } from 'lucide-vue-next'
+import DependencyIndicator from './DependencyIndicator.vue'
 
 const { t } = useI18n()
 const hoveredFile = useHoveredFile()
@@ -333,7 +344,7 @@ const isDependencyHovered = ref(false)
 // Dependency indicator logic
 const hasDependencyLink = computed(() => {
   if (props.item.node.isDir) return false
-  if (!settingsStore.settings.fileExplorer.showDependencyIndicators) return false
+  if (!fileStore.showDependencyIndicators) return false
   return fileStore.allFileDependencies.has(props.item.node.path)
 })
 
@@ -396,6 +407,42 @@ const isRelevant = computed(() => {
   return !fileStore.shouldDimNode(props.item.node)
 })
 
+// Dependency highlighting
+const hoveredFilePath = ref<string | null>(null)
+
+const isHighlightedByDependency = computed(() => {
+  if (!hoveredFilePath.value || !settingsStore.settings.fileExplorer.autoHighlightDependencies) {
+    return false
+  }
+  
+  const deps = fileStore.allFileDependencies.get(hoveredFilePath.value)
+  if (!deps) return false
+  
+  return deps.incoming.includes(props.item.node.path) || deps.outgoing.includes(props.item.node.path)
+})
+
+const isOutgoingHighlight = computed(() => {
+  if (!hoveredFilePath.value || !settingsStore.settings.fileExplorer.autoHighlightDependencies) {
+    return false
+  }
+  
+  const deps = fileStore.allFileDependencies.get(hoveredFilePath.value)
+  if (!deps) return false
+  
+  return deps.outgoing.includes(props.item.node.path)
+})
+
+const isIncomingHighlight = computed(() => {
+  if (!hoveredFilePath.value || !settingsStore.settings.fileExplorer.autoHighlightDependencies) {
+    return false
+  }
+  
+  const deps = fileStore.allFileDependencies.get(hoveredFilePath.value)
+  if (!deps) return false
+  
+  return deps.incoming.includes(props.item.node.path)
+})
+
 // Search highlighting: split name into segments
 const nameSegments = computed(() => {
   // Check if this is a search result with matches
@@ -440,6 +487,11 @@ function handleQuickLook() {
 function handleMouseEnter() {
   hoveredFile.setHovered(props.item.node.path, props.item.node.isDir)
   
+  // Track hovered file for dependency highlighting
+  if (!props.item.node.isDir && settingsStore.settings.fileExplorer.autoHighlightDependencies) {
+    hoveredFilePath.value = props.item.node.path
+  }
+  
   // Emit row-mouseenter for drag-to-select
   if (props.isDraggingSelection) {
     emit('row-mouseenter', props.item.node.path)
@@ -448,6 +500,26 @@ function handleMouseEnter() {
 
 function handleMouseLeave() {
   hoveredFile.clearHovered(props.item.node.path)
+  
+  // Clear hovered file for dependency highlighting
+  if (!props.item.node.isDir) {
+    hoveredFilePath.value = null
+  }
+}
+
+function handleShowDependencies(direction: 'incoming' | 'outgoing') {
+  // For now, just select the dependencies
+  const deps = fileStore.allFileDependencies.get(props.item.node.path)
+  if (!deps) return
+  
+  const pathsToSelect = direction === 'incoming' ? deps.incoming : deps.outgoing
+  
+  // Select all dependency files
+  for (const path of pathsToSelect) {
+    if (!fileStore.selectedPaths.has(path)) {
+      fileStore.selectPath(path)
+    }
+  }
 }
 
 function handleCheckboxMouseDown() {

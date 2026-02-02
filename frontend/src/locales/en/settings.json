@@ -68,7 +68,6 @@
   "settings.modal.uiScaling": "UI Scaling",
   "settings.modal.uiScalingHint": "Changes the size of all interface elements",
   "settings.modal.tourHint": "Take a tour to learn all features",
-
   "export.format": "Format",
   "export.markdown": "Markdown",
   "export.plainText": "Plain text",
@@ -112,5 +111,15 @@
   "settings.shellIntegration.enableSuccess": "Context menu added",
   "settings.shellIntegration.disableSuccess": "Context menu removed",
   "settings.shellIntegration.error": "Failed to change integration",
-  "settings.shellIntegration.requiresAdmin": "May require explorer restart"
+  "settings.shellIntegration.requiresAdmin": "May require explorer restart",
+  "settings.dependencies.title": "Dependencies",
+  "settings.dependencies.showIndicators": "Show dependency indicators",
+  "settings.dependencies.showIndicatorsDesc": "Display incoming/outgoing dependency counts in file tree",
+  "settings.dependencies.autoHighlight": "Auto-highlight dependencies",
+  "settings.dependencies.autoHighlightDesc": "Highlight related files when hovering over a file",
+  "settings.dependencies.includeTypes": "Include dependency types",
+  "settings.dependencies.includeTypesDesc": "Choose which types of dependencies to track",
+  "settings.dependencies.includeTests": "Test files",
+  "settings.dependencies.includeStyles": "Style files (CSS/SCSS)",
+  "settings.dependencies.includeTypesLabel": "Type definitions"
 }

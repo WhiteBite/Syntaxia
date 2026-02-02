@@ -234,6 +234,22 @@ export function useFileExplorer() {
                         uiStore.addToast(t('files.focusedOn', { folder: node.name }), 'success')
                     }
                     break
+                case 'showDependencies':
+                    if (!node.isDir) {
+                        // Emit event to parent to show dependency modal
+                        return { action: 'showDependencies', path: node.path }
+                    }
+                    break
+                case 'addAllDependencies':
+                    if (!node.isDir) {
+                        const count = fileStore.addDependencies(node.path)
+                        if (count > 0) {
+                            uiStore.addToast(t('files.dependenciesAdded', { count }), 'success')
+                        } else {
+                            uiStore.addToast(t('files.noDependencies'), 'info')
+                        }
+                    }
+                    break
             }
         } catch (error) {
             logger.error('Context menu action failed:', error)

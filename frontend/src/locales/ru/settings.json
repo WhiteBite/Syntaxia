@@ -68,7 +68,6 @@
   "settings.modal.uiScaling": "Масштаб интерфейса",
   "settings.modal.uiScalingHint": "Изменяет размер всех элементов интерфейса",
   "settings.modal.tourHint": "Пройдите обучение, чтобы узнать все возможности",
-
   "export.format": "Формат",
   "export.markdown": "Markdown",
   "export.plainText": "Простой текст",
@@ -112,5 +111,15 @@
   "settings.shellIntegration.enableSuccess": "Контекстное меню добавлено",
   "settings.shellIntegration.disableSuccess": "Контекстное меню удалено",
   "settings.shellIntegration.error": "Ошибка при изменении интеграции",
-  "settings.shellIntegration.requiresAdmin": "Может потребоваться перезапуск проводника"
+  "settings.shellIntegration.requiresAdmin": "Может потребоваться перезапуск проводника",
+  "settings.dependencies.title": "Зависимости",
+  "settings.dependencies.showIndicators": "Показывать индикаторы зависимостей",
+  "settings.dependencies.showIndicatorsDesc": "Отображать количество входящих/исходящих зависимостей в дереве файлов",
+  "settings.dependencies.autoHighlight": "Автоподсветка зависимостей",
+  "settings.dependencies.autoHighlightDesc": "Подсвечивать связанные файлы при наведении на файл",
+  "settings.dependencies.includeTypes": "Типы зависимостей",
+  "settings.dependencies.includeTypesDesc": "Выберите, какие типы зависимостей отслеживать",
+  "settings.dependencies.includeTests": "Тестовые файлы",
+  "settings.dependencies.includeStyles": "Файлы стилей (CSS/SCSS)",
+  "settings.dependencies.includeTypesLabel": "Определения типов"
 }

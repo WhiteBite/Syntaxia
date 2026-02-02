@@ -89,6 +89,29 @@
 
       <div v-if="!node.isDir" class="context-menu-divider"></div>
 
+      <!-- Dependency actions (files only) -->
+      <button
+        v-if="!node.isDir"
+        @click="handleAction('showDependencies')"
+        class="context-menu-item"
+      >
+        <Share2Icon class="w-4 h-4" />
+        {{ t('files.showDependencies') }}
+      </button>
+
+      <button
+        v-if="!node.isDir"
+        @click="handleAction('addAllDependencies')"
+        :disabled="!hasDependencies"
+        class="context-menu-item"
+        :class="{ 'context-menu-item-disabled': !hasDependencies }"
+      >
+        <PlusCircleIcon class="w-4 h-4" />
+        {{ t('files.addAllDependencies') }}
+      </button>
+
+      <div v-if="!node.isDir" class="context-menu-divider"></div>
+
       <!-- Copy Actions -->
       <button
         @click="handleAction('copyPath')"
@@ -167,14 +190,19 @@
 <script setup lang="ts">
 import BaseDropdown from '@/components/ui/BaseDropdown.vue'
 import { useI18n } from '@/composables/useI18n'
+import { useDependencyGraph } from '@/composables/useDependencyGraph'
 import type { FileNode } from '@/features/files/model/file.store'
+import { useFileStore } from '@/features/files/model/file.store'
 import { LightBulbIcon, StarIcon as StarIconOutline } from '@heroicons/vue/24/outline'
-import { StarIcon as StarIconSolid } from '@heroicons/vue/24/solid'
+import { StarIcon as StarIconSolid, PlusCircleIcon } from '@heroicons/vue/24/solid'
+import { Share2 as Share2Icon } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useFavorites } from '../composables/useFavorites'
 
 const { t } = useI18n()
 const { isFavorite } = useFavorites()
+const { findAllDependencies } = useDependencyGraph()
+const fileStore = useFileStore()
 
 interface Props {
   node: FileNode | null
@@ -187,6 +215,25 @@ const props = defineProps<Props>()
 const isNodeFavorite = computed(() => {
   if (!props.node || props.node.isDir) return false
   return isFavorite(props.node.path)
+})
+
+// Get all file nodes for dependency checking
+const allNodes = computed(() => {
+  const nodes: FileNode[] = []
+  function traverse(node: FileNode) {
+    if (!node.isDir) nodes.push(node)
+    if (node.children) {
+      node.children.forEach(traverse)
+    }
+  }
+  fileStore.nodes.forEach(traverse)
+  return nodes
+})
+
+const hasDependencies = computed(() => {
+  if (!props.node || props.node.isDir) return false
+  const deps = findAllDependencies(props.node.path, allNodes.value)
+  return deps.incoming.length > 0 || deps.outgoing.length > 0
 })
 
 const emit = defineEmits<{
@@ -230,6 +277,16 @@ function handleVisibilityChange(visible: boolean) {
 
 .context-menu-item-danger {
   color: #fb923c;
+}
+
+.context-menu-item-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.context-menu-item-disabled:hover {
+  background: transparent;
+  transform: none;
 }
 
 .context-menu-divider {

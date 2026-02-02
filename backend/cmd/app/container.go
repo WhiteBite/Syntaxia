@@ -153,6 +153,9 @@ type AppContainer struct {
 	AnalysisContainer *analysis.Container
 	ToolExecutor      *application.ToolExecutorImpl
 
+	// Dependency Analysis
+	DependencyAnalyzer domain.DependencyAnalyzer
+
 	// Lazy initialization support
 	lazyInitOnce              sync.Once
 	testServiceOnce           sync.Once
@@ -691,6 +694,12 @@ func (c *AppContainer) initializeHandlers() error {
 		},
 	}
 	c.AnalysisContainer = analysis.NewContainer(c.Log, analysisConfig)
+
+	// Initialize Dependency Analyzer
+	c.DependencyAnalyzer = analysis.NewDependencyAnalyzer(
+		c.AnalysisContainer.GetRegistry(),
+		c.Log,
+	)
 
 	// Initialize Tool Executor with all dependencies
 	c.ToolExecutor = application.NewToolExecutor(

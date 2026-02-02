@@ -185,6 +185,91 @@
                   </label>
                 </div>
               </div>
+
+              <div class="settings-divider"></div>
+
+              <!-- Dependency Settings -->
+              <div class="settings-group">
+                <div class="settings-group-header">
+                  <Share2 class="w-4 h-4 text-purple-400" />
+                  <span>{{ t('settings.dependencies.title') }}</span>
+                </div>
+                
+                <div class="settings-toggle-list">
+                  <label class="settings-toggle-item">
+                    <div class="settings-toggle-info">
+                      <span class="settings-toggle-label">{{ t('settings.dependencies.showIndicators') }}</span>
+                      <span class="settings-toggle-hint">{{ t('settings.dependencies.showIndicatorsDesc') }}</span>
+                    </div>
+                    <div class="settings-toggle">
+                      <input
+                        type="checkbox"
+                        v-model="fileStore.showDependencyIndicators"
+                        class="sr-only peer"
+                        @change="fileStore.setShowDependencyIndicators(fileStore.showDependencyIndicators)"
+                      />
+                      <div class="settings-toggle-track peer-checked:bg-indigo-500"></div>
+                      <div class="settings-toggle-thumb peer-checked:translate-x-5"></div>
+                    </div>
+                  </label>
+
+                  <label class="settings-toggle-item" :class="{ 'opacity-50': !fileStore.showDependencyIndicators }">
+                    <div class="settings-toggle-info">
+                      <span class="settings-toggle-label">{{ t('settings.dependencies.autoHighlight') }}</span>
+                      <span class="settings-toggle-hint">{{ t('settings.dependencies.autoHighlightDesc') }}</span>
+                    </div>
+                    <div class="settings-toggle">
+                      <input
+                        type="checkbox"
+                        v-model="fileStore.autoHighlightDependencies"
+                        :disabled="!fileStore.showDependencyIndicators"
+                        class="sr-only peer"
+                        @change="fileStore.setAutoHighlightDependencies(fileStore.autoHighlightDependencies)"
+                      />
+                      <div class="settings-toggle-track peer-checked:bg-indigo-500"></div>
+                      <div class="settings-toggle-thumb peer-checked:translate-x-5"></div>
+                    </div>
+                  </label>
+                </div>
+
+                <div class="settings-subsection">
+                  <label class="settings-subsection-label">
+                    {{ t('settings.dependencies.includeTypes') }}
+                  </label>
+                  <p class="settings-subsection-hint">
+                    {{ t('settings.dependencies.includeTypesDesc') }}
+                  </p>
+                  <div class="checkbox-group">
+                    <label class="checkbox-label">
+                      <input
+                        type="checkbox"
+                        v-model="fileStore.includeDependencyTests"
+                        class="checkbox"
+                        @change="fileStore.setIncludeDependencyTests(fileStore.includeDependencyTests)"
+                      />
+                      <span>{{ t('settings.dependencies.includeTests') }}</span>
+                    </label>
+                    <label class="checkbox-label">
+                      <input
+                        type="checkbox"
+                        v-model="fileStore.includeDependencyStyles"
+                        class="checkbox"
+                        @change="fileStore.setIncludeDependencyStyles(fileStore.includeDependencyStyles)"
+                      />
+                      <span>{{ t('settings.dependencies.includeStyles') }}</span>
+                    </label>
+                    <label class="checkbox-label">
+                      <input
+                        type="checkbox"
+                        v-model="fileStore.includeDependencyTypes"
+                        class="checkbox"
+                        @change="fileStore.setIncludeDependencyTypes(fileStore.includeDependencyTypes)"
+                      />
+                      <span>{{ t('settings.dependencies.includeTypesLabel') }}</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- System Tab -->
@@ -212,7 +297,8 @@ import ShellIntegrationSettings from '@/components/ShellIntegrationSettings.vue'
 import { useI18n } from '@/composables/useI18n'
 import { useOnboarding } from '@/composables/useOnboarding'
 import { useSettingsStore } from '@/stores/settings.store'
-import { FileText, Filter, FolderTree, Globe, HelpCircle, Lightbulb, Maximize, Monitor, Settings, Sparkles, X } from 'lucide-vue-next'
+import { useFileStore } from '@/features/files/model/file.store'
+import { FileText, Filter, FolderTree, Globe, HelpCircle, Lightbulb, Maximize, Monitor, Settings, Share2, Sparkles, X } from 'lucide-vue-next'
 
 import { computed, ref, watch } from 'vue'
 
@@ -226,6 +312,7 @@ const emit = defineEmits<{
 
 const { t, setLocale, locale } = useI18n()
 const settingsStore = useSettingsStore()
+const fileStore = useFileStore()
 const { startTour, resetTour } = useOnboarding()
 
 const tabs = computed(() => [
@@ -604,5 +691,89 @@ function handleStartTour() {
 .tab-fade-enter-from,
 .tab-fade-leave-to {
   opacity: 0;
+}
+
+/* Dependency Settings Styles */
+.settings-subsection {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--bg-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.settings-subsection-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.settings-subsection-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  transition: background 150ms ease-out;
+}
+
+.checkbox-label:hover {
+  background: var(--bg-hover);
+}
+
+.checkbox {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 2px solid var(--border-default);
+  cursor: pointer;
+  transition: all 150ms ease-out;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: transparent;
+}
+
+.checkbox:checked {
+  background: var(--accent-indigo);
+  border-color: var(--accent-indigo);
+  position: relative;
+}
+
+.checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.checkbox:hover {
+  border-color: var(--accent-indigo);
+}
+
+.checkbox-label span {
+  font-size: 14px;
+  color: var(--text-primary);
 }
 </style>

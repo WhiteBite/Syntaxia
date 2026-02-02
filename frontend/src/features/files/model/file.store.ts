@@ -83,6 +83,23 @@ export const useFileStore = defineStore('file', () => {
     // Quick Open modal state
     const isQuickOpenModalVisible = ref(false)
 
+    // Dependency settings
+    const showDependencyIndicators = ref(
+        localStorage.getItem('syntaxia_show_dependency_indicators') !== 'false'
+    )
+    const autoHighlightDependencies = ref(
+        localStorage.getItem('syntaxia_auto_highlight_dependencies') !== 'false'
+    )
+    const includeDependencyTests = ref(
+        localStorage.getItem('syntaxia_include_dependency_tests') !== 'false'
+    )
+    const includeDependencyStyles = ref(
+        localStorage.getItem('syntaxia_include_dependency_styles') !== 'false'
+    )
+    const includeDependencyTypes = ref(
+        localStorage.getItem('syntaxia_include_dependency_types') !== 'false'
+    )
+
     // Settings
     const settingsStore = useSettingsStore()
     const autoSaveSelection = computed(() => settingsStore.settings.fileExplorer.autoSaveSelection)
@@ -489,6 +506,31 @@ export const useFileStore = defineStore('file', () => {
         isQuickOpenModalVisible.value = false
     }
 
+    function setShowDependencyIndicators(value: boolean) {
+        showDependencyIndicators.value = value
+        localStorage.setItem('syntaxia_show_dependency_indicators', String(value))
+    }
+
+    function setAutoHighlightDependencies(value: boolean) {
+        autoHighlightDependencies.value = value
+        localStorage.setItem('syntaxia_auto_highlight_dependencies', String(value))
+    }
+
+    function setIncludeDependencyTests(value: boolean) {
+        includeDependencyTests.value = value
+        localStorage.setItem('syntaxia_include_dependency_tests', String(value))
+    }
+
+    function setIncludeDependencyStyles(value: boolean) {
+        includeDependencyStyles.value = value
+        localStorage.setItem('syntaxia_include_dependency_styles', String(value))
+    }
+
+    function setIncludeDependencyTypes(value: boolean) {
+        includeDependencyTypes.value = value
+        localStorage.setItem('syntaxia_include_dependency_types', String(value))
+    }
+
     return {
         // State (from tree)
         nodes: tree.nodes,
@@ -615,6 +657,18 @@ export const useFileStore = defineStore('file', () => {
         toggleQuickOpenModal,
         openQuickOpenModal,
         closeQuickOpenModal,
+
+        // Dependency settings
+        showDependencyIndicators,
+        autoHighlightDependencies,
+        includeDependencyTests,
+        includeDependencyStyles,
+        includeDependencyTypes,
+        setShowDependencyIndicators,
+        setAutoHighlightDependencies,
+        setIncludeDependencyTests,
+        setIncludeDependencyStyles,
+        setIncludeDependencyTypes,
 
         // Public utility methods for UI components
         findNode: tree.findNode,

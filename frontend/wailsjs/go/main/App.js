@@ -114,6 +114,10 @@ export function CleanupTempRepository(arg1) {
   return window['go']['main']['App']['CleanupTempRepository'](arg1);
 }
 
+export function ClearDependencyCache() {
+  return window['go']['main']['App']['ClearDependencyCache']();
+}
+
 export function ClearFileTreeCache() {
   return window['go']['main']['App']['ClearFileTreeCache']();
 }
@@ -346,6 +350,10 @@ export function GetFileContentAtCommit(arg1, arg2, arg3) {
   return window['go']['main']['App']['GetFileContentAtCommit'](arg1, arg2, arg3);
 }
 
+export function GetFileDependencies(arg1, arg2) {
+  return window['go']['main']['App']['GetFileDependencies'](arg1, arg2);
+}
+
 export function GetFileQuickInfo(arg1, arg2) {
   return window['go']['main']['App']['GetFileQuickInfo'](arg1, arg2);
 }
@@ -384,6 +392,10 @@ export function GetMetricsSummary() {
 
 export function GetProjectContexts(arg1) {
   return window['go']['main']['App']['GetProjectContexts'](arg1);
+}
+
+export function GetProjectDependencyGraph(arg1, arg2) {
+  return window['go']['main']['App']['GetProjectDependencyGraph'](arg1, arg2);
 }
 
 export function GetProjectStructure(arg1) {

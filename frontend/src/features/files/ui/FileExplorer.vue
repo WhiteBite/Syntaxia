@@ -239,11 +239,15 @@
 
     <!-- Context Menu -->
     <FileContextMenu :node="contextMenu.targetNode.value" :position="contextMenu.position.value"
-      :visible="contextMenu.isVisible.value" @action="explorer.handleContextMenuAction" @close="contextMenu.hide" />
+      :visible="contextMenu.isVisible.value" @action="handleContextMenuAction" @close="contextMenu.hide" />
 
     <!-- Modals -->
     <IgnoreRulesModal ref="ignoreRulesModalRef" />
     <QuickLookModal v-model="explorer.quickLookVisible.value" :file-path="explorer.quickLookPath.value" @add-to-context="explorer.handleAddToContext" />
+    <DependencyVisualizerModal
+      v-model="showDependencyModal"
+      :file-path="selectedFileForDeps"
+    />
 
     <!-- Analysis Status Bar -->
     <AnalysisStatusBar 
@@ -290,6 +294,7 @@ import PresetsPanel from './PresetsPanel.vue'
 
 const QuickLookModal = defineAsyncComponent(() => import('@/components/QuickLookModal.vue'))
 const IgnoreRulesModal = defineAsyncComponent(() => import('./IgnoreRulesModal.vue'))
+const DependencyVisualizerModal = defineAsyncComponent(() => import('./DependencyVisualizerModal.vue'))
 
 provideHoveredFile()
 
@@ -307,6 +312,10 @@ const logger = useLogger('FileExplorer')
 const ignoreRulesModalRef = ref<InstanceType<typeof IgnoreRulesModal>>()
 const searchInputRef = ref<HTMLInputElement | null>(null)
 
+// Dependency modal state
+const showDependencyModal = ref(false)
+const selectedFileForDeps = ref('')
+
 function clearSearch() {
   explorer.clearSearch()
 }
@@ -317,6 +326,16 @@ defineEmits<{
   (e: 'preview-file', filePath: string): void
   (e: 'build-context'): void
 }>()
+
+async function handleContextMenuAction(payload: { type: string; node: FileNode }) {
+  const result = await explorer.handleContextMenuAction(payload)
+  
+  // Handle special actions that need parent component interaction
+  if (result && result.action === 'showDependencies') {
+    selectedFileForDeps.value = result.path
+    showDependencyModal.value = true
+  }
+}
 
 function handleContextMenu(node: FileNode, event: MouseEvent) {
   contextMenu.show(node, event)
