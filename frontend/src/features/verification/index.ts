@@ -1,4 +1,6 @@
-// Verification feature module
+/**
+ * Verification feature module - Public API
+ */
 
 // Store
 export { useVerificationStore } from './model/verification.store'
@@ -12,6 +14,15 @@ export type {
     VerificationResult,
     VerificationType
 } from './api/verification.api'
+
+// Composables
+export { useVerification } from './composables/useVerification'
+
+// Types
+export type {
+    VerificationFilter,
+    VerificationStats
+} from './types'
 
 // UI Components
 export { default as ErrorItem } from './ui/ErrorItem.vue'

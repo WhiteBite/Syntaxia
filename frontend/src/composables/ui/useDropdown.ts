@@ -1,4 +1,5 @@
-import { onMounted, onUnmounted, ref, type Ref } from 'vue'
+import { onMounted, onUnmounted, ref, watch, type Ref } from 'vue'
+import { useOverlay } from './useOverlay'
 
 export type DropdownPlacement = 'bottom-start' | 'bottom-end' | 'top-start' | 'top-end' | 'left' | 'right'
 
@@ -27,6 +28,8 @@ export interface UseDropdownReturn {
 
 /**
  * Composable for dropdown functionality with positioning, click outside, and keyboard handling
+ * 
+ * Built on top of useOverlay composable for consistent overlay behavior.
  */
 export function useDropdown(options: UseDropdownOptions = {}): UseDropdownReturn {
     const {
@@ -36,10 +39,22 @@ export function useDropdown(options: UseDropdownOptions = {}): UseDropdownReturn
         closeOnEscape = true
     } = options
 
-    const isOpen = ref(false)
     const triggerRef = ref<HTMLElement | null>(null)
     const dropdownRef = ref<HTMLElement | null>(null)
-    const position = ref<DropdownPosition>({ top: '0px', left: '0px' })
+
+    // Use base overlay functionality
+    const overlay = useOverlay({
+        closeOnEscape,
+        closeOnClickOutside: true,
+        lockScroll: false,
+        zIndex: 1000,
+        ignoreElements: [triggerRef]
+    })
+
+    // Assign dropdownRef to overlayRef for click outside detection
+    watch(dropdownRef, (newRef) => {
+        overlay.overlayRef.value = newRef
+    })
 
     /**
      * Calculate dropdown position based on trigger element and placement
@@ -104,17 +119,17 @@ export function useDropdown(options: UseDropdownOptions = {}): UseDropdownReturn
             top = 8
         }
 
-        position.value = {
+        overlay.setPosition({
             top: `${top}px`,
             left: `${left}px`
-        }
+        })
     }
 
     /**
      * Open dropdown
      */
     function open(): void {
-        isOpen.value = true
+        overlay.open()
         // Calculate position on next tick after DOM update
         setTimeout(() => {
             calculatePosition()
@@ -125,34 +140,17 @@ export function useDropdown(options: UseDropdownOptions = {}): UseDropdownReturn
      * Close dropdown
      */
     function close(): void {
-        isOpen.value = false
+        overlay.close()
     }
 
     /**
      * Toggle dropdown open/close
      */
     function toggle(): void {
-        if (isOpen.value) {
+        if (overlay.isVisible.value) {
             close()
         } else {
             open()
-        }
-    }
-
-    /**
-     * Handle click outside to close dropdown
-     */
-    function handleClickOutside(event: MouseEvent): void {
-        if (!isOpen.value) return
-
-        const target = event.target as Node
-
-        // Check if click is outside both trigger and dropdown
-        const isOutsideTrigger = triggerRef.value && !triggerRef.value.contains(target)
-        const isOutsideDropdown = dropdownRef.value && !dropdownRef.value.contains(target)
-
-        if (isOutsideTrigger && isOutsideDropdown) {
-            close()
         }
     }
 
@@ -166,29 +164,16 @@ export function useDropdown(options: UseDropdownOptions = {}): UseDropdownReturn
     }
 
     /**
-     * Handle escape key to close dropdown
-     */
-    function handleEscape(event: KeyboardEvent): void {
-        if (closeOnEscape && isOpen.value && event.key === 'Escape') {
-            close()
-            // Return focus to trigger
-            triggerRef.value?.focus()
-        }
-    }
-
-    /**
      * Recalculate position on window resize
      */
     function handleResize(): void {
-        if (isOpen.value) {
+        if (overlay.isVisible.value) {
             calculatePosition()
         }
     }
 
     // Setup event listeners
     onMounted(() => {
-        document.addEventListener('click', handleClickOutside)
-        document.addEventListener('keydown', handleEscape)
         window.addEventListener('resize', handleResize)
         window.addEventListener('scroll', handleResize, true)
 
@@ -200,8 +185,6 @@ export function useDropdown(options: UseDropdownOptions = {}): UseDropdownReturn
 
     // Cleanup event listeners
     onUnmounted(() => {
-        document.removeEventListener('click', handleClickOutside)
-        document.removeEventListener('keydown', handleEscape)
         window.removeEventListener('resize', handleResize)
         window.removeEventListener('scroll', handleResize, true)
 
@@ -211,10 +194,10 @@ export function useDropdown(options: UseDropdownOptions = {}): UseDropdownReturn
     })
 
     return {
-        isOpen,
+        isOpen: overlay.isVisible,
         triggerRef,
         dropdownRef,
-        position,
+        position: overlay.position as Ref<DropdownPosition>,
         open,
         close,
         toggle,

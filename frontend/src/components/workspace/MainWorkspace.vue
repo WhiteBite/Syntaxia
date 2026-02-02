@@ -68,7 +68,7 @@
     </div>
 
     <!-- Action Bar -->
-    <ActionBar class="workspace-actionbar" @open-export="handleOpenExport" @reset-layout="resetPanelSizes" />
+    <ActionBar class="workspace-actionbar" @open-export="handleOpenExport" @reset-layout="handleResetLayout" />
 
     <!-- Export Modal -->
     <ExportModal ref="exportModalRef" />
@@ -79,243 +79,59 @@
 <script setup lang="ts">
 import ExportModal from '@/components/ExportModal.vue'
 import { useI18n } from '@/composables/useI18n'
-import { useLogger } from '@/composables/useLogger'
-import { useResizablePanel } from '@/composables/useResizablePanel'
 import { useContextStore } from '@/features/context'
-import { useFileStore } from '@/features/files'
-import { useTemplateStore, generateFileTree, detectLanguages } from '@/features/templates'
-import { useProjectStore } from '@/stores/project.store'
-import { useSettingsStore } from '@/stores/settings.store'
 import { useUIStore } from '@/stores/ui.store'
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { ref } from 'vue'
 import ActionBar from './ActionBar.vue'
 import CenterWorkspace from './CenterWorkspace.vue'
 import LeftSidebar from './LeftSidebar.vue'
 import RightSidebar from './RightSidebar.vue'
+import { useWorkspaceLayout } from '@/composables/workspace/useWorkspaceLayout'
+import { useContextBuilder } from '@/composables/workspace/useContextBuilder'
+import { useWorkspaceShortcuts } from '@/composables/workspace/useWorkspaceShortcuts'
 
-const logger = useLogger('MainWorkspace')
-const templateStore = useTemplateStore()
-const projectStore = useProjectStore()
 const { t } = useI18n()
 const contextStore = useContextStore()
-const fileStore = useFileStore()
 const uiStore = useUIStore()
-const settingsStore = useSettingsStore()
 const exportModalRef = ref<InstanceType<typeof ExportModal> | null>(null)
 
-// Right sidebar visibility
-const showRightSidebar = ref(loadSidebarState())
+// Layout management (panel resizing, sidebar visibility)
+const {
+  showRightSidebar,
+  toggleRightSidebar,
+  leftResize,
+  leftWidth,
+  leftPanelRef,
+  rightResize,
+  rightWidth,
+  rightPanelRef,
+  resetPanelSizes
+} = useWorkspaceLayout()
 
-function loadSidebarState(): boolean {
-  try {
-    const saved = localStorage.getItem('right-sidebar-visible')
-    return saved !== 'false'
-  } catch {
-    return true
-  }
-}
+// Context building logic
+const { buildContext, copyContext, setupAutoRebuild } = useContextBuilder()
 
-function toggleRightSidebar() {
-  showRightSidebar.value = !showRightSidebar.value
-  try {
-    localStorage.setItem('right-sidebar-visible', String(showRightSidebar.value))
-  } catch {
-    // Ignore localStorage errors
-  }
-}
+// Setup auto-rebuild on settings changes
+setupAutoRebuild()
 
-function resetPanelSizes() {
-  leftResize.resetToDefault()
-  rightResize.resetToDefault()
+// Global keyboard shortcuts
+useWorkspaceShortcuts({
+  onBuildContext: buildContext,
+  onOpenExport: handleOpenExport,
+  onCopyContext: copyContext
+})
+
+function handleResetLayout() {
+  resetPanelSizes()
   uiStore.addToast(t('workspace.layoutReset'), 'success')
 }
-
-// Panel resizing
-const leftResize = useResizablePanel({
-  minWidth: 280,
-  maxWidth: 700,
-  defaultWidth: 380,
-  storageKey: 'workspace-left-width'
-})
-const leftWidth = leftResize.width
-
-const rightResize = useResizablePanel({
-  minWidth: 320,
-  maxWidth: 700,
-  defaultWidth: 380,
-  storageKey: 'workspace-right-width',
-  invertDirection: true // Тянем влево = увеличиваем ширину
-})
-// Panel refs are used in template via ref="leftPanelRef" and ref="rightPanelRef"
-const leftPanelRef = leftResize.panelRef
-const rightPanelRef = rightResize.panelRef
-const rightWidth = rightResize.width
 
 function handlePreviewFile(_filePath: string) {
   // Preview file functionality - handled by QuickLook
 }
 
-// Global keyboard shortcut handlers
-const handleGlobalBuildContext = () => handleBuildContext()
-const handleGlobalOpenExport = () => handleOpenExport()
-const handleGlobalCopyContext = async () => {
-  if (contextStore.hasContext && contextStore.contextId) {
-    try {
-      const filesContent = await contextStore.getFullContextContent()
-      
-      let content: string
-      if (settingsStore.settings.context.applyTemplateOnCopy && templateStore.activeTemplate) {
-        const files = contextStore.summary?.files || []
-        const templateContext = {
-          fileTree: generateFileTree(files, projectStore.projectName),
-          files: filesContent,
-          task: templateStore.currentTask,
-          userRules: templateStore.userRules,
-          fileCount: contextStore.fileCount,
-          tokenCount: contextStore.tokenCount,
-          languages: detectLanguages(files),
-          projectName: projectStore.projectName
-        }
-        content = templateStore.generatePrompt(templateContext)
-      } else {
-        content = filesContent
-      }
-      
-      await navigator.clipboard.writeText(content)
-      uiStore.addToast(t('toast.contextCopied'), 'success')
-    } catch (error) {
-      logger.error('Failed to copy context:', error)
-      uiStore.addToast(t('toast.copyError'), 'error')
-    }
-  }
-}
-
-onMounted(() => {
-  window.addEventListener('global-build-context', handleGlobalBuildContext)
-  window.addEventListener('global-open-export', handleGlobalOpenExport)
-  window.addEventListener('global-copy-context', handleGlobalCopyContext)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('global-build-context', handleGlobalBuildContext)
-  window.removeEventListener('global-open-export', handleGlobalOpenExport)
-  window.removeEventListener('global-copy-context', handleGlobalCopyContext)
-})
-
-// Watch for format/settings changes and rebuild context automatically
-watch(
-  () => [
-    settingsStore.settings.context.outputFormat,
-    settingsStore.settings.context.stripComments
-  ],
-  async ([newFormat, newStripComments], [oldFormat, oldStripComments]) => {
-    // Only rebuild if context exists and settings actually changed
-    if (!contextStore.hasContext || contextStore.isBuilding) return
-    if (newFormat === oldFormat && newStripComments === oldStripComments) return
-    
-    // Get the files from current context summary
-    const currentFiles = contextStore.summary?.files
-    if (!currentFiles || currentFiles.length === 0) {
-      // Fallback to selected files if no files in summary
-      if (fileStore.selectedPaths.size === 0) return
-    }
-    
-    const filePaths = currentFiles && currentFiles.length > 0 
-      ? currentFiles 
-      : Array.from(fileStore.selectedPaths)
-    
-    // Settings changed, rebuilding context silently
-    
-    try {
-      const options = {
-        maxTokens: settingsStore.settings.context.maxTokens,
-        stripComments: settingsStore.settings.context.stripComments,
-        includeTests: settingsStore.settings.context.includeTests,
-        splitStrategy: settingsStore.settings.context.splitStrategy,
-        outputFormat: settingsStore.settings.context.outputFormat,
-        // Content optimization options
-        excludeTests: settingsStore.settings.context.excludeTests,
-        collapseEmptyLines: settingsStore.settings.context.collapseEmptyLines,
-        stripLicense: settingsStore.settings.context.stripLicense,
-        compactDataFiles: settingsStore.settings.context.compactDataFiles,
-        trimWhitespace: settingsStore.settings.context.trimWhitespace
-      }
-      
-      await contextStore.buildContext(filePaths, options)
-      uiStore.addToast(t('context.rebuilt'), 'success')
-    } catch (error) {
-      logger.error('Failed to rebuild context:', error)
-    }
-  }
-)
-
-async function handleBuildContext() {
-  if (fileStore.selectedPaths.size === 0) {
-    uiStore.addToast('Выберите файлы для построения контекста', 'warning')
-    return
-  }
-
-  if (contextStore.isBuilding) return
-
-  try {
-    const filePaths = Array.from(fileStore.selectedPaths)
-    const options = {
-      maxTokens: settingsStore.settings.context.maxTokens,
-      stripComments: settingsStore.settings.context.stripComments,
-      includeTests: settingsStore.settings.context.includeTests,
-      splitStrategy: settingsStore.settings.context.splitStrategy,
-      outputFormat: settingsStore.settings.context.outputFormat,
-      // Output options
-      includeLineNumbers: settingsStore.settings.context.includeLineNumbers,
-      // Content optimization options
-      excludeTests: settingsStore.settings.context.excludeTests,
-      collapseEmptyLines: settingsStore.settings.context.collapseEmptyLines,
-      stripLicense: settingsStore.settings.context.stripLicense,
-      compactDataFiles: settingsStore.settings.context.compactDataFiles,
-      trimWhitespace: settingsStore.settings.context.trimWhitespace
-    }
-    
-    await contextStore.buildContext(filePaths, options)
-    
-    // Show success toast with copy action
-    uiStore.addToast(t('toast.contextBuilt'), 'success', 5000, {
-      label: t('context.copy'),
-      icon: '📋',
-      onClick: async () => {
-        try {
-          const content = await contextStore.getFullContextContent()
-          await navigator.clipboard.writeText(content)
-          uiStore.addToast(t('toast.contextCopied'), 'success')
-        } catch {
-          uiStore.addToast(t('toast.copyError'), 'error')
-        }
-      }
-    })
-  } catch (error) {
-    logger.error('Failed to build context:', error)
-    
-    // Handle token limit exceeded error with detailed message
-    if (error instanceof Error && error.message === 'TOKEN_LIMIT_EXCEEDED') {
-      const storeError = contextStore.error
-      if (storeError?.startsWith('TOKEN_LIMIT_EXCEEDED:')) {
-        const parts = storeError.split(':')
-        const actual = Number(parts[1])
-        const limit = Number(parts[2])
-        const actualK = Math.round(actual / 1000)
-        const limitK = Math.round(limit / 1000)
-        uiStore.addToast(
-          t('error.tokenLimitExceeded', { actual: actualK, limit: limitK }),
-          'error'
-        )
-      } else {
-        uiStore.addToast(t('error.tokenLimitGeneric'), 'error')
-      }
-      return
-    }
-    
-    const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-    uiStore.addToast(`${t('toast.contextError')}: ${errorMsg}`, 'error')
-  }
+function handleBuildContext() {
+  buildContext()
 }
 
 function handleOpenExport() {

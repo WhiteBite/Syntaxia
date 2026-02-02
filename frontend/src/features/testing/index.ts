@@ -8,6 +8,9 @@ export { useTestingStore } from './model/testing.store'
 // API
 export { testingApi } from './api/testing.api'
 
+// Composables
+export { useTestRunner } from './composables/useTestRunner'
+
 // Types
 export type {
     TestFilter,

@@ -115,19 +115,19 @@ describe('UIStore', () => {
         it('should log error toast to console.error', () => {
             store.addToast('Error occurred', 'error')
 
-            expect(consoleSpy.error).toHaveBeenCalledWith('[UIStore]', '[Toast ERROR] Error occurred')
+            expect(consoleSpy.error).toHaveBeenCalledWith('[CoreStore:UI]', '[Toast ERROR] Error occurred')
         })
 
         it('should log warning toast to console.warn', () => {
             store.addToast('Warning message', 'warning')
 
-            expect(consoleSpy.warn).toHaveBeenCalledWith('[UIStore]', '[Toast WARNING] Warning message')
+            expect(consoleSpy.warn).toHaveBeenCalledWith('[CoreStore:UI]', '[Toast WARNING] Warning message')
         })
 
         it('should log info toast to console.info', () => {
             store.addToast('Info message', 'info')
 
-            expect(consoleSpy.info).toHaveBeenCalledWith('[UIStore]', '[Toast INFO] Info message')
+            expect(consoleSpy.info).toHaveBeenCalledWith('[CoreStore:UI]', '[Toast INFO] Info message')
         })
     })
 

@@ -10,21 +10,19 @@
 
 import { useLogger } from '@/composables/useLogger';
 import { useUIStore } from '@/stores/ui.store';
+import { forceMemoryCleanup } from './memory-cleanup';
+import {
+  type MemoryStats,
+  type StoreMetrics,
+  calculateMemoryTrend,
+  dumpHeapSnapshot,
+  getMemoryStats
+} from './memory-stats';
 
 const logger = useLogger('MemoryMonitor');
 
-export interface MemoryStats {
-  used: number;        // Used memory in MB
-  total: number;       // Total available memory in MB
-  percentage: number;  // Usage percentage (0-100)
-  storeMetrics?: StoreMetrics;
-}
-
-export interface StoreMetrics {
-  fileStore: { nodesCount: number; memoryEstimate: number }
-  contextStore: { cacheSize: number; chunkSize: number }
-  apiCache: { entries: number; totalSize: number }
-}
+// Re-export types for backward compatibility
+export type { MemoryStats, StoreMetrics };
 
 interface StoreImportsCache {
   useFileStore?: () => { nodes?: unknown[]; getMemoryUsage?: () => number }
@@ -99,83 +97,7 @@ export class MemoryMonitor {
    * Get current memory stats with store metrics
    */
   public async getMemoryStats(): Promise<MemoryStats | null> {
-    if (!('performance' in window) || !performance.memory) {
-      return null;
-    }
-
-    const memory = performance.memory;
-    const used = Math.round(memory.usedJSHeapSize / (1024 * 1024));
-    const total = Math.round(memory.jsHeapSizeLimit / (1024 * 1024));
-    const percentage = Math.round((memory.usedJSHeapSize / memory.jsHeapSizeLimit) * 100);
-
-    // Collect store metrics
-    const storeMetrics = await this.collectStoreMetrics();
-
-    return { used, total, percentage, storeMetrics };
-  }
-
-  /**
-   * Collect memory metrics from all stores
-   * In dev mode, skip detailed metrics to reduce memory overhead
-   */
-  private async collectStoreMetrics(): Promise<StoreMetrics> {
-    const metrics: StoreMetrics = {
-      fileStore: { nodesCount: 0, memoryEstimate: 0 },
-      contextStore: { cacheSize: 0, chunkSize: 0 },
-      apiCache: { entries: 0, totalSize: 0 }
-    };
-
-    // Skip detailed store metrics in dev mode to reduce dynamic import overhead
-    if (this.isDevMode) {
-      return metrics;
-    }
-
-    try {
-      // Import stores once and cache them to avoid repeated dynamic imports
-      if (!this.storeImportsCache.useFileStore) {
-        const fileStoreModule = await import('@/features/files/model/file.store');
-        this.storeImportsCache.useFileStore = fileStoreModule.useFileStore as StoreImportsCache['useFileStore'];
-      }
-
-      if (!this.storeImportsCache.useContextStore) {
-        const contextStoreModule = await import('@/features/context/model/context.store');
-        this.storeImportsCache.useContextStore = contextStoreModule.useContextStore as StoreImportsCache['useContextStore'];
-      }
-
-      if (!this.storeImportsCache.getCacheStats) {
-        const apiCacheModule = await import('@/composables/useApiCache');
-        this.storeImportsCache.getCacheStats = apiCacheModule.getCacheStats as StoreImportsCache['getCacheStats'];
-      }
-
-      const fileStore = this.storeImportsCache.useFileStore?.();
-      const contextStore = this.storeImportsCache.useContextStore?.();
-      const cacheStats = this.storeImportsCache.getCacheStats?.();
-
-      if (fileStore) {
-        metrics.fileStore = {
-          nodesCount: fileStore.nodes?.length || 0,
-          memoryEstimate: fileStore.getMemoryUsage ? fileStore.getMemoryUsage() : 0
-        };
-      }
-
-      if (contextStore) {
-        metrics.contextStore = {
-          cacheSize: contextStore.getMemoryUsage ? contextStore.getMemoryUsage() : 0,
-          chunkSize: contextStore.currentChunk?.lines?.length || 0
-        };
-      }
-
-      if (cacheStats) {
-        metrics.apiCache = {
-          entries: cacheStats.entries || 0,
-          totalSize: cacheStats.size || 0
-        };
-      }
-    } catch (e) {
-      logger.warn('Could not collect store metrics:', e);
-    }
-
-    return metrics;
+    return getMemoryStats(this.isDevMode, this.storeImportsCache);
   }
 
   /**
@@ -210,90 +132,26 @@ export class MemoryMonitor {
    * Force cleanup of memory with AGGRESSIVE strategies
    */
   public forceCleanup(): void {
-    logger.warn('EMERGENCY: Forcing aggressive memory cleanup...');
+    forceMemoryCleanup();
 
-    // Attempt to free up memory by clearing large objects in memory
-    try {
-      // Clear large arrays and objects
-      window.largeObjects = [];
-      window.cachedData = null;
-
-      // Clear API caches
-      import('@/composables/useApiCache').then(({ clearAllCaches }) => {
-        clearAllCaches();
-      }).catch(e => {
-        logger.warn('Could not clear API caches:', e);
-      });
-
-      // Clear stores
-      Promise.all([
-        import('@/features/files/model/file.store'),
-        import('@/features/context/model/context.store')
-      ]).then(([{ useFileStore }, { useContextStore }]) => {
-        const fileStore = useFileStore();
-        const contextStore = useContextStore();
-
-        fileStore.resetStore();
-        contextStore.clearContext();
-      }).catch(e => {
-        logger.warn('Could not cleanup stores:', e);
-      });
-
-      // Clear Vue reactive caches if possible
-      try {
-        // Force cleanup of any global stores
-        const stores = ['contextBuilder', 'fileTree', 'treeState', 'ui'] as const;
-        stores.forEach(storeName => {
-          const storeData = (window as unknown as Record<string, { cleanup?: () => void }>)[storeName];
-          if (storeData && typeof storeData.cleanup === 'function') {
-            storeData.cleanup();
-          }
-        });
-      } catch (e) {
-        logger.warn('Could not cleanup Vue stores:', e);
-      }
-
-      // Force garbage collection multiple times if available
-      if (window.gc) {
-        try {
-          window.gc();
-          setTimeout(() => window.gc?.(), 100);
-          setTimeout(() => window.gc?.(), 300);
-          logger.debug('Multiple garbage collection cycles triggered');
-        } catch (e) {
-          logger.warn('Failed to trigger garbage collection', e);
+    // Add a small delay to allow garbage collection to work
+    setTimeout(() => {
+      void this.getMemoryStats().then(stats => {
+        if (stats) {
+          logger.debug(`Memory after aggressive cleanup: ${stats.used}MB / ${stats.total}MB (${stats.percentage}%)`);
         }
-      }
-
-      // Add a small delay to allow garbage collection to work
-      setTimeout(() => {
-        void this.getMemoryStats().then(stats => {
-          if (stats) {
-            logger.debug(`Memory after aggressive cleanup: ${stats.used}MB / ${stats.total}MB (${stats.percentage}%)`);
-          }
-        });
-      }, 500);
-    } catch (e) {
-      logger.error('Error during emergency memory cleanup:', e);
-    }
+      });
+    }, 500);
   }
 
   /**
    * Dump heap snapshot for analysis in Chrome DevTools
    */
   public async dumpHeapSnapshot(reason: string): Promise<void> {
-    if ('performance' in window && performance.writeHeapSnapshot) {
-      try {
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const filename = `heap-snapshot-${timestamp}-${reason}.heapsnapshot`;
-        await performance.writeHeapSnapshot(filename);
-        logger.debug(`Heap snapshot saved: ${filename}`);
-        this.uiStore.addToast(`Heap snapshot saved: ${filename}`, 'info');
-      } catch (e) {
-        logger.error('Failed to dump heap snapshot:', e);
-      }
-    } else {
-      logger.warn('Heap snapshot API not available. Run Chrome with --enable-precise-memory-info flag.');
+    await dumpHeapSnapshot(reason);
+    const stats = await this.getMemoryStats();
+    if (stats) {
+      this.uiStore.addToast(`Heap snapshot saved: ${reason}`, 'info');
     }
   }
 
@@ -441,23 +299,11 @@ export class MemoryMonitor {
    * Track memory trend to detect rapid growth
    */
   private getMemoryTrend(currentUsed: number): number {
-    this.memoryHistory.push(currentUsed);
-
-    // Keep only last 10 measurements
-    if (this.memoryHistory.length > 10) {
-      this.memoryHistory.shift();
-    }
-
-    // Calculate growth rate (MB per minute)
-    if (this.memoryHistory.length < 2) {
-      return 0;
-    }
-
-    const oldest = this.memoryHistory[0];
-    const newest = this.memoryHistory[this.memoryHistory.length - 1];
-    const timeDiff = (this.memoryHistory.length - 1) * (this.options.pollingInterval || 5000) / 60000; // minutes
-
-    return (newest - oldest) / timeDiff;
+    return calculateMemoryTrend(
+      this.memoryHistory,
+      currentUsed,
+      this.options.pollingInterval || 5000
+    );
   }
 }
 

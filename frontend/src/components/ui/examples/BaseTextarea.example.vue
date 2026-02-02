@@ -186,6 +186,9 @@
 import { ref, computed } from 'vue'
 import BaseTextarea from '../BaseTextarea.vue'
 import BaseButton from '../BaseButton.vue'
+import { useLogger } from '@/composables/useLogger'
+
+const logger = useLogger('BaseTextareaExample')
 
 // Basic
 const basicText = ref('')
@@ -246,12 +249,12 @@ function validateJson() {
 }
 
 function sendPrompt() {
-  console.log('Sending prompt:', aiPrompt.value)
+  logger.debug('Sending prompt:', aiPrompt.value)
 }
 
 function formatCode() {
   // Simulate code formatting
-  console.log('Formatting code...')
+  logger.debug('Formatting code...')
 }
 
 function copyCode() {

@@ -1,5 +1,6 @@
-import { onClickOutside, useEventListener } from '@vueuse/core'
+import { useEventListener } from '@vueuse/core'
 import { nextTick, ref, watch, type Ref } from 'vue'
+import { useOverlay } from './useOverlay'
 
 export type PopoverPlacement =
     | 'top'
@@ -59,14 +60,33 @@ export function usePopover(options: UsePopoverOptions = {}): UsePopoverReturn {
         onClose
     } = options
 
-    const isOpen = ref(false)
     const triggerRef = ref<HTMLElement | null>(null)
     const popoverRef = ref<HTMLElement | null>(null)
-    const position = ref<PopoverPosition>({ top: '0px', left: '0px', transform: '' })
     const arrowPosition = ref<ArrowPosition>({})
 
     let hoverTimeout: ReturnType<typeof setTimeout> | null = null
     let closeTimeout: ReturnType<typeof setTimeout> | null = null
+
+    // Use base overlay functionality
+    const overlay = useOverlay({
+        closeOnEscape: true,
+        closeOnClickOutside: trigger !== 'manual',
+        lockScroll: false,
+        zIndex: 1000,
+        ignoreElements: [triggerRef],
+        onOpen: () => {
+            onOpen?.()
+            nextTick(() => {
+                calculatePosition()
+            })
+        },
+        onClose
+    })
+
+    // Assign popoverRef to overlayRef for click outside detection
+    watch(popoverRef, (newRef) => {
+        overlay.overlayRef.value = newRef
+    })
 
     function calculatePosition() {
         if (!triggerRef.value || !popoverRef.value) return
@@ -167,11 +187,11 @@ export function usePopover(options: UsePopoverOptions = {}): UsePopoverReturn {
             top = viewport.height - popoverRect.height - padding
         }
 
-        position.value = {
+        overlay.setPosition({
             top: `${top}px`,
             left: `${left}px`,
             transform: ''
-        }
+        })
 
         arrowPosition.value = {
             top: arrowTop,
@@ -183,7 +203,7 @@ export function usePopover(options: UsePopoverOptions = {}): UsePopoverReturn {
     }
 
     function open() {
-        if (isOpen.value) return
+        if (overlay.isVisible.value) return
 
         if (closeTimeout) {
             clearTimeout(closeTimeout)
@@ -191,11 +211,7 @@ export function usePopover(options: UsePopoverOptions = {}): UsePopoverReturn {
         }
 
         const doOpen = () => {
-            isOpen.value = true
-            onOpen?.()
-            nextTick(() => {
-                calculatePosition()
-            })
+            overlay.open()
         }
 
         if (delay > 0 && trigger === 'hover') {
@@ -206,7 +222,7 @@ export function usePopover(options: UsePopoverOptions = {}): UsePopoverReturn {
     }
 
     function close() {
-        if (!isOpen.value) return
+        if (!overlay.isVisible.value) return
 
         if (hoverTimeout) {
             clearTimeout(hoverTimeout)
@@ -214,8 +230,7 @@ export function usePopover(options: UsePopoverOptions = {}): UsePopoverReturn {
         }
 
         const doClose = () => {
-            isOpen.value = false
-            onClose?.()
+            overlay.close()
         }
 
         if (trigger === 'hover') {
@@ -226,26 +241,15 @@ export function usePopover(options: UsePopoverOptions = {}): UsePopoverReturn {
     }
 
     function toggle() {
-        if (isOpen.value) {
+        if (overlay.isVisible.value) {
             close()
         } else {
             open()
         }
     }
 
-    // Click outside handling
-    onClickOutside(
-        popoverRef,
-        (event) => {
-            if (trigger === 'manual') return
-            if (triggerRef.value?.contains(event.target as Node)) return
-            close()
-        },
-        { ignore: [triggerRef] }
-    )
-
     // Recalculate position on scroll/resize
-    watch(isOpen, (open) => {
+    watch(overlay.isVisible, (open) => {
         if (open) {
             useEventListener(window, 'scroll', calculatePosition, { passive: true })
             useEventListener(window, 'resize', calculatePosition, { passive: true })
@@ -253,13 +257,13 @@ export function usePopover(options: UsePopoverOptions = {}): UsePopoverReturn {
     })
 
     return {
-        isOpen,
+        isOpen: overlay.isVisible,
         open,
         close,
         toggle,
         triggerRef,
         popoverRef,
-        position,
+        position: overlay.position as Ref<PopoverPosition>,
         arrowPosition,
         calculatePosition
     }

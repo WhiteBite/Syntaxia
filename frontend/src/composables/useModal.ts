@@ -1,5 +1,4 @@
-import { onKeyStroke } from '@vueuse/core'
-import { onUnmounted, ref, watch } from 'vue'
+import { useOverlay } from './ui/useOverlay'
 
 export interface UseModalOptions {
   /**
@@ -30,6 +29,8 @@ export interface UseModalOptions {
 /**
  * Generic modal composable for managing modal state with enhanced features
  * 
+ * Built on top of useOverlay composable for consistent overlay behavior.
+ * 
  * Features:
  * - State management (open/close/toggle)
  * - ESC key handling
@@ -56,66 +57,21 @@ export function useModal(options: UseModalOptions = {}) {
     onClose,
   } = options
 
-  const isOpen = ref(initialState)
-
-  function open() {
-    isOpen.value = true
-  }
-
-  function close() {
-    isOpen.value = false
-  }
-
-  function toggle() {
-    isOpen.value = !isOpen.value
-  }
-
-  // Body scroll lock
-  function lockBodyScroll() {
-    if (!lockScroll) return
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
-    document.body.style.overflow = 'hidden'
-    document.body.style.paddingRight = `${scrollbarWidth}px`
-  }
-
-  function unlockBodyScroll() {
-    if (!lockScroll) return
-    document.body.style.overflow = ''
-    document.body.style.paddingRight = ''
-  }
-
-  // ESC key handling
-  if (closeOnEsc) {
-    onKeyStroke('Escape', (e) => {
-      if (isOpen.value) {
-        e.preventDefault()
-        close()
-      }
-    })
-  }
-
-  // Watch for modal state changes
-  watch(isOpen, (newValue) => {
-    if (newValue) {
-      lockBodyScroll()
-      onOpen?.()
-    } else {
-      unlockBodyScroll()
-      onClose?.()
-    }
-  })
-
-  // Cleanup on unmount
-  onUnmounted(() => {
-    if (isOpen.value) {
-      unlockBodyScroll()
-    }
+  // Use base overlay functionality
+  const overlay = useOverlay({
+    initialState,
+    closeOnEscape: closeOnEsc,
+    closeOnClickOutside: false, // Modals typically don't close on outside click
+    lockScroll,
+    zIndex: 1000,
+    onOpen,
+    onClose
   })
 
   return {
-    isOpen,
-    open,
-    close,
-    toggle,
+    isOpen: overlay.isVisible,
+    open: overlay.open,
+    close: overlay.close,
+    toggle: overlay.toggle,
   }
 }
