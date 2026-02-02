@@ -206,5 +206,17 @@
     "commandBar.filterHeavyTooltip": "Show files with 50K+ tokens (Heavy weight)",
     "commandBar.filterCriticalTooltip": "Show files with 100K+ tokens (Critical weight)",
     "commandBar.clearWeightFilter": "Clear weight filter",
-    "commandBar.weightFilterActive": "Weight filter active: {level}"
+    "commandBar.weightFilterActive": "Weight filter active: {level}",
+    "context.noiseReduction": "Noise Reduction",
+    "context.noiseReductionEnabled": "Enable noise reduction",
+    "context.noiseReductionTooltip": "Intelligently remove imports, boilerplate, and noise from code to reduce token usage",
+    "context.noiseReductionCollapseImports": "Collapse imports",
+    "context.noiseReductionCollapseImportsTooltip": "Replace import blocks with \"// N imports collapsed\"",
+    "context.noiseReductionRemoveComments": "Remove comments",
+    "context.noiseReductionRemoveCommentsTooltip": "Strip comments from code (preserves JSDoc)",
+    "context.noiseReductionRemoveTypeDefinitions": "Remove type definitions",
+    "context.noiseReductionRemoveTypeDefinitionsTooltip": "Remove TypeScript interfaces and type aliases",
+    "context.noiseReductionSavings": "Noise reduction: -{percent}% tokens",
+    "context.noiseReductionBadge": "Cleaned",
+    "context.noiseReductionStats": "Original: {original} tokens → Cleaned: {cleaned} tokens (saved {savings})"
 }

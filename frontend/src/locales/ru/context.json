@@ -206,5 +206,17 @@
     "commandBar.filterHeavyTooltip": "Показать файлы с 50K+ токенами (Тяжёлый вес)",
     "commandBar.filterCriticalTooltip": "Показать файлы с 100K+ токенами (Критический вес)",
     "commandBar.clearWeightFilter": "Сбросить фильтр по весу",
-    "commandBar.weightFilterActive": "Активен фильтр по весу: {level}"
+    "commandBar.weightFilterActive": "Активен фильтр по весу: {level}",
+    "context.noiseReduction": "Очистка шума",
+    "context.noiseReductionEnabled": "Включить очистку шума",
+    "context.noiseReductionTooltip": "Умное удаление импортов, boilerplate и шума из кода для уменьшения токенов",
+    "context.noiseReductionCollapseImports": "Схлопнуть импорты",
+    "context.noiseReductionCollapseImportsTooltip": "Заменить блоки импортов на \"// N импортов схлопнуто\"",
+    "context.noiseReductionRemoveComments": "Удалить комментарии",
+    "context.noiseReductionRemoveCommentsTooltip": "Удалить комментарии из кода (сохраняет JSDoc)",
+    "context.noiseReductionRemoveTypeDefinitions": "Удалить определения типов",
+    "context.noiseReductionRemoveTypeDefinitionsTooltip": "Удалить TypeScript интерфейсы и алиасы типов",
+    "context.noiseReductionSavings": "Очистка шума: -{percent}% токенов",
+    "context.noiseReductionBadge": "Очищено",
+    "context.noiseReductionStats": "Исходно: {original} токенов → Очищено: {cleaned} токенов (сэкономлено {savings})"
 }

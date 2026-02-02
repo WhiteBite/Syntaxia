@@ -67,7 +67,8 @@
         props.checkboxState !== 'none' ? 'tree-cb-checked' : '',
         props.checkboxState === 'partial' ? 'tree-cb-partial' : '',
         isSelectionDisabled ? 'tree-cb-disabled' : '',
-        props.isDraggingSelection ? 'tree-cb-dragging' : ''
+        props.isDraggingSelection ? 'tree-cb-dragging' : '',
+        isCriticalSize && props.checkboxState === 'none' ? 'tree-cb-warning' : ''
       ]"
       @click.stop="handleToggleSelect($event)"
       @mousedown.stop="handleCheckboxMouseDown"
@@ -78,6 +79,10 @@
         v-else-if="props.checkboxState === 'partial'"
         class="w-2 h-0.5 bg-white rounded-full"
       ></div>
+      <AlertTriangleIcon 
+        v-else-if="isCriticalSize && props.checkboxState === 'none'" 
+        class="w-3 h-3 tree-warning-icon"
+      />
     </div>
 
     <!-- Magic Wand Button (Select Related) -->
@@ -200,7 +205,7 @@ import { useSettingsStore } from '@/stores/settings.store'
 import { CheckIcon, ChevronIcon, EyeIcon, FolderIcon, FolderOpenIcon, WandIcon } from '@/components/icons'
 import { computed, ref } from 'vue'
 import type { FuseResultMatch } from 'fuse.js'
-import { Link as LinkIcon } from 'lucide-vue-next'
+import { Link as LinkIcon, AlertTriangle as AlertTriangleIcon } from 'lucide-vue-next'
 
 const { t } = useI18n()
 const hoveredFile = useHoveredFile()
@@ -607,12 +612,55 @@ function handleAddDependency() {
     background: rgba(71, 85, 105, 0.2);
 }
 
+.tree-cb-warning {
+    border-color: #fb923c;
+    background: rgba(251, 146, 60, 0.1);
+    animation: pulse-warning 2s ease-in-out infinite;
+}
+
+.tree-cb-warning:hover {
+    border-color: #f97316;
+    background: rgba(251, 146, 60, 0.2);
+    animation: none;
+}
+
+.tree-warning-icon {
+    color: #fb923c;
+}
+
+@keyframes pulse-warning {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(251, 146, 60, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 4px rgba(251, 146, 60, 0);
+    }
+}
+
 .tree-icon {
     flex-shrink: 0;
     width: var(--tree-icon-size);
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.tree-icon-critical {
+    animation: pulse-critical 2s ease-in-out infinite;
+}
+
+.tree-icon-heavy {
+    filter: drop-shadow(0 0 2px rgba(251, 146, 60, 0.3));
+}
+
+@keyframes pulse-critical {
+    0%, 100% {
+        filter: drop-shadow(0 0 2px rgba(248, 113, 113, 0.5));
+    }
+    50% {
+        filter: drop-shadow(0 0 4px rgba(248, 113, 113, 0.8));
+    }
 }
 
 .tree-folder-icon {

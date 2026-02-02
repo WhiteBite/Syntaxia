@@ -218,6 +218,7 @@
     "files.focusOnFolder": "Focus on this folder",
     "files.backToRoot": "Back to Project Root",
     "files.focusedOn": "Focused on: {folder}",
+    "files.filesVisible": "files visible",
     "commandBar.tokenDistribution": "Token Weight",
     "commandBar.filterMediumTooltip": "Show files with 10K+ tokens (Medium weight)",
     "commandBar.filterHeavyTooltip": "Show files with 50K+ tokens (Heavy weight)",
@@ -226,5 +227,16 @@
     "commandBar.weightFilterActive": "Weight filter active: {level}",
     "files.criticalSizeWarning": "⚠️ This file is {tokens} tokens ({percent}% of limit). Are you sure?",
     "files.heavySizeWarning": "Large file: {tokens} tokens. May slow down processing.",
-    "files.sizeGuardTitle": "Large File Warning"
+    "files.sizeGuardTitle": "Large File Warning",
+    "files.sizeGuard.title": "Large File Warning",
+    "files.sizeGuard.message": "You are about to select a very large file that may impact performance and consume a significant portion of your context limit.",
+    "files.sizeGuard.fileName": "File",
+    "files.sizeGuard.fileSize": "Size",
+    "files.sizeGuard.tokens": "tokens",
+    "files.sizeGuard.contextUsage": "Context Usage",
+    "files.sizeGuard.ofLimit": "of limit",
+    "files.sizeGuard.impact": "Large files may slow down AI processing and reduce available context for other files. Consider selecting only the most relevant sections.",
+    "files.sizeGuard.dontShowAgain": "Don't show this warning again",
+    "files.sizeGuard.cancel": "Cancel",
+    "files.sizeGuard.selectAnyway": "Select Anyway"
 }

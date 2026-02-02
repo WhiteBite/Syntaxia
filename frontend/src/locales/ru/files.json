@@ -218,6 +218,7 @@
     "files.focusOnFolder": "Сфокусироваться на папке",
     "files.backToRoot": "Вернуться к корню проекта",
     "files.focusedOn": "Фокус на: {folder}",
+    "files.filesVisible": "файлов видно",
     "commandBar.tokenDistribution": "Вес токенов",
     "commandBar.filterMediumTooltip": "Показать файлы с 10K+ токенами (Средний вес)",
     "commandBar.filterHeavyTooltip": "Показать файлы с 50K+ токенами (Тяжёлый вес)",
@@ -226,5 +227,16 @@
     "commandBar.weightFilterActive": "Активен фильтр по весу: {level}",
     "files.criticalSizeWarning": "⚠️ Этот файл {tokens} токенов ({percent}% лимита). Уверены?",
     "files.heavySizeWarning": "Большой файл: {tokens} токенов. Может замедлить обработку.",
-    "files.sizeGuardTitle": "Предупреждение о размере"
+    "files.sizeGuardTitle": "Предупреждение о размере",
+    "files.sizeGuard.title": "Предупреждение о размере файла",
+    "files.sizeGuard.message": "Вы собираетесь выбрать очень большой файл, который может повлиять на производительность и занять значительную часть лимита контекста.",
+    "files.sizeGuard.fileName": "Файл",
+    "files.sizeGuard.fileSize": "Размер",
+    "files.sizeGuard.tokens": "токенов",
+    "files.sizeGuard.contextUsage": "Использование контекста",
+    "files.sizeGuard.ofLimit": "от лимита",
+    "files.sizeGuard.impact": "Большие файлы могут замедлить обработку AI и уменьшить доступный контекст для других файлов. Рассмотрите возможность выбора только наиболее релевантных разделов.",
+    "files.sizeGuard.dontShowAgain": "Больше не показывать это предупреждение",
+    "files.sizeGuard.cancel": "Отмена",
+    "files.sizeGuard.selectAnyway": "Выбрать в любом случае"
 }

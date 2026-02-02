@@ -34,6 +34,11 @@
           <span class="token-stat-count">{{ tokenStats.critical }}</span>
           <span class="token-stat-label">100K+</span>
         </button>
+        <Transition name="filter-info">
+          <div v-if="weightFilter !== 'none'" class="weight-filter-info">
+            <span class="filter-info-text">{{ visibleFilesCount }} {{ t('files.filesVisible') }}</span>
+          </div>
+        </Transition>
         <BaseButton
           v-if="weightFilter !== 'none'"
           variant="ghost"
@@ -146,6 +151,23 @@
         {{ selectedCount }}
       </BaseBadge>
       <span class="token-estimate">~{{ estimatedTokens }}k tokens</span>
+      
+      <!-- Noise Reduction Toggle -->
+      <BaseButton 
+        variant="ghost" 
+        size="xs" 
+        class="noise-toggle ml-3"
+        :class="{ active: noiseReductionEnabled }"
+        @click="toggleNoiseReduction"
+        :title="noiseReductionTooltip"
+      >
+        <template #icon><Sparkles class="w-3 h-3" /></template>
+        {{ t('context.noiseReduction') }}
+        <span v-if="noiseReductionEnabled && estimatedSavings > 0" class="savings-badge">
+          -{{ estimatedSavings }}%
+        </span>
+      </BaseButton>
+      
       <BaseButton 
         variant="ghost" 
         size="xs" 
@@ -166,7 +188,7 @@ import { useI18n } from '@/composables/useI18n'
 import { useFileStore } from '@/features/files/model/file.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { BaseButton, BaseBadge } from '@/components/ui'
-import { Check, ChevronDown, Zap, X } from 'lucide-vue-next'
+import { Check, ChevronDown, Zap, X, Sparkles } from 'lucide-vue-next'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { TOKEN_THRESHOLDS } from '@/config/constants'
 import type { WeightFilterLevel } from '@/composables/useFileFilter'
@@ -196,6 +218,63 @@ const isDisabled = computed(() => props.selectedCount === 0)
 const isButtonDisabled = computed(() => props.selectedCount === 0 || props.isBuilding)
 const estimatedTokens = computed(() => Math.round(fileStore.estimatedTokenCount / 1000))
 const weightFilter = computed(() => fileStore.weightFilter)
+const noiseReductionEnabled = computed(() => settings.value.enableNoiseReduction)
+
+// Estimated savings from noise reduction (conservative estimate: 15-25%)
+const estimatedSavings = computed(() => {
+  if (!noiseReductionEnabled.value) return 0
+  
+  let savingsPercent = 0
+  if (settings.value.noiseReductionCollapseImports) savingsPercent += 10
+  if (settings.value.noiseReductionRemoveComments) savingsPercent += 8
+  if (settings.value.noiseReductionRemoveTypeDefinitions) savingsPercent += 5
+  
+  return Math.min(savingsPercent, 30) // Cap at 30%
+})
+
+const noiseReductionTooltip = computed(() => {
+  const parts = [t('context.noiseReductionTooltip')]
+  
+  if (noiseReductionEnabled.value) {
+    const options: string[] = []
+    if (settings.value.noiseReductionCollapseImports) options.push('imports')
+    if (settings.value.noiseReductionRemoveComments) options.push('comments')
+    if (settings.value.noiseReductionRemoveTypeDefinitions) options.push('types')
+    
+    if (options.length > 0) {
+      parts.push(`\nActive: ${options.join(', ')}`)
+    }
+    
+    if (estimatedSavings.value > 0) {
+      parts.push(`\nEstimated savings: ~${estimatedSavings.value}%`)
+    }
+  }
+  
+  return parts.join('')
+})
+
+function toggleNoiseReduction() {
+  settingsStore.updateContextSettings({ 
+    enableNoiseReduction: !settings.value.enableNoiseReduction 
+  })
+}
+
+// Count visible files after weight filtering
+const visibleFilesCount = computed(() => {
+  let count = 0
+  const countFiles = (nodes: FileNode[]) => {
+    for (const node of nodes) {
+      if (!node.isDir) {
+        count++
+      }
+      if (node.children) {
+        countFiles(node.children)
+      }
+    }
+  }
+  countFiles(fileStore.filteredNodes)
+  return count
+})
 
 // Calculate token weight statistics from all files in tree
 const tokenStats = computed(() => {
@@ -334,7 +413,8 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.15s ease-out;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
 .token-stat-segment:hover {
@@ -345,7 +425,27 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 
 .token-stat-segment.active {
   border-width: 2px;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1), 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+}
+
+.token-stat-segment.active::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 6px;
+  padding: 2px;
+  background: linear-gradient(135deg, currentColor, transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.3;
+  animation: pulse-border 2s ease-in-out infinite;
+}
+
+@keyframes pulse-border {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
 }
 
 .token-stat-segment--medium {
@@ -358,6 +458,10 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   border-color: rgba(251, 191, 36, 0.5);
 }
 
+.token-stat-segment--medium.active::before {
+  color: #fbbf24;
+}
+
 .token-stat-segment--heavy {
   border-color: rgba(249, 115, 22, 0.3);
 }
@@ -368,6 +472,10 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   border-color: rgba(249, 115, 22, 0.5);
 }
 
+.token-stat-segment--heavy.active::before {
+  color: #f97316;
+}
+
 .token-stat-segment--critical {
   border-color: rgba(239, 68, 68, 0.3);
 }
@@ -376,6 +484,10 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 .token-stat-segment--critical.active {
   background: rgba(239, 68, 68, 0.1);
   border-color: rgba(239, 68, 68, 0.5);
+}
+
+.token-stat-segment--critical.active::before {
+  color: #ef4444;
 }
 
 .token-stat-count {
@@ -407,12 +519,58 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   margin-left: auto;
   padding: 0.25rem;
   color: #6b7280;
-  transition: all 0.15s ease-out;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .clear-weight-filter:hover {
   color: #ef4444;
   background: rgba(239, 68, 68, 0.1);
+  transform: scale(1.1);
+}
+
+.weight-filter-info {
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 6px;
+  margin-left: 0.5rem;
+}
+
+.filter-info-text {
+  font-size: var(--font-size-xs);
+  color: #a5b4fc;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.filter-info-enter-active,
+.filter-info-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.filter-info-enter-from {
+  opacity: 0;
+  transform: translateX(-10px) scale(0.9);
+}
+
+.filter-info-leave-to {
+  opacity: 0;
+  transform: translateX(10px) scale(0.9);
 }
 
 /* MAGIC BAR */
@@ -686,6 +844,54 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   background: rgba(239, 68, 68, 0.15);
   border-color: rgba(239, 68, 68, 0.5);
   color: #f87171;
+}
+
+/* NOISE REDUCTION TOGGLE */
+.noise-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: transparent;
+  border: 1px solid rgba(192, 132, 252, 0.3);
+  border-radius: 4px;
+  color: #9ca3af;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+}
+
+.noise-toggle:hover {
+  background: rgba(192, 132, 252, 0.1);
+  border-color: rgba(192, 132, 252, 0.5);
+  color: #c084fc;
+}
+
+.noise-toggle.active {
+  background: rgba(192, 132, 252, 0.2);
+  border-color: rgba(192, 132, 252, 0.6);
+  color: #e9d5ff;
+  box-shadow: 0 0 0 2px rgba(192, 132, 252, 0.1);
+}
+
+.noise-toggle.active :deep(svg) {
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+.savings-badge {
+  margin-left: 4px;
+  padding: 1px 4px;
+  background: rgba(34, 197, 94, 0.2);
+  border-radius: 3px;
+  color: #22c55e;
+  font-size: 9px;
+  font-weight: 600;
+  font-family: ui-monospace, monospace;
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
 }
 
 /* DROPDOWN TRANSITION */

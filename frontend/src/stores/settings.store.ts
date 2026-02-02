@@ -26,6 +26,11 @@ export interface ContextSettings {
     maxTokensPerChunk: number
     // Template options
     applyTemplateOnCopy: boolean
+    // Noise reduction options
+    enableNoiseReduction: boolean
+    noiseReductionCollapseImports: boolean
+    noiseReductionRemoveComments: boolean
+    noiseReductionRemoveTypeDefinitions: boolean
 }
 
 export interface QuickFilterConfig {
@@ -48,6 +53,8 @@ export interface FileExplorerSettings {
     allowSelectBinary: boolean
     customIgnoreRules: string
     quickFilters: QuickFilterConfig[]
+    warnHeavyFiles: boolean
+    heavyFileThreshold: number
 }
 
 export interface ContextStorageSettings {
@@ -86,7 +93,12 @@ const DEFAULT_SETTINGS: AppSettings = {
         enableAutoSplit: false,
         maxTokensPerChunk: 32000,
         // Template options
-        applyTemplateOnCopy: true
+        applyTemplateOnCopy: true,
+        // Noise reduction - disabled by default for safety
+        enableNoiseReduction: false,
+        noiseReductionCollapseImports: true,
+        noiseReductionRemoveComments: false,
+        noiseReductionRemoveTypeDefinitions: false
     },
     contextStorage: {
         maxContexts: 20,
@@ -109,7 +121,9 @@ const DEFAULT_SETTINGS: AppSettings = {
             { id: 'config', label: 'Конфигурация', extensions: ['.json', '.yaml', '.yml', '.toml', '.ini', '.env'], patterns: [], enabled: true },
             { id: 'docs', label: 'Документация', extensions: ['.md', '.txt', '.rst', '.adoc'], patterns: [], enabled: true },
             { id: 'styles', label: 'Стили', extensions: ['.css', '.scss', '.sass', '.less'], patterns: [], enabled: true }
-        ]
+        ],
+        warnHeavyFiles: true,
+        heavyFileThreshold: 100000 // 100k tokens
     },
     aiModel: 'gpt-4',
     theme: 'dark',

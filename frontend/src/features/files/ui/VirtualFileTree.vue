@@ -43,6 +43,15 @@
     <div v-if="flattenedNodes.length === 0" class="empty-state">
       <p class="empty-state-text">{{ t('files.noFiles') }}</p>
     </div>
+
+    <!-- Heavy File Warning Modal -->
+    <ConfirmHeavyFileModal
+      :is-open="showHeavyFileModal"
+      :file-name="pendingFile?.name || ''"
+      :tokens="pendingFile?.tokens || 0"
+      @confirm="handleHeavyFileConfirm"
+      @cancel="handleHeavyFileCancel"
+    />
   </div>
 
 </template>
@@ -59,6 +68,10 @@ import { RecycleScroller } from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 import { useFileStore, type FileNode } from '../model/file.store'
 import VirtualTreeRow from './VirtualTreeRow.vue'
+import ConfirmHeavyFileModal from './ConfirmHeavyFileModal.vue'
+import { TOKEN_THRESHOLDS } from '@/config/constants'
+
+const STORAGE_KEY_DONT_WARN = 'syntaxia-dont-warn-heavy-files'
 
 const { t } = useI18n()
 const fileStore = useFileStore()
@@ -102,6 +115,10 @@ const flattenedNodes = computed(() => flattenedVisibleNodes.value)
 const isDraggingSelection = ref(false)
 const dragInitialAction = ref<'select' | 'deselect'>('select')
 const draggedPaths = new Set<string>()
+
+// Heavy file warning state
+const showHeavyFileModal = ref(false)
+const pendingFile = ref<{ path: string; name: string; tokens: number } | null>(null)
 
 // Scroll performance optimization
 const isScrolling = ref(false)
@@ -177,7 +194,61 @@ function handleToggleSelect(payload: { path: string, shiftKey: boolean }) {
     }
   }
   
+  // Check if we need to show heavy file warning
+  const node = fileStore.findNode(path)
+  if (node && !node.isDir && !fileStore.selectedPaths.has(path)) {
+    if (shouldWarnAboutHeavyFile(node)) {
+      // Show warning modal
+      const tokens = node.size ? Math.round(node.size / TOKEN_THRESHOLDS.BYTES_PER_TOKEN) : 0
+      pendingFile.value = {
+        path: node.path,
+        name: node.name,
+        tokens
+      }
+      showHeavyFileModal.value = true
+      return
+    }
+  }
+  
   fileStore.toggleSelect(path)
+}
+
+function shouldWarnAboutHeavyFile(node: FileNode): boolean {
+  // Check if warnings are enabled in settings
+  if (!settingsStore.settings.fileExplorer.warnHeavyFiles) {
+    return false
+  }
+  
+  // Check if user has disabled warnings
+  const dontWarn = localStorage.getItem(STORAGE_KEY_DONT_WARN)
+  if (dontWarn === 'true') {
+    return false
+  }
+  
+  // Check if file exceeds threshold
+  if (!node.size) return false
+  const tokens = Math.round(node.size / TOKEN_THRESHOLDS.BYTES_PER_TOKEN)
+  const threshold = settingsStore.settings.fileExplorer.heavyFileThreshold
+  
+  return tokens >= threshold
+}
+
+function handleHeavyFileConfirm(dontShowAgain: boolean) {
+  if (dontShowAgain) {
+    localStorage.setItem(STORAGE_KEY_DONT_WARN, 'true')
+  }
+  
+  if (pendingFile.value) {
+    fileStore.toggleSelect(pendingFile.value.path)
+  }
+  
+  showHeavyFileModal.value = false
+  pendingFile.value = null
+}
+
+function handleHeavyFileCancel() {
+  showHeavyFileModal.value = false
+  pendingFile.value = null
 }
 
 // Selection helpers - computed at parent level for better performance

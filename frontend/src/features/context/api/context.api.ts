@@ -18,6 +18,13 @@ export interface ProjectContext {
         selectedFiles?: string[]
         warnings?: string[]
         skippedFiles?: string[]
+        noiseReduction?: {
+            enabled: boolean
+            originalTokens: number
+            cleanedTokens: number
+            savings: number
+            savingsPercent: number
+        }
     }
 }
 
