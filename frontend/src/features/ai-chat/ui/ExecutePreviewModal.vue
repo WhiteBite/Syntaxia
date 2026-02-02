@@ -1,7 +1,12 @@
 <template>
-  <div class="modal-backdrop" @click.self="$emit('cancel')">
-    <div class="modal-content">
-      <div class="modal-header">
+  <BaseModal 
+    :model-value="true" 
+    @update:model-value="handleClose"
+    size="sm"
+    :show-close="false"
+  >
+    <template #header>
+      <div class="modal-header-content">
         <div class="modal-icon">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -9,77 +14,63 @@
         </div>
         <h3 class="modal-title">{{ t('chat.executePreview.title') }}</h3>
       </div>
-      
-      <div class="modal-body">
-        <p class="modal-text">
-          {{ t('chat.executePreview.description', { count: fileCount }) }}
-        </p>
-        <p class="modal-hint">
-          {{ t('chat.executePreview.hint') }}
-        </p>
-      </div>
-      
-      <div class="modal-actions">
-        <button 
-          class="btn btn-secondary"
-          @click="$emit('cancel')"
-        >
-          {{ t('chat.executePreview.cancel') }}
-        </button>
-        <button 
-          class="btn btn-primary"
-          @click="$emit('confirm')"
-        >
-          {{ t('chat.executePreview.confirm') }}
-        </button>
-      </div>
-    </div>
-  </div>
+    </template>
+
+    <template #default>
+      <p class="modal-text">
+        {{ t('chat.executePreview.description', { count: fileCount }) }}
+      </p>
+      <p class="modal-hint">
+        {{ t('chat.executePreview.hint') }}
+      </p>
+    </template>
+
+    <template #footer>
+      <BaseButton 
+        variant="secondary" 
+        @click="$emit('cancel')"
+      >
+        {{ t('chat.executePreview.cancel') }}
+      </BaseButton>
+      <BaseButton 
+        variant="primary" 
+        @click="$emit('confirm')"
+      >
+        {{ t('chat.executePreview.confirm') }}
+      </BaseButton>
+    </template>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
 import { useI18n } from '@/composables/useI18n'
+import BaseModal from '@/components/ui/BaseModal.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
 
 defineProps<{
   fileCount: number
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   confirm: []
   cancel: []
 }>()
 
 const { t } = useI18n()
+
+function handleClose(value: boolean) {
+  if (!value) {
+    emit('cancel')
+  }
+}
 </script>
 
 <style scoped>
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: var(--z-modal);
-  padding: 1rem;
-}
-
-.modal-content {
-  background: var(--bg-1);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
-  width: 100%;
-  max-width: min(400px, 90vw);
-  padding: 1.5rem;
-}
-
-.modal-header {
+.modal-header-content {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 1rem;
+  width: 100%;
 }
 
 .modal-icon {
@@ -101,10 +92,6 @@ const { t } = useI18n()
   margin: 0;
 }
 
-.modal-body {
-  margin-bottom: 1.5rem;
-}
-
 .modal-text {
   font-size: 0.875rem;
   color: var(--text-secondary);
@@ -116,11 +103,5 @@ const { t } = useI18n()
   font-size: 0.75rem;
   color: var(--text-muted);
   margin: 0;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
 }
 </style>

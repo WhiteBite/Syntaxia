@@ -1,3 +1,40 @@
+## Задача 0: Использование базовых UI компонентов (UI Kit Adoption)
+
+**Цель:** Заменить кастомные реализации на базовые компоненты из UI Kit для консистентности и переиспользования.
+
+**Приоритет:** Средний
+
+**Компоненты для рефакторинга:**
+
+### 1. Модальные окна → BaseModal
+- `features/ai-chat/ui/ExecutePreviewModal.vue` - кастомная реализация
+- Другие компоненты с `class="modal-backdrop"` или `class="modal-content"`
+
+### 2. Dropdown меню → BaseDropdown + useDropdown
+- `features/git/ui/RecentReposDropdown.vue` - ручное управление isOpen
+- Другие компоненты с кастомными dropdown реализациями
+
+### 3. Кнопки → BaseButton
+Найдено ~50+ кнопок без класса `.btn`:
+- `features/verification/ui/ErrorList.vue` - кнопки группировки
+- `features/testing/ui/TestTree.vue` - кнопки suite headers
+- `features/templates/ui/TemplateListItem.vue` - action buttons
+- `features/symbols/ui/SymbolSearch.vue` - filter buttons
+- И другие...
+
+### 4. Tooltips → BaseTooltip (если нужно)
+- Проверить где используются кастомные тултипы
+
+**Преимущества:**
+- Единый стиль во всем приложении
+- Меньше дублирования кода
+- Легче поддерживать и тестировать
+- Автоматическая поддержка accessibility
+
+**Оценка:** ~4-6 часов работы
+
+---
+
 Для реализации этих улучшений ИИ-агенту потребуются изменения в логике Pinia-сторов, CSS-модулях и структуре Vue-компонентов. Ниже представлены первые 5 задач, сфокусированных на стабильности и скорости работы дерева.
 
 ---

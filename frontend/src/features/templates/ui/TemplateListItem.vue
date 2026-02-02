@@ -8,22 +8,32 @@
     <span class="item-name">{{ template.name }}</span>
     <span v-if="isCurrent" class="current-badge">●</span>
     <div class="item-actions">
-      <button
+      <BaseButton
+        variant="ghost"
+        size="sm"
+        icon-only
         @click.stop="$emit('toggle-favorite')"
         class="item-action fav"
         :class="{ active: template.isFavorite }"
         :title="t('templates.toggleFavorite')"
       >
-        <Star class="w-3 h-3" :fill="template.isFavorite ? 'currentColor' : 'none'" />
-      </button>
-      <button
+        <template #icon>
+          <Star class="w-3 h-3" :fill="template.isFavorite ? 'currentColor' : 'none'" />
+        </template>
+      </BaseButton>
+      <BaseButton
         v-if="!template.isBuiltIn"
+        variant="ghost"
+        size="sm"
+        icon-only
         @click.stop="$emit('delete')"
         class="item-action delete"
         :title="t('templates.delete')"
       >
-        <Trash2 class="w-3 h-3" />
-      </button>
+        <template #icon>
+          <Trash2 class="w-3 h-3" />
+        </template>
+      </BaseButton>
     </div>
   </div>
 </template>
@@ -32,6 +42,7 @@
 import { useI18n } from '@/composables/useI18n'
 import { Star, Trash2 } from 'lucide-vue-next'
 import type { PromptTemplate } from '../model/template.types'
+import BaseButton from '@/components/ui/BaseButton.vue'
 
 const { t } = useI18n()
 
@@ -107,22 +118,9 @@ defineEmits<{
 }
 
 .item-action {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 1.25rem;
   height: 1.25rem;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.item-action:hover {
-  background: var(--bg-3);
-  color: var(--text-primary);
+  padding: 0;
 }
 
 .item-action.fav:hover,

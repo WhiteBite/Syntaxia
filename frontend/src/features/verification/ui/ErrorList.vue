@@ -16,7 +16,9 @@
         class="error-group"
       >
         <!-- File Header -->
-        <button 
+        <BaseButton 
+          variant="ghost" 
+          size="sm"
           class="error-group-header"
           @click="toggleGroup(file)"
         >
@@ -44,7 +46,7 @@
               {{ getWarningCount(fileErrors) }}
             </span>
           </div>
-        </button>
+        </BaseButton>
 
         <!-- File Errors -->
         <div 
@@ -72,7 +74,9 @@
       >
         <template v-if="errorsBySeverity[severity].length > 0">
           <!-- Severity Header -->
-          <button 
+          <BaseButton 
+            variant="ghost" 
+            size="sm"
             class="error-group-header"
             @click="toggleGroup(severity)"
           >
@@ -93,7 +97,7 @@
             <span class="group-title">{{ t(`verification.${severity}`) }}</span>
             
             <span class="group-count">{{ errorsBySeverity[severity].length }}</span>
-          </button>
+          </BaseButton>
 
           <!-- Severity Errors -->
           <div 
@@ -120,6 +124,7 @@ import { useI18n } from '@/composables/useI18n'
 import { computed, ref, watch } from 'vue'
 import type { Severity, VerificationError } from '../api/verification.api'
 import ErrorItem from './ErrorItem.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
 
 const { t } = useI18n()
 
@@ -271,10 +276,7 @@ defineExpose({ expandAll, collapseAll })
   gap: 8px;
   width: 100%;
   padding: 12px 16px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: background 0.15s ease-out;
+  justify-content: flex-start;
 }
 
 .error-group-header:hover {
