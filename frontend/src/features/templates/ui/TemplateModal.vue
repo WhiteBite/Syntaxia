@@ -109,17 +109,23 @@
                   <!-- Role Card -->
                   <TemplateCard v-if="editingTemplate.sections.role" :title="t('templates.roleContent')" :icon="UserIcon"
                     :count="editingTemplate.roleContent?.length || 0" :enabled="true">
-                    <textarea ref="roleTextarea" v-model="editingTemplate.roleContent" 
-                      :placeholder="t('templates.rolePlaceholder')" class="tpl-textarea"
-                      @input="autoResize($event.target as HTMLTextAreaElement)" />
+                    <BaseTextarea
+                      v-model="editingTemplate.roleContent" 
+                      :placeholder="t('templates.rolePlaceholder')"
+                      auto-resize
+                      :rows="3"
+                    />
                   </TemplateCard>
 
                   <!-- Rules Card -->
                   <TemplateCard v-if="editingTemplate.sections.rules" :title="t('templates.rulesContent')" :icon="ListChecksIcon"
                     :count="editingTemplate.rulesContent?.length || 0" :enabled="true">
-                    <textarea ref="rulesTextarea" v-model="editingTemplate.rulesContent"
-                      :placeholder="t('templates.rulesPlaceholder')" class="tpl-textarea"
-                      @input="autoResize($event.target as HTMLTextAreaElement)" />
+                    <BaseTextarea
+                      v-model="editingTemplate.rulesContent"
+                      :placeholder="t('templates.rulesPlaceholder')"
+                      auto-resize
+                      :rows="3"
+                    />
                   </TemplateCard>
 
                   <!-- Context Options - Grid Tiles -->
@@ -146,11 +152,19 @@
                     <div class="tpl-advanced-content">
                       <div class="tpl-advanced-field">
                         <label>{{ t('templates.prefix') }}</label>
-                        <textarea v-model="editingTemplate.customPrefix" :placeholder="t('templates.prefixPlaceholder')" rows="2" />
+                        <BaseTextarea
+                          v-model="editingTemplate.customPrefix"
+                          :placeholder="t('templates.prefixPlaceholder')"
+                          :rows="2"
+                        />
                       </div>
                       <div class="tpl-advanced-field">
                         <label>{{ t('templates.suffix') }}</label>
-                        <textarea v-model="editingTemplate.customSuffix" :placeholder="t('templates.suffixPlaceholder')" rows="2" />
+                        <BaseTextarea
+                          v-model="editingTemplate.customSuffix"
+                          :placeholder="t('templates.suffixPlaceholder')"
+                          :rows="2"
+                        />
                       </div>
                     </div>
                   </details>
@@ -317,7 +331,7 @@
 
 
 <script setup lang="ts">
-import BaseButton from '@/components/ui/BaseButton.vue'
+import { BaseButton, BaseTextarea } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
 import { useContextStore } from '@/features/context'
 import { 
@@ -326,7 +340,7 @@ import {
   Trash2, Upload, User, X, Zap 
 } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
-import { computed, nextTick, ref, watch, shallowRef } from 'vue'
+import { computed, ref, watch, shallowRef } from 'vue'
 import { useTemplateStore } from '../model/template.store'
 import { createEmptyTemplate, DEFAULT_SECTION_ORDER, SECTION_META, type PromptTemplate, type TemplateSections } from '../model/template.types'
 import TemplateListItem from './TemplateListItem.vue'
@@ -356,9 +370,6 @@ const searchQuery = ref('')
 const autoSaveOnClose = ref(localStorage.getItem('template-autosave') === 'true')
 const showEmojiPicker = ref(false)
 const justSaved = ref(false)
-
-const roleTextarea = ref<HTMLTextAreaElement | null>(null)
-const rulesTextarea = ref<HTMLTextAreaElement | null>(null)
 
 const sectionsList = SECTION_META
 const hasChanges = computed(() => !editingTemplate.value ? false : !selectedTemplate.value ? true : JSON.stringify(editingTemplate.value) !== originalJson.value)
@@ -468,20 +479,11 @@ const noResults = computed(() => searchQuery.value && !filteredFavorites.value.l
 watch(autoSaveOnClose, v => localStorage.setItem('template-autosave', v ? 'true' : 'false'))
 watch(isOpen, open => { if (open && templateStore.activeTemplate) selectTemplate(templateStore.activeTemplate) })
 
-function autoResize(el: HTMLTextAreaElement) {
-  el.style.height = 'auto'
-  el.style.height = Math.max(80, el.scrollHeight) + 'px'
-}
-
 function selectTemplate(tpl: PromptTemplate) {
   if (hasChanges.value && !isEditingBuiltIn.value) { showUnsavedWarning.value = true; return }
   selectedTemplate.value = tpl
   editingTemplate.value = JSON.parse(JSON.stringify(tpl))
   originalJson.value = JSON.stringify(tpl)
-  nextTick(() => {
-    if (roleTextarea.value) autoResize(roleTextarea.value)
-    if (rulesTextarea.value) autoResize(rulesTextarea.value)
-  })
 }
 
 function toggleSection(key: keyof TemplateSections) { 
@@ -858,22 +860,6 @@ function handleImport() {
 .tpl-cards::-webkit-scrollbar-track { background: transparent; }
 .tpl-cards::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 2px; }
 
-.tpl-textarea {
-  width: 100%;
-  min-height: 80px;
-  max-height: 200px;
-  padding: 0;
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 13px;
-  font-family: var(--font-mono);
-  line-height: 1.6;
-  resize: none;
-  outline: none;
-}
-.tpl-textarea::placeholder { color: var(--text-subtle); font-style: italic; }
-
 /* Context Options Grid */
 .tpl-options-card {
   background: #0d1117;
@@ -943,21 +929,6 @@ function handleImport() {
   color: var(--text-subtle);
   text-transform: uppercase;
 }
-
-.tpl-advanced-field textarea {
-  width: 100%;
-  padding: 0.5rem;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-family: var(--font-mono);
-  resize: none;
-  outline: none;
-  transition: border-color 0.15s;
-}
-.tpl-advanced-field textarea:focus { border-color: var(--accent-indigo-border); }
 
 .tpl-empty {
   flex: 1;

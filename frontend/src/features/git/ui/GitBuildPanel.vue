@@ -4,10 +4,9 @@
     <div class="flex items-center justify-between mb-3">
       <span class="text-sm text-gray-300">{{ remoteSelectedCount }} {{ t('git.filesSelected') }}</span>
     </div>
-    <button @click="$emit('build-remote')" :disabled="isBuilding" class="btn btn-primary w-full">
-      <BaseSpinner v-if="isBuilding" size="sm" class="mr-2" />
+    <BaseButton @click="$emit('build-remote')" :disabled="isBuilding" variant="primary" :loading="isBuilding" class="w-full">
       {{ t('git.buildContext') }} {{ remoteBranch }}
-    </button>
+    </BaseButton>
   </div>
 
   <!-- Bottom Panel - Build Context (Local) -->
@@ -15,17 +14,16 @@
     <div class="flex items-center justify-between mb-3">
       <span class="text-sm text-gray-300">{{ localSelectedCount }} {{ t('git.filesSelected') }}</span>
     </div>
-    <button @click="$emit('build-local')" :disabled="isBuilding" class="btn btn-primary w-full">
-      <BaseSpinner v-if="isBuilding" size="sm" class="mr-2" />
+    <BaseButton @click="$emit('build-local')" :disabled="isBuilding" variant="primary" :loading="isBuilding" class="w-full">
       {{ t('git.buildContext') }} {{ localRef?.slice(0, 7) || 'ref' }}
-    </button>
+    </BaseButton>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useI18n } from '@/composables/useI18n'
 import type { SourceType } from './GitSourceTabs.vue'
-import { BaseSpinner } from '@/components/ui'
+import { BaseButton } from '@/components/ui'
 
 defineProps<{
   sourceType: SourceType

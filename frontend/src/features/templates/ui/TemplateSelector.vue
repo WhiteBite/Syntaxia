@@ -57,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import BaseButton from '@/components/ui/BaseButton.vue'
+import { BaseButton } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
 import { onClickOutside } from '@vueuse/core'
 import { ChevronDown } from 'lucide-vue-next'

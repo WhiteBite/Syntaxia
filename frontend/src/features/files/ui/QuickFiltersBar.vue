@@ -162,23 +162,34 @@
 
     <!-- Actions -->
     <div class="filter-actions">
-      <button
+      <BaseButton
         v-if="allActiveFilters.length > 0"
+        variant="ghost"
+        size="sm"
         @click="clearAllFilters"
-        class="filter-clear-btn"
         :title="t('quickFilters.clearAll')"
       >
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-        <span>{{ t('quickFilters.clear') }}</span>
-      </button>
-      <button @click="showSettingsModal = true" class="filter-settings-btn" :title="t('quickFilters.settings')">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-        </svg>
-      </button>
+        <template #icon>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </template>
+        {{ t('quickFilters.clear') }}
+      </BaseButton>
+      <BaseButton
+        variant="ghost"
+        size="sm"
+        icon-only
+        @click="showSettingsModal = true"
+        :title="t('quickFilters.settings')"
+      >
+        <template #icon>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+          </svg>
+        </template>
+      </BaseButton>
     </div>
   </div>
 
@@ -194,6 +205,7 @@
 
 <script setup lang="ts">
 import BaseDropdown from '@/components/ui/BaseDropdown.vue'
+import { BaseButton } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
 import { h, ref } from 'vue'
 import { useQuickFilters } from '../composables/useQuickFilters'
@@ -282,24 +294,7 @@ function getFilterIcon(category: string) {
 }
 .filter-badge-smart { background: var(--accent-emerald); }
 
-.filter-clear-btn {
-  @apply flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-lg;
-  color: var(--color-danger);
-  background: var(--color-danger-soft);
-  border: 1px solid var(--color-danger-border);
-  transition: all 150ms ease-out;
-}
-.filter-clear-btn:hover { background: rgba(248, 113, 113, 0.25); }
 
-.filter-settings-btn {
-  @apply p-1.5 rounded-lg;
-  color: var(--text-muted);
-  transition: all 150ms ease-out;
-}
-.filter-settings-btn:hover {
-  color: var(--text-primary);
-  background: var(--bg-2);
-}
 
 /* Smart filter menu variants */
 :deep(.filter-menu-smart) { border-color: var(--accent-emerald-border); }

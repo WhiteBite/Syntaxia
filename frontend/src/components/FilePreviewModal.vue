@@ -30,10 +30,7 @@
 
     <!-- Content -->
     <div v-if="isLoading" class="flex items-center justify-center h-64">
-      <svg class="animate-spin w-8 h-8 text-indigo-400" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-      </svg>
+      <BaseSpinner size="lg" color="#a78bfa" />
     </div>
     <div v-else-if="error" class="flex items-center justify-center h-64 text-red-400">
       <div class="text-center">
@@ -55,6 +52,7 @@
 
 <script setup lang="ts">
 import BaseModal from '@/components/ui/BaseModal.vue'
+import { BaseSpinner } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n';
 import { useUIStore } from '@/stores/ui.store';
 import { getFileIcon } from '@/utils/fileIcons';

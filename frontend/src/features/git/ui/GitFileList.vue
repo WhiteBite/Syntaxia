@@ -17,15 +17,18 @@
           :placeholder="t('git.searchFiles')"
           class="input pl-10 py-1.5 text-sm w-full" 
         />
-        <button 
+        <BaseButton 
           v-if="searchQuery" 
           @click="searchQuery = ''"
-          class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+          variant="ghost"
+          size="xs"
+          icon-only
+          class="absolute right-2 top-1/2 -translate-y-1/2"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
-        </button>
+        </BaseButton>
       </div>
 
       <!-- File Type Filters -->
@@ -56,12 +59,12 @@
 
     <!-- Selection Actions -->
     <div class="flex gap-2">
-      <button @click="$emit('select-all')" class="action-btn action-btn-success btn-sm flex-1">
+      <BaseButton @click="$emit('select-all')" variant="success" size="sm" class="flex-1">
         {{ t('git.selectAll') }}
-      </button>
-      <button @click="$emit('clear-selection')" class="action-btn action-btn-danger btn-sm flex-1">
+      </BaseButton>
+      <BaseButton @click="$emit('clear-selection')" variant="danger" size="sm" class="flex-1">
         {{ t('git.clearSelection') }}
-      </button>
+      </BaseButton>
     </div>
   </div>
 </template>
@@ -71,6 +74,7 @@ import SimpleFileTree from '@/components/SimpleFileTree.vue'
 import { useI18n } from '@/composables/useI18n'
 import { useLogger } from '@/composables/useLogger'
 import { computed, ref } from 'vue'
+import { BaseButton } from '@/components/ui'
 
 const logger = useLogger('GitFileList')
 

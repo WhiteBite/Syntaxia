@@ -54,20 +54,28 @@
               <span class="preset-date">{{ formatDate(preset.createdAt) }}</span>
             </div>
             <div class="preset-actions">
-              <button
-                class="preset-action-btn"
+              <BaseButton
+                variant="ghost"
+                size="sm"
+                icon-only
                 @click="handleLoad(preset)"
                 :title="t('presets.load')"
               >
-                <ArrowDownTrayIcon class="w-3.5 h-3.5" />
-              </button>
-              <button
-                class="preset-action-btn preset-action-delete"
+                <template #icon>
+                  <ArrowDownTrayIcon class="w-3.5 h-3.5" />
+                </template>
+              </BaseButton>
+              <BaseButton
+                variant="danger"
+                size="sm"
+                icon-only
                 @click="handleDelete(preset)"
                 :title="t('presets.delete')"
               >
-                <TrashIcon class="w-3.5 h-3.5" />
-              </button>
+                <template #icon>
+                  <TrashIcon class="w-3.5 h-3.5" />
+                </template>
+              </BaseButton>
             </div>
           </div>
         </div>
@@ -363,26 +371,6 @@ function confirmDelete() {
 
 .preset-item:hover .preset-actions {
   opacity: 1;
-}
-
-.preset-action-btn {
-  padding: 0.375rem;
-  border-radius: 0.25rem;
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.preset-action-btn:hover {
-  background: rgba(99, 102, 241, 0.2);
-  color: rgb(129, 140, 248);
-}
-
-.preset-action-delete:hover {
-  background: rgba(239, 68, 68, 0.2);
-  color: rgb(239, 68, 68);
 }
 
 /* Form styles for modal content */

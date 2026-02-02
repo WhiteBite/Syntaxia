@@ -1,97 +1,93 @@
 <template>
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-    <div class="bg-gray-900 rounded-lg shadow-xl flex flex-col" style="width: min(800px, 90vw); max-height: 80vh;">
-      <!-- Header -->
-      <div class="flex items-center justify-between p-4 border-b border-gray-700">
-        <div class="flex items-center gap-3">
-          <div class="section-icon section-icon-yellow">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
-          <h2 class="text-lg font-semibold text-white">
-            {{ t('sandbox.reviewChanges') }}
-          </h2>
-          <span class="badge badge-warning">
-            {{ sandboxStore.changeCount }} {{ t('sandbox.files') }}
-          </span>
-        </div>
-        <button @click="$emit('close')" class="btn btn-ghost btn-sm">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+  <BaseModal
+    :model-value="true"
+    size="lg"
+    :close-on-backdrop="true"
+    @close="$emit('close')"
+  >
+    <template #header>
+      <div class="flex items-center gap-3">
+        <div class="section-icon section-icon-yellow">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-        </button>
-      </div>
-
-      <!-- Content -->
-      <div class="flex-1 min-h-0 flex">
-        <!-- File list -->
-        <div class="border-r border-gray-700 overflow-y-auto flex-shrink-0" style="width: min(16rem, 30%);">
-          <div
-            v-for="change in sandboxStore.changes"
-            :key="change.path"
-            @click="selectedFile = change.path"
-            :class="[
-              'p-3 cursor-pointer border-b border-gray-800 hover:bg-gray-800',
-              selectedFile === change.path ? 'bg-gray-800' : ''
-            ]"
-          >
-            <div class="flex items-center gap-2">
-              <span :class="getOperationClass(change.operation)">
-                {{ getOperationIcon(change.operation) }}
-              </span>
-              <span class="text-sm text-gray-300 truncate">{{ getFileName(change.path) }}</span>
-            </div>
-            <div class="text-xs text-gray-500 truncate mt-1">{{ change.path }}</div>
-          </div>
         </div>
-
-        <!-- Diff view -->
-        <div class="flex-1 min-w-0 overflow-auto p-4">
-          <div v-if="selectedFile && currentDiff" class="font-mono text-sm">
-            <pre class="whitespace-pre-wrap"><code v-html="highlightDiff(currentDiff)"></code></pre>
-          </div>
-          <div v-else-if="isLoadingDiff" class="flex items-center justify-center h-full">
-            <BaseSpinner size="lg" class="text-purple-500" />
-          </div>
-          <div v-else class="empty-state h-full">
-            <p class="text-gray-400">{{ t('sandbox.selectFile') }}</p>
-          </div>
-        </div>
+        <h2 class="text-lg font-semibold text-white">
+          {{ t('sandbox.reviewChanges') }}
+        </h2>
+        <span class="badge badge-warning">
+          {{ sandboxStore.changeCount }} {{ t('sandbox.files') }}
+        </span>
       </div>
+    </template>
 
-      <!-- Footer -->
-      <div class="flex items-center justify-between p-4 border-t border-gray-700">
-        <button
-          @click="handleDiscardAll"
-          :disabled="sandboxStore.isLoading"
-          class="btn btn-danger"
+    <!-- Content -->
+    <div class="flex min-h-0" style="height: 60vh;">
+      <!-- File list -->
+      <div class="border-r border-gray-700 overflow-y-auto flex-shrink-0" style="width: min(16rem, 30%);">
+        <div
+          v-for="change in sandboxStore.changes"
+          :key="change.path"
+          @click="selectedFile = change.path"
+          :class="[
+            'p-3 cursor-pointer border-b border-gray-800 hover:bg-gray-800',
+            selectedFile === change.path ? 'bg-gray-800' : ''
+          ]"
         >
-          {{ t('sandbox.discardAll') }}
-        </button>
-        <div class="flex gap-2">
-          <button @click="$emit('close')" class="btn btn-secondary">
-            {{ t('common.cancel') }}
-          </button>
-          <button
-            @click="handleApplyAll"
-            :disabled="sandboxStore.isLoading"
-            class="btn btn-primary"
-          >
-            {{ t('sandbox.applyAll') }}
-          </button>
+          <div class="flex items-center gap-2">
+            <span :class="getOperationClass(change.operation)">
+              {{ getOperationIcon(change.operation) }}
+            </span>
+            <span class="text-sm text-gray-300 truncate">{{ getFileName(change.path) }}</span>
+          </div>
+          <div class="text-xs text-gray-500 truncate mt-1">{{ change.path }}</div>
+        </div>
+      </div>
+
+      <!-- Diff view -->
+      <div class="flex-1 min-w-0 overflow-auto p-4">
+        <div v-if="selectedFile && currentDiff" class="font-mono text-sm">
+          <pre class="whitespace-pre-wrap"><code v-html="highlightDiff(currentDiff)"></code></pre>
+        </div>
+        <div v-else-if="isLoadingDiff" class="flex items-center justify-center h-full">
+          <BaseSpinner size="lg" class="text-purple-500" />
+        </div>
+        <div v-else class="empty-state h-full">
+          <p class="text-gray-400">{{ t('sandbox.selectFile') }}</p>
         </div>
       </div>
     </div>
-  </div>
+
+    <template #footer>
+      <button
+        @click="handleDiscardAll"
+        :disabled="sandboxStore.isLoading"
+        class="btn btn-danger"
+      >
+        {{ t('sandbox.discardAll') }}
+      </button>
+      <div class="flex gap-2 ml-auto">
+        <button @click="$emit('close')" class="btn btn-secondary">
+          {{ t('common.cancel') }}
+        </button>
+        <button
+          @click="handleApplyAll"
+          :disabled="sandboxStore.isLoading"
+          class="btn btn-primary"
+        >
+          {{ t('sandbox.applyAll') }}
+        </button>
+      </div>
+    </template>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
+import { BaseModal, BaseSpinner } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
 import { useSandboxStore } from '@/stores/sandbox.store'
 import { ref, watch } from 'vue'
-import BaseSpinner from '@/components/ui/BaseSpinner.vue'
 
 const emit = defineEmits<{
   close: []

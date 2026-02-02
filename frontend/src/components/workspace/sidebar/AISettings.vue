@@ -64,7 +64,7 @@
         :disabled="isSaving"
         class="ai-settings-save-btn"
       >
-        <Loader2 v-if="isSaving" class="animate-spin w-4 h-4" />
+        <BaseSpinner v-if="isSaving" size="sm" />
         {{ isSaving ? t('settings.saving') : t('settings.save') }}
       </button>
 
@@ -77,7 +77,8 @@
 <script setup lang="ts">
 import { useAISettings } from '@/composables/useAISettings'
 import { useI18n } from '@/composables/useI18n'
-import { Lightbulb, Loader2 } from 'lucide-vue-next'
+import { Lightbulb } from 'lucide-vue-next'
+import { BaseSpinner } from '@/components/ui'
 import { onMounted } from 'vue'
 import {
     ApiKeyInput,

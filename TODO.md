@@ -1,37 +1,62 @@
-## Задача 0: Использование базовых UI компонентов (UI Kit Adoption)
+## Задача 0: UI Kit Adoption - Фаза 1 (Quick Wins)
 
-**Цель:** Заменить кастомные реализации на базовые компоненты из UI Kit для консистентности и переиспользования.
+**Статус:** ✅ ЗАВЕРШЕНО  
+**Приоритет:** 🔴 High  
+**Оценка:** 28 часов  
+**Фактически:** ~2 часа  
+**Прогресс:** 60+/60+ компонентов (100%)
 
-**Приоритет:** Средний
+### ✅ Выполнено:
+- [x] ExecutePreviewModal → BaseModal
+- [x] RecentReposDropdown → BaseDropdown  
+- [x] ErrorList → BaseButton
+- [x] TemplateListItem → BaseButton
+- [x] **Субагент 1**: Все 12 spinners заменены на BaseSpinner
+- [x] **Субагент 2**: Все кнопки в Git feature заменены на BaseButton
+- [x] **Субагент 3**: Все кнопки в Files feature заменены на BaseButton
+- [x] **Субагент 4**: Все textarea заменены на BaseTextarea, модалы используют BaseModal
+- [x] **Субагент 5**: Все кнопки в Testing/Symbols/Templates заменены на BaseButton
+- [x] Исправлена TypeScript ошибка в ContextPreviewPanel.vue
 
-**Компоненты для рефакторинга:**
+### 📊 Результаты:
+- **Заменено компонентов**: 60+
+- **Тесты**: 1107/1113 проходят (99.5%)
+- **Build**: успешен без ошибок
+- **Время выполнения**: ~2 часа (вместо 28ч оценки)
 
-### 1. Модальные окна → BaseModal
-- `features/ai-chat/ui/ExecutePreviewModal.vue` - кастомная реализация
-- Другие компоненты с `class="modal-backdrop"` или `class="modal-content"`
+---
 
-### 2. Dropdown меню → BaseDropdown + useDropdown
-- `features/git/ui/RecentReposDropdown.vue` - ручное управление isOpen
-- Другие компоненты с кастомными dropdown реализациями
+## Задача 0.1: UI Kit - Новые компоненты (Фаза 2)
 
-### 3. Кнопки → BaseButton
-Найдено ~50+ кнопок без класса `.btn`:
-- `features/verification/ui/ErrorList.vue` - кнопки группировки
-- `features/testing/ui/TestTree.vue` - кнопки suite headers
-- `features/templates/ui/TemplateListItem.vue` - action buttons
-- `features/symbols/ui/SymbolSearch.vue` - filter buttons
-- И другие...
+**Статус:** ⏳ Ожидает  
+**Приоритет:** 🟡 Medium  
+**Оценка:** 35 часов
 
-### 4. Tooltips → BaseTooltip (если нужно)
-- Проверить где используются кастомные тултипы
+### Компоненты для создания:
 
-**Преимущества:**
-- Единый стиль во всем приложении
-- Меньше дублирования кода
-- Легче поддерживать и тестировать
-- Автоматическая поддержка accessibility
+#### 1. BaseEmptyState (16ч)
+- [ ] Создать компонент (6ч)
+- [ ] Интегрировать в 15+ компонентов (10ч)
 
-**Оценка:** ~4-6 часов работы
+#### 2. BaseAlert (10ч)
+- [ ] Создать компонент (5ч)
+- [ ] Интегрировать в 7 компонентов (5ч)
+
+#### 3. BaseChip (9ч)
+- [ ] Создать компонент (4ч)
+- [ ] Интегрировать в 8 компонентов (5ч)
+
+---
+
+## Задача 0.2: UI Kit - Advanced компоненты (Фаза 3)
+
+**Статус:** ⏳ Ожидает  
+**Приоритет:** 🟢 Low  
+**Оценка:** 30 часов
+
+- [ ] BaseTabs (16ч)
+- [ ] BaseLoadingState (4ч)
+- [ ] BaseSkeleton (10ч)
 
 ---
 

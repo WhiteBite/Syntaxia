@@ -166,6 +166,8 @@ export function GetContextContent(arg1:string,arg2:number,arg3:number):Promise<s
 
 export function GetContextLines(arg1:string,arg2:number,arg3:number):Promise<string>;
 
+export function GetContextStats(arg1:string):Promise<string>;
+
 export function GetCurrentBranch(arg1:string):Promise<string>;
 
 export function GetCurrentDirectory():Promise<string>;

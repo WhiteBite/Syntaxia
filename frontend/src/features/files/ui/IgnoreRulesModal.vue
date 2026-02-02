@@ -102,37 +102,42 @@
 
     <template #footer>
       <div class="ignore-footer__left">
-        <button 
-          v-if="currentTab === 'custom'" 
-          @click="resetToDefaults" 
-          class="ignore-footer__danger-btn"
+        <BaseButton
+          v-if="currentTab === 'custom'"
+          variant="ghost"
+          @click="resetToDefaults"
         >
           {{ t('ignoreModal.reset') }}
-        </button>
-        <button 
-          v-if="currentTab === 'custom'" 
-          @click="clearAll" 
-          class="ignore-footer__danger-btn"
+        </BaseButton>
+        <BaseButton
+          v-if="currentTab === 'custom'"
+          variant="ghost"
+          @click="clearAll"
         >
           {{ t('ignoreModal.clearAll') }}
-        </button>
+        </BaseButton>
       </div>
       <div class="ignore-footer__right">
-        <button @click="close" class="btn btn-secondary">
-          {{ t('ignoreModal.cancel') }}
-        </button>
-        <button
-          v-if="currentTab === 'custom'"
-          @click="save"
-          :disabled="isSaving"
-          class="ignore-footer__save-btn"
+        <BaseButton
+          variant="ghost"
+          @click="close"
         >
-          <svg v-if="!isSaving" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>
-          <BaseSpinner v-else size="sm" />
+          {{ t('ignoreModal.cancel') }}
+        </BaseButton>
+        <BaseButton
+          v-if="currentTab === 'custom'"
+          variant="primary"
+          :disabled="isSaving"
+          @click="save"
+        >
+          <template #icon>
+            <svg v-if="!isSaving" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <BaseSpinner v-else size="sm" />
+          </template>
           {{ t('ignoreModal.save') }}
-        </button>
+        </BaseButton>
       </div>
     </template>
   </BaseModal>
@@ -141,6 +146,7 @@
 <script setup lang="ts">
 import BaseModal from '@/components/ui/BaseModal.vue'
 import BaseSpinner from '@/components/ui/BaseSpinner.vue'
+import { BaseButton } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
 import { apiService } from '@/services/api.service'
 import type { IgnorePreviewResult } from '@/services/api/settings.api'
@@ -512,42 +518,7 @@ defineExpose({ open, close })
   gap: 0.75rem;
 }
 
-.ignore-footer__danger-btn {
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  font-size: 0.8125rem;
-  color: #64748b;
-  transition: all 150ms;
-}
 
-.ignore-footer__danger-btn:hover {
-  color: #f87171;
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.ignore-footer__save-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1.25rem;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  border-radius: 0.625rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: white;
-  transition: all 150ms;
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
-}
-
-.ignore-footer__save-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
-}
-
-.ignore-footer__save-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
 
 /* Transitions */
 .modal-backdrop-enter-active, .modal-backdrop-leave-active { transition: opacity 0.2s ease; }

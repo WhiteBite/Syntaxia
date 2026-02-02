@@ -1,42 +1,29 @@
 <template>
-  <Teleport to="body">
-    <Transition name="modal">
-      <div v-if="visible" class="context-preview-overlay" @click.self="handleClose">
-        <div 
-          class="context-preview-modal"
-          role="dialog"
-          aria-modal="true"
-          :aria-labelledby="titleId"
-          @keydown.esc="handleClose"
-        >
-          <!-- Header -->
-          <div class="context-preview-header">
-            <div class="flex items-center gap-3">
-              <div class="section-icon section-icon-purple">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-              </div>
-              <div>
-                <h2 :id="titleId" class="text-lg font-semibold text-white">
-                  {{ t('context.preview.title') }}
-                </h2>
-                <p class="text-sm text-gray-400">
-                  {{ t('context.preview.found', { count: files.length, tokens: formattedTotalTokens }) }}
-                </p>
-              </div>
-            </div>
-            <button 
-              @click="handleClose" 
-              class="modal-close"
-              :aria-label="t('context.preview.cancel')"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+  <BaseModal
+    :model-value="visible"
+    size="lg"
+    :close-on-backdrop="true"
+    :close-on-esc="true"
+    @close="handleClose"
+  >
+    <template #header>
+      <div class="flex items-center gap-3">
+        <div class="section-icon section-icon-purple">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-lg font-semibold text-white">
+            {{ t('context.preview.title') }}
+          </h2>
+          <p class="text-sm text-gray-400">
+            {{ t('context.preview.found', { count: files.length, tokens: formattedTotalTokens }) }}
+          </p>
+        </div>
+      </div>
+    </template>
 
           <!-- System Prompt Section -->
           <div class="system-prompt-section">
@@ -153,26 +140,22 @@
             </div>
           </div>
 
-          <!-- Footer -->
-          <div class="context-preview-footer">
-            <button @click="handleClose" class="btn btn-secondary">
-              {{ t('context.preview.cancel') }}
-            </button>
-            <button 
-              @click="handleConfirm" 
-              :disabled="!contextPreview.canSend.value"
-              class="btn btn-primary"
-            >
-              {{ t('context.preview.sendToAI') }}
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
+    <template #footer>
+      <button @click="handleClose" class="btn btn-secondary">
+        {{ t('context.preview.cancel') }}
+      </button>
+      <button 
+        @click="handleConfirm" 
+        :disabled="!contextPreview.canSend.value"
+        class="btn btn-primary"
+      >
+        {{ t('context.preview.sendToAI') }}
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+        </svg>
+      </button>
+    </template>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
@@ -196,8 +179,6 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const contextPreview = useContextPreview()
-
-const titleId = 'context-preview-title'
 
 // Sync props to composable
 watch(() => props.files, (newFiles) => {

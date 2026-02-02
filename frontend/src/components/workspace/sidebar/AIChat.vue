@@ -47,10 +47,7 @@
     <Transition name="fade">
       <div v-if="isAnalyzing" class="ai-chat__analyzing">
         <div class="analyzing-pulse"></div>
-        <svg class="w-4 h-4 text-purple-400 animate-spin" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-        </svg>
+        <BaseSpinner size="sm" color="#c4b5fd" />
         <span>{{ t('chat.analyzing') }}</span>
       </div>
     </Transition>
@@ -71,6 +68,7 @@
 <script setup lang="ts">
 import { useI18n } from '@/composables/useI18n'
 import { useChatMessages } from '@/features/ai-chat/composables/useChatMessages'
+import { BaseSpinner } from '@/components/ui'
 import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 import ChatMessageItem from './chat/ChatMessageItem.vue'
 import ChatWelcome from './chat/ChatWelcome.vue'

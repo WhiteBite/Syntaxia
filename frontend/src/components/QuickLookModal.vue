@@ -17,10 +17,7 @@
     <!-- Content -->
     <div class="quicklook-content">
       <div v-if="isLoading" class="quicklook-loading">
-        <svg class="loading-spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-        </svg>
+        <BaseSpinner size="lg" />
         <p>{{ t('files.loading') }}</p>
       </div>
 
@@ -64,6 +61,7 @@
 
 <script setup lang="ts">
 import BaseModal from '@/components/ui/BaseModal.vue'
+import { BaseSpinner } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
 import { apiService } from '@/services/api.service'
 import { useProjectStore } from '@/stores/project.store'
@@ -185,22 +183,6 @@ function formatSize(bytes: number): string {
   justify-content: center;
   min-height: 300px;
   text-align: center;
-}
-
-.loading-spinner {
-  width: 3rem;
-  height: 3rem;
-  animation: spin 1s linear infinite;
-  color: var(--accent-indigo);
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .quicklook-filename {

@@ -12,10 +12,9 @@
             class="input flex-1"
             @keydown.enter="$emit('load-repo', urlInput)" 
           />
-          <button @click="$emit('load-repo', urlInput)" :disabled="!urlInput || isLoading" class="btn btn-primary">
-            <BaseSpinner v-if="isLoading" size="sm" />
-            <span v-else>{{ t('git.load') }}</span>
-          </button>
+          <BaseButton @click="$emit('load-repo', urlInput)" :disabled="!urlInput || isLoading" variant="primary" :loading="isLoading">
+            {{ t('git.load') }}
+          </BaseButton>
         </div>
       </div>
       <p class="text-xs text-gray-400">
@@ -74,12 +73,12 @@
       </div>
       <p class="text-xs text-gray-400 truncate">{{ clonedPath }}</p>
       <div class="flex gap-2 mt-3">
-        <button @click="$emit('open-cloned')" class="btn btn-primary btn-sm flex-1">
+        <BaseButton @click="$emit('open-cloned')" variant="primary" size="sm" class="flex-1">
           {{ t('git.openProject') }}
-        </button>
-        <button @click="$emit('cleanup-cloned')" class="btn btn-ghost btn-sm">
+        </BaseButton>
+        <BaseButton @click="$emit('cleanup-cloned')" variant="ghost" size="sm">
           {{ t('git.remove') }}
-        </button>
+        </BaseButton>
       </div>
     </div>
   </div>
@@ -90,7 +89,7 @@ import { useI18n } from '@/composables/useI18n'
 import { useLogger } from '@/composables/useLogger'
 import { ref, watch } from 'vue'
 import GitFileList from './GitFileList.vue'
-import { BaseSpinner } from '@/components/ui'
+import { BaseButton } from '@/components/ui'
 
 const logger = useLogger('GitRemotePanel')
 

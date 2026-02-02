@@ -15,38 +15,47 @@
         @input="handleInput"
         @keydown.escape="handleClear"
       />
-      <button
+      <BaseButton
         v-if="searchQuery"
-        class="clear-btn"
+        variant="ghost"
+        size="sm"
+        icon-only
         :title="t('symbols.clear')"
         @click="handleClear"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
+        <template #icon>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </template>
+      </BaseButton>
     </div>
 
     <!-- Kind Filters -->
     <div class="kind-filters">
-      <button
+      <BaseButton
         v-for="kind in availableKinds"
         :key="kind.value"
+        variant="ghost"
+        size="sm"
         class="kind-btn"
         :class="{ 'kind-btn--active': selectedKinds.includes(kind.value) }"
         :title="kind.label"
         @click="toggleKind(kind.value)"
       >
-        <component :is="kind.icon" class="kind-icon" />
+        <template #icon>
+          <component :is="kind.icon" class="kind-icon" />
+        </template>
         <span v-if="kindStats[kind.value] > 0" class="kind-count">
           {{ kindStats[kind.value] }}
         </span>
-      </button>
+      </BaseButton>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { BaseButton } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
 import { computed, h, ref, watch } from 'vue'
 import type { SymbolKind } from '../types'
@@ -186,27 +195,6 @@ defineExpose({ focus })
   background: rgba(255, 255, 255, 0.06);
 }
 
-.clear-btn {
-  position: absolute;
-  right: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  background: none;
-  border: none;
-  border-radius: 4px;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.15s ease-out;
-}
-
-.clear-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #e5e7eb;
-}
-
 .kind-filters {
   display: flex;
   gap: 4px;
@@ -214,28 +202,13 @@ defineExpose({ focus })
 }
 
 .kind-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 6px;
-  color: #9ca3af;
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.15s ease-out;
-}
-
-.kind-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #e5e7eb;
+  /* Keep only layout-specific styles, BaseButton handles the rest */
 }
 
 .kind-btn--active {
-  background: rgba(139, 92, 246, 0.15);
-  border-color: rgba(139, 92, 246, 0.3);
-  color: #a78bfa;
+  background: rgba(139, 92, 246, 0.15) !important;
+  border-color: rgba(139, 92, 246, 0.3) !important;
+  color: #a78bfa !important;
 }
 
 .kind-icon {

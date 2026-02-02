@@ -81,10 +81,7 @@
     <div class="panel-content">
       <!-- Loading State -->
       <div v-if="store.isLoading && !store.hasSymbols" class="loading-state">
-        <svg class="loading-spinner" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity="0.25"/>
-          <path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
+        <BaseSpinner size="lg" />
         <span class="loading-text">{{ t('symbols.loading') }}</span>
       </div>
 
@@ -137,6 +134,7 @@
 
 <script setup lang="ts">
 import BaseButton from '@/components/ui/BaseButton.vue'
+import { BaseSpinner } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
 import { useProjectStore } from '@/stores/project.store'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -264,13 +262,6 @@ function handleSymbolClick(symbol: Symbol) {
   text-align: center;
 }
 
-.loading-spinner {
-  width: 32px;
-  height: 32px;
-  color: #a78bfa;
-  animation: spin 1s linear infinite;
-}
-
 .loading-text {
   margin-top: 12px;
   font-size: 13px;
@@ -309,10 +300,5 @@ function handleSymbolClick(symbol: Symbol) {
 .footer-stats {
   font-size: 11px;
   color: #6b7280;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 </style>

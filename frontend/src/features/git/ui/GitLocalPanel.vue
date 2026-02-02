@@ -20,9 +20,9 @@
           <span class="text-xs text-gray-400">{{ t('git.currentBranch') }}:</span>
           <span class="ml-2 text-sm text-white font-medium">{{ currentBranch }}</span>
         </div>
-        <button @click="$emit('select-ref', currentBranch)" class="btn btn-primary btn-sm" :disabled="selectedRef === currentBranch">
+        <BaseButton @click="$emit('select-ref', currentBranch)" variant="primary" size="sm" :disabled="selectedRef === currentBranch">
           {{ t('git.load') }}
-        </button>
+        </BaseButton>
       </div>
 
       <!-- Branch/Commit Selection -->
@@ -34,13 +34,12 @@
           <button @click="switchToCommits" :class="['tab-btn text-sm', refType === 'commits' ? 'tab-btn-active' : 'tab-btn-inactive']">
             {{ t('git.commits') }} {{ commitsLoaded ? `(${commits.length})` : '' }}
           </button>
-          <button v-if="branches.length >= 2" @click="$emit('open-diff')"
-            class="ml-auto px-2 py-1 text-xs text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 rounded transition-colors flex items-center gap-1">
+          <BaseButton v-if="branches.length >= 2" @click="$emit('open-diff')" variant="ghost" size="xs" class="ml-auto">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
             {{ t('git.diff') }}
-          </button>
+          </BaseButton>
         </div>
 
         <!-- Selected Ref Info -->
@@ -51,9 +50,9 @@
               <span class="ml-2 text-sm text-white font-medium">{{ selectedRef }}</span>
               <span v-if="selectedRef === currentBranch" class="text-xs text-emerald-400 ml-2">({{ t('git.current') }})</span>
             </div>
-            <button @click="$emit('clear-ref')" class="text-xs text-gray-400 hover:text-white">
+            <BaseButton @click="$emit('clear-ref')" variant="ghost" size="xs">
               {{ t('git.clear') }}
-            </button>
+            </BaseButton>
           </div>
           <p class="text-xs text-gray-400 mt-1">{{ t('git.noCheckout') }}</p>
         </div>
@@ -114,6 +113,7 @@ import { useLogger } from '@/composables/useLogger'
 import type { CommitInfo } from '@/services/api.service'
 import { ref } from 'vue'
 import GitFileList from './GitFileList.vue'
+import { BaseButton } from '@/components/ui'
 
 const logger = useLogger('GitLocalPanel')
 

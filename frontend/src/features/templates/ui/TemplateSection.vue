@@ -84,13 +84,11 @@
       </div>
       
       <div class="task-input-wrapper">
-        <textarea
+        <BaseTextarea
           v-model="task"
           :placeholder="t('templates.taskPlaceholder')"
-          class="template-textarea"
-          rows="3"
+          :rows="3"
         />
-        <span v-if="task" class="task-char-count">{{ task.length }}</span>
       </div>
 
       <!-- Task history dropdown -->
@@ -133,11 +131,10 @@
       </button>
       <Transition name="expand">
         <div v-if="showRules" class="expand-content">
-          <textarea
+          <BaseTextarea
             v-model="userRulesLocal"
             :placeholder="t('templates.userRulesPlaceholder')"
-            class="template-textarea"
-            rows="3"
+            :rows="3"
           />
         </div>
       </Transition>
@@ -146,7 +143,7 @@
 </template>
 
 <script setup lang="ts">
-import BaseButton from '@/components/ui/BaseButton.vue'
+import { BaseButton, BaseTextarea } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
 import { ChevronRight, FileText, History, Lightbulb, Settings, Trash2, X } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
@@ -307,30 +304,6 @@ watch(showHistory, (v) => {
 
 .task-input-wrapper {
   position: relative;
-}
-
-.template-textarea {
-  width: 100%;
-  padding: 0.5rem;
-  padding-right: 2.5rem;
-  background: var(--bg-2);
-  border: 1px solid var(--border-default);
-  border-radius: 0.375rem;
-  color: var(--text-1);
-  font-size: 0.8125rem;
-  font-family: inherit;
-  resize: vertical;
-  min-height: 60px;
-  transition: border-color 0.15s;
-}
-
-.template-textarea:focus {
-  outline: none;
-  border-color: var(--border-focus);
-}
-
-.template-textarea::placeholder {
-  color: var(--text-3);
 }
 
 .task-char-count {

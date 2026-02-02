@@ -3,7 +3,8 @@ import { useI18n } from '@/composables/useI18n'
 import { useLogger } from '@/composables/useLogger'
 import { apiService, type SemanticIndexStats, type SemanticSearchResult } from '@/services/api.service'
 import { useProjectStore } from '@/stores/project.store'
-import { computed, onMounted, ref } from 'vue'
+import { BaseSpinner } from '@/components/ui'
+import { computed, onMounted, ref, watch } from 'vue'
 
 const { t } = useI18n()
 const logger = useLogger('SemanticSearch')
@@ -117,7 +118,7 @@ onMounted(() => {
 })
 
 // Watch for project changes
-projectStore.$subscribe(() => {
+watch(() => projectStore.currentPath, () => {
   checkAvailability()
 })
 </script>
@@ -157,10 +158,7 @@ projectStore.$subscribe(() => {
             class="btn btn-primary btn-sm w-full"
           >
             <span v-if="isIndexing" class="flex items-center gap-2">
-              <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
+              <BaseSpinner size="sm" />
               {{ t('semanticSearch.indexing') }}
             </span>
             <span v-else>{{ t('semanticSearch.indexProject') }}</span>
@@ -200,10 +198,7 @@ projectStore.$subscribe(() => {
             :disabled="!canSearch"
             class="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-gray-700/50 disabled:opacity-50"
           >
-            <svg v-if="isSearching" class="animate-spin h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
+            <BaseSpinner v-if="isSearching" size="sm" />
             <svg v-else class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>

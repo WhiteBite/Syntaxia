@@ -89,14 +89,19 @@
     </div>
 
     <!-- Magic Wand Button (Select Related) -->
-    <button
+    <BaseButton
       v-if="!item.node.isDir"
+      variant="ghost"
+      size="xs"
+      icon-only
       class="tree-wand"
       @click.stop="handleSelectRelated"
       :title="t('files.selectRelated')"
     >
-      <WandIcon />
-    </button>
+      <template #icon>
+        <WandIcon />
+      </template>
+    </BaseButton>
 
     <!-- Dependency Indicator -->
     <div
@@ -118,14 +123,18 @@
       </button>
       
       <!-- Batch Add Button (shown on hover if multiple dependencies) -->
-      <button
+      <BaseButton
         v-if="totalDependencyCount > 1 && isDependencyHovered"
+        variant="ghost"
+        size="xs"
         class="tree-dependency-batch"
         @click.stop="handleAddAllDependencies"
         :title="t('files.addAllDependencies')"
       >
-        <PlusIcon class="w-3 h-3" />
-      </button>
+        <template #icon>
+          <PlusIcon class="w-3 h-3" />
+        </template>
+      </BaseButton>
     </div>
 
     <!-- File/Folder Icon -->
@@ -210,13 +219,18 @@
     </template>
 
     <!-- QuickLook button -->
-    <button
+    <BaseButton
       v-if="!item.node.isDir"
+      variant="ghost"
+      size="xs"
+      icon-only
       class="tree-preview"
       @click.stop="handleQuickLook"
     >
-      <EyeIcon />
-    </button>
+      <template #icon>
+        <EyeIcon />
+      </template>
+    </BaseButton>
   </div>
 </template>
 
@@ -230,6 +244,7 @@ import { useHoveredFile } from '../composables/useHoveredFile'
 import { useFileStore, type FileNode } from '../model/file.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { CheckIcon, ChevronIcon, EyeIcon, FolderIcon, FolderOpenIcon, WandIcon } from '@/components/icons'
+import { BaseButton } from '@/components/ui'
 import { computed, ref } from 'vue'
 import type { FuseResultMatch } from 'fuse.js'
 import { Link as LinkIcon, AlertTriangle as AlertTriangleIcon, Plus as PlusIcon } from 'lucide-vue-next'
@@ -869,9 +884,6 @@ function handleDependencyHover(isHovering: boolean) {
     opacity: 0;
     margin-left: auto;
     margin-right: var(--space-1);
-    padding: var(--space-1);
-    border-radius: var(--radius-sm);
-    color: var(--text-muted);
     transition: all var(--transition-fast);
 }
 
@@ -927,23 +939,7 @@ function handleDependencyHover(isHovering: boolean) {
 }
 
 .tree-dependency-batch {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 3px;
-    border-radius: var(--radius-sm);
-    background: rgba(34, 197, 94, 0.15);
-    border: 1px solid rgba(34, 197, 94, 0.3);
-    color: #22c55e;
-    transition: all var(--transition-fast);
-    cursor: pointer;
     animation: slideIn 0.2s ease-out;
-}
-
-.tree-dependency-batch:hover {
-    background: rgba(34, 197, 94, 0.25);
-    border-color: rgba(34, 197, 94, 0.5);
-    transform: scale(1.1);
 }
 
 @keyframes slideIn {
@@ -959,24 +955,11 @@ function handleDependencyHover(isHovering: boolean) {
 
 .tree-wand {
     opacity: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2px;
-    border-radius: var(--radius-sm);
-    color: var(--text-muted);
     transition: all var(--transition-fast);
-    cursor: pointer;
 }
 
 .tree-row:hover .tree-wand {
     opacity: 1;
-}
-
-.tree-wand:hover {
-    background: rgba(168, 85, 247, 0.15);
-    color: #a855f7;
-    transform: scale(1.1);
 }
 
 .tree-row-dragging {

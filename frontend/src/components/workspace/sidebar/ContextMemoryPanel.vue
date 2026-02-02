@@ -68,10 +68,7 @@
           <svg v-if="!isLoading" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
-          <svg v-else class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-          </svg>
+          <BaseSpinner v-else size="sm" />
           {{ isLoading ? t('context.building') : t('context.loadAndBuild') }}
         </button>
         <button @click="deleteContext" class="detail-delete-btn" :title="t('context.delete')">
@@ -91,6 +88,7 @@ import { useFileStore } from '@/features/files/model/file.store'
 import { useContextStore } from '@/features/context/model/context.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useUIStore } from '@/stores/ui.store'
+import { BaseSpinner } from '@/components/ui'
 import { computed, ref } from 'vue'
 import { formatContextSize } from '@/features/context/lib/context-utils'
 

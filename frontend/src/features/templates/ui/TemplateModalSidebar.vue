@@ -64,7 +64,7 @@
     </nav>
     
     <BaseButton 
-      variant="ghost" 
+      variant="primary"
       size="sm"
       @click="$emit('create-new')"
       class="tpl-new-btn"
@@ -78,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import BaseButton from '@/components/ui/BaseButton.vue'
+import { BaseButton } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
 import { Plus, Search, Star, User, Zap } from 'lucide-vue-next'
 import { computed } from 'vue'

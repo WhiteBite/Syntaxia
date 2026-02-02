@@ -326,6 +326,10 @@ export function GetContextLines(arg1, arg2, arg3) {
   return window['go']['main']['App']['GetContextLines'](arg1, arg2, arg3);
 }
 
+export function GetContextStats(arg1) {
+  return window['go']['main']['App']['GetContextStats'](arg1);
+}
+
 export function GetCurrentBranch(arg1) {
   return window['go']['main']['App']['GetCurrentBranch'](arg1);
 }

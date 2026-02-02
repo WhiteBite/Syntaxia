@@ -139,10 +139,7 @@
             <svg v-if="!isThinking" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
             </svg>
-            <svg v-else class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-            </svg>
+            <BaseSpinner v-else size="sm" />
           </button>
         </div>
       </div>
@@ -161,6 +158,7 @@ import { useI18n } from '@/composables/useI18n'
 import { useMentions } from '@/features/ai-chat/composables/useMentions'
 import { useContextStore } from '@/features/context'
 import { useFileStore } from '@/features/files'
+import { BaseSpinner } from '@/components/ui'
 import { computed, nextTick, ref, watch } from 'vue'
 
 const props = defineProps<{

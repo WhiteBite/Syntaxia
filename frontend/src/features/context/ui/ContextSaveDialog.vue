@@ -24,10 +24,10 @@
       </div>
       <div class="save-modal-field">
         <label class="save-modal-label">{{ t('context.summary') }}</label>
-        <textarea 
+        <BaseTextarea
           v-model="localSummary" 
-          class="save-modal-textarea" 
-          :placeholder="t('context.summaryPlaceholder')" 
+          :placeholder="t('context.summaryPlaceholder')"
+          :rows="3"
         />
       </div>
     </form>
@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import BaseModal from '@/components/ui/BaseModal.vue'
+import { BaseModal, BaseTextarea } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
 import { computed, nextTick, ref, watch } from 'vue'
 
@@ -163,29 +163,6 @@ function handleSubmit() {
 }
 
 .save-modal-input:focus {
-  border-color: #8b5cf6;
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
-}
-
-.save-modal-textarea {
-  width: 100%;
-  height: 90px;
-  padding: 14px 16px;
-  background: #0f111a;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  font-size: 14px;
-  color: white;
-  outline: none;
-  resize: none;
-  transition: all 0.2s ease-out;
-}
-
-.save-modal-textarea::placeholder {
-  color: #4b5563;
-}
-
-.save-modal-textarea:focus {
   border-color: #8b5cf6;
   box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
 }

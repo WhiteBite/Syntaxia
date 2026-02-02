@@ -6,20 +6,17 @@
         <div class="w-1 h-5 bg-blue-500 rounded-full"></div>
         <h2 class="text-lg font-semibold text-white">{{ t('task.title') }}</h2>
       </div>
-      <span class="text-xs text-gray-400" :class="{ 'text-yellow-400': taskStore.taskDescription.length > 4500, 'text-red-400': taskStore.taskDescription.length >= 5000 }">
-        {{ taskStore.taskDescription.length }} / 5000
-      </span>
     </div>
     
     <!-- Textarea with auto-resize -->
-    <textarea
-      ref="textareaRef"
+    <BaseTextarea
       v-model="taskStore.taskDescription"
       :placeholder="t('task.placeholder')"
-      class="task-textarea flex-1 w-full px-4 py-3 bg-gray-800/90 border border-gray-700/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 focus:bg-gray-800 resize-none transition-all duration-200"
-      maxlength="5000"
-      @input="autoResize"
-    ></textarea>
+      :max-length="5000"
+      auto-resize
+      :rows="5"
+      class="flex-1"
+    />
 
     <!-- AI Suggestions -->
     <div v-if="taskStore.suggestions.length > 0 && !taskStore.taskDescription" class="mt-3 space-y-2">
@@ -71,9 +68,9 @@
 </template>
 
 <script setup lang="ts">
-import BaseSpinner from '@/components/ui/BaseSpinner.vue'
+import { BaseSpinner, BaseTextarea } from '@/components/ui'
 import { useI18n } from '@/composables/useI18n'
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useTaskStore } from '../model/task.store'
 import { useUIStore } from '@/stores/ui.store'
 
@@ -81,18 +78,9 @@ const { t } = useI18n()
 const taskStore = useTaskStore()
 const uiStore = useUIStore()
 
-const textareaRef = ref<HTMLTextAreaElement>()
-
 const canAnalyze = computed(() => {
   return taskStore.taskDescription.trim().length > 10 && !taskStore.isAnalyzing
 })
-
-// Auto-resize textarea
-function autoResize() {
-  if (!textareaRef.value) return
-  textareaRef.value.style.height = 'auto'
-  textareaRef.value.style.height = textareaRef.value.scrollHeight + 'px'
-}
 
 async function handleAnalyze() {
   if (!canAnalyze.value) return
@@ -107,38 +95,9 @@ async function handleAnalyze() {
 
 onMounted(() => {
   taskStore.loadTaskDraft()
-  autoResize()
 })
 </script>
 
 <style scoped>
-.task-textarea {
-  font-family: inherit;
-  line-height: 1.6;
-}
-
-.task-textarea::placeholder {
-  font-style: italic;
-}
-
-.task-textarea:focus {
-  box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.1);
-}
-
-.task-textarea::-webkit-scrollbar {
-  width: 6px;
-}
-
-.task-textarea::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.task-textarea::-webkit-scrollbar-thumb {
-  background: rgba(107, 114, 128, 0.3);
-  border-radius: 3px;
-}
-
-.task-textarea::-webkit-scrollbar-thumb:hover {
-  background: rgba(107, 114, 128, 0.5);
-}
+/* Removed custom textarea styles - using BaseTextarea component */
 </style>
