@@ -9,6 +9,7 @@ export interface FileDependency {
     path: string
     type: 'import' | 'style' | 'test' | 'type' | 'related'
     confidence: 'high' | 'medium' | 'low'
+    direction: 'incoming' | 'outgoing' // incoming: files that import this file, outgoing: files this file imports
 }
 
 /**
@@ -19,7 +20,7 @@ export interface FileDependency {
 export function useDependencyGraph() {
     /**
      * Find dependencies for a given file
-     * Returns files that the given file likely depends on
+     * Returns files that the given file likely depends on (outgoing dependencies)
      */
     function findDependencies(
         filePath: string,
@@ -42,31 +43,84 @@ export function useDependencyGraph() {
                     deps.push({
                         path: node.path,
                         type: 'style',
-                        confidence: 'high'
+                        confidence: 'high',
+                        direction: 'outgoing'
                     })
                 } else if (isTestFile(node.path)) {
                     deps.push({
                         path: node.path,
                         type: 'test',
-                        confidence: 'high'
+                        confidence: 'high',
+                        direction: 'outgoing'
                     })
                 } else if (isTypeFile(node.path)) {
                     deps.push({
                         path: node.path,
                         type: 'type',
-                        confidence: 'high'
+                        confidence: 'high',
+                        direction: 'outgoing'
                     })
                 } else {
                     deps.push({
                         path: node.path,
                         type: 'related',
-                        confidence: 'medium'
+                        confidence: 'medium',
+                        direction: 'outgoing'
                     })
                 }
             }
         }
 
         return deps
+    }
+
+    /**
+     * Find incoming dependencies (files that depend on this file)
+     * Returns files that import/use the given file
+     */
+    function findIncomingDependencies(
+        filePath: string,
+        allNodes: FileNode[]
+    ): FileDependency[] {
+        const deps: FileDependency[] = []
+        const basename = getBasename(filePath)
+
+        // Find files that might depend on this file
+        for (const node of allNodes) {
+            if (node.isDir || node.path === filePath) continue
+
+            const nodeBasename = getBasename(node.path)
+
+            // If this is a test/style/type file, find the main file
+            if (isTestFile(filePath) || isStyleFile(filePath) || isTypeFile(filePath)) {
+                const dir = filePath.substring(0, filePath.lastIndexOf('/'))
+                const nodeDir = node.path.substring(0, node.path.lastIndexOf('/'))
+
+                if (nodeDir === dir && nodeBasename === basename && !isTestFile(node.path) && !isStyleFile(node.path) && !isTypeFile(node.path)) {
+                    deps.push({
+                        path: node.path,
+                        type: 'related',
+                        confidence: 'high',
+                        direction: 'incoming'
+                    })
+                }
+            }
+        }
+
+        return deps
+    }
+
+    /**
+     * Find all dependencies (both incoming and outgoing) for a given file
+     */
+    function findAllDependencies(
+        filePath: string,
+        allNodes: FileNode[]
+    ): { incoming: FileDependency[], outgoing: FileDependency[] } {
+        return {
+            incoming: findIncomingDependencies(filePath, allNodes),
+            outgoing: findDependencies(filePath, allNodes)
+        }
     }
 
     /**
@@ -164,6 +218,8 @@ export function useDependencyGraph() {
 
     return {
         findDependencies,
+        findIncomingDependencies,
+        findAllDependencies,
         findRelatedFiles
     }
 }

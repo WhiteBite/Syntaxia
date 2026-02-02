@@ -148,6 +148,34 @@ export const useFileStore = defineStore('file', () => {
         return deps
     })
 
+    // Computed: Get all dependencies (incoming + outgoing) for each file
+    const allFileDependencies = computed(() => {
+        const allNodes = getAllFileNodes()
+        const depsMap = new Map<string, { incoming: string[], outgoing: string[] }>()
+
+        for (const selectedPath of selection.selectedPaths.value) {
+            const { incoming, outgoing } = dependencyGraph.findAllDependencies(selectedPath, allNodes)
+
+            // Track outgoing dependencies (files this file depends on)
+            for (const dep of outgoing) {
+                if (!depsMap.has(dep.path)) {
+                    depsMap.set(dep.path, { incoming: [], outgoing: [] })
+                }
+                depsMap.get(dep.path)!.incoming.push(selectedPath)
+            }
+
+            // Track incoming dependencies (files that depend on this file)
+            for (const dep of incoming) {
+                if (!depsMap.has(dep.path)) {
+                    depsMap.set(dep.path, { incoming: [], outgoing: [] })
+                }
+                depsMap.get(dep.path)!.outgoing.push(selectedPath)
+            }
+        }
+
+        return depsMap
+    })
+
     function getAllFileNodes(): FileNode[] {
         const result: FileNode[] = []
         walkTree(tree.nodes.value, (node) => {
@@ -395,6 +423,33 @@ export const useFileStore = defineStore('file', () => {
         return selectedCount
     }
 
+    function addDependencies(path: string): number {
+        // Get all file nodes from the tree
+        const allFileNodes: FileNode[] = []
+        walkTree(tree.nodes.value, (node) => {
+            if (!node.isDir) allFileNodes.push(node)
+        })
+
+        // Find all dependencies (incoming + outgoing)
+        const { incoming, outgoing } = dependencyGraph.findAllDependencies(path, allFileNodes)
+        const allDeps = [...incoming, ...outgoing]
+
+        // Select all dependency files that aren't already selected
+        let selectedCount = 0
+        for (const dep of allDeps) {
+            if (!selection.selectedPaths.value.has(dep.path)) {
+                selection.selectPath(dep.path)
+                selectedCount++
+            }
+        }
+
+        if (autoSaveSelection.value && selectedCount > 0) {
+            persistence.debouncedSaveSelection()
+        }
+
+        return selectedCount
+    }
+
     function getPresets() {
         return persistence.getPresets()
     }
@@ -484,6 +539,7 @@ export const useFileStore = defineStore('file', () => {
         estimatedTokenCount,
         estimatedContextSize,
         selectedFileDependencies,
+        allFileDependencies,
         isFlatSearchMode,
 
         // Actions (tree)
@@ -548,6 +604,7 @@ export const useFileStore = defineStore('file', () => {
         setFocusOnFolder,
         clearFolderFocus,
         selectRelated,
+        addDependencies,
 
         // Actions (presets)
         getPresets,

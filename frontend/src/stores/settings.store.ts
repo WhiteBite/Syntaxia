@@ -55,6 +55,8 @@ export interface FileExplorerSettings {
     quickFilters: QuickFilterConfig[]
     warnHeavyFiles: boolean
     heavyFileThreshold: number
+    showDependencyIndicators: boolean
+    autoHighlightDependencies: boolean
 }
 
 export interface ContextStorageSettings {
@@ -123,7 +125,9 @@ const DEFAULT_SETTINGS: AppSettings = {
             { id: 'styles', label: 'Стили', extensions: ['.css', '.scss', '.sass', '.less'], patterns: [], enabled: true }
         ],
         warnHeavyFiles: true,
-        heavyFileThreshold: 100000 // 100k tokens
+        heavyFileThreshold: 100000, // 100k tokens
+        showDependencyIndicators: true,
+        autoHighlightDependencies: true
     },
     aiModel: 'gpt-4',
     theme: 'dark',

@@ -96,17 +96,34 @@
     </button>
 
     <!-- Dependency Indicator -->
-    <button
+    <div
       v-if="hasDependencyLink"
-      class="tree-dependency-indicator"
-      @click.stop="handleAddDependency"
-      :title="dependencyTooltip"
+      class="tree-dependency-container"
+      @mouseenter="handleDependencyHover(true)"
+      @mouseleave="handleDependencyHover(false)"
     >
-      <LinkIcon class="w-3.5 h-3.5" />
-      <span v-if="dependentCount > 1" class="dependency-count">
-        {{ dependentCount }}
-      </span>
-    </button>
+      <button
+        class="tree-dependency-indicator"
+        :class="{ 'tree-dependency-indicator--hover': isDependencyHovered }"
+        @click.stop="handleAddSingleDependency"
+        :title="dependencyTooltip"
+      >
+        <LinkIcon class="w-3.5 h-3.5" :class="dependencyIconClass" />
+        <span v-if="totalDependencyCount > 1" class="dependency-count">
+          {{ totalDependencyCount }}
+        </span>
+      </button>
+      
+      <!-- Batch Add Button (shown on hover if multiple dependencies) -->
+      <button
+        v-if="totalDependencyCount > 1 && isDependencyHovered"
+        class="tree-dependency-batch"
+        @click.stop="handleAddAllDependencies"
+        :title="t('files.addAllDependencies')"
+      >
+        <PlusIcon class="w-3 h-3" />
+      </button>
+    </div>
 
     <!-- File/Folder Icon -->
     <div class="tree-icon" :class="{
@@ -205,7 +222,7 @@ import { useSettingsStore } from '@/stores/settings.store'
 import { CheckIcon, ChevronIcon, EyeIcon, FolderIcon, FolderOpenIcon, WandIcon } from '@/components/icons'
 import { computed, ref } from 'vue'
 import type { FuseResultMatch } from 'fuse.js'
-import { Link as LinkIcon, AlertTriangle as AlertTriangleIcon } from 'lucide-vue-next'
+import { Link as LinkIcon, AlertTriangle as AlertTriangleIcon, Plus as PlusIcon } from 'lucide-vue-next'
 
 const { t } = useI18n()
 const hoveredFile = useHoveredFile()
@@ -303,40 +320,71 @@ const emit = defineEmits<{
   (e: 'quicklook', path: string): void
   (e: 'select-related', path: string): void
   (e: 'add-dependency', path: string): void
+  (e: 'add-all-dependencies', path: string): void
   (e: 'checkbox-mousedown', payload: { path: string, isSelected: boolean }): void
   (e: 'row-mouseenter', path: string): void
+  (e: 'dependency-hover', payload: { path: string, isHovering: boolean }): void
 }>()
 
 const fileStore = useFileStore()
 const isDragging = ref(false)
+const isDependencyHovered = ref(false)
 
 // Dependency indicator logic
 const hasDependencyLink = computed(() => {
   if (props.item.node.isDir) return false
-  return fileStore.selectedFileDependencies.has(props.item.node.path)
+  if (!settingsStore.settings.fileExplorer.showDependencyIndicators) return false
+  return fileStore.allFileDependencies.has(props.item.node.path)
 })
 
-const dependentCount = computed(() => {
-  const deps = fileStore.selectedFileDependencies.get(props.item.node.path)
-  return deps?.length || 0
+const dependencyInfo = computed(() => {
+  if (!hasDependencyLink.value) return null
+  return fileStore.allFileDependencies.get(props.item.node.path)
+})
+
+const incomingCount = computed(() => dependencyInfo.value?.incoming.length || 0)
+const outgoingCount = computed(() => dependencyInfo.value?.outgoing.length || 0)
+const totalDependencyCount = computed(() => incomingCount.value + outgoingCount.value)
+
+const dependencyIconClass = computed(() => {
+  if (incomingCount.value > 0 && outgoingCount.value > 0) {
+    return 'text-purple-400' // Bidirectional
+  } else if (incomingCount.value > 0) {
+    return 'text-blue-400' // Incoming
+  } else if (outgoingCount.value > 0) {
+    return 'text-green-400' // Outgoing
+  }
+  return ''
 })
 
 const dependencyTooltip = computed(() => {
-  if (!hasDependencyLink.value) return ''
+  if (!hasDependencyLink.value || !dependencyInfo.value) return ''
 
-  const deps = fileStore.selectedFileDependencies.get(props.item.node.path)
-  if (!deps || deps.length === 0) return ''
-
-  const fileNames = deps.map(p => p.substring(p.lastIndexOf('/') + 1))
-
-  if (fileNames.length === 1) {
-    return t('files.importedBy', { file: fileNames[0] })
-  } else {
-    return t('files.importedByMultiple', {
-      count: fileNames.length,
-      files: fileNames.slice(0, 2).join(', ')
-    })
+  const parts: string[] = []
+  
+  if (incomingCount.value > 0) {
+    const files = dependencyInfo.value.incoming.map(p => p.substring(p.lastIndexOf('/') + 1))
+    if (files.length === 1) {
+      parts.push(t('files.incomingDep', { file: files[0] }))
+    } else {
+      parts.push(t('files.incomingDependencies', { count: files.length }))
+    }
   }
+  
+  if (outgoingCount.value > 0) {
+    const files = dependencyInfo.value.outgoing.map(p => p.substring(p.lastIndexOf('/') + 1))
+    if (files.length === 1) {
+      parts.push(t('files.outgoingDep', { file: files[0] }))
+    } else {
+      parts.push(t('files.outgoingDependencies', { count: files.length }))
+    }
+  }
+
+  if (totalDependencyCount.value > 1) {
+    parts.push('\n' + t('files.addAllDependencies'))
+  }
+
+  return parts.join('\n')
 })
 
 const isHoveredOrFocused = computed(() => {
@@ -471,8 +519,23 @@ function handleSelectRelated() {
   emit('select-related', props.item.node.path)
 }
 
-function handleAddDependency() {
+function handleAddSingleDependency() {
   emit('add-dependency', props.item.node.path)
+}
+
+function handleAddAllDependencies() {
+  emit('add-all-dependencies', props.item.node.path)
+}
+
+function handleDependencyHover(isHovering: boolean) {
+  isDependencyHovered.value = isHovering
+  
+  if (settingsStore.settings.fileExplorer.autoHighlightDependencies) {
+    emit('dependency-hover', {
+      path: props.item.node.path,
+      isHovering
+    })
+  }
 }
 </script>
 
@@ -744,8 +807,122 @@ function handleAddDependency() {
     opacity: 1;
 }
 
+.tree-dependency-container {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-right: var(--space-1);
+}
+
+.tree-dependency-indicator {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 4px;
+    border-radius: var(--radius-sm);
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+    cursor: pointer;
+}
+
+.tree-dependency-indicator:hover {
+    background: rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.4);
+    transform: scale(1.05);
+}
+
+.tree-dependency-indicator--hover {
+    animation: pulse-dependency 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-dependency {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0);
+    }
+}
+
+.dependency-count {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-primary);
+    min-width: 12px;
+    text-align: center;
+}
+
+.tree-dependency-batch {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px;
+    border-radius: var(--radius-sm);
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #22c55e;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+    animation: slideIn 0.2s ease-out;
+}
+
+.tree-dependency-batch:hover {
+    background: rgba(34, 197, 94, 0.25);
+    border-color: rgba(34, 197, 94, 0.5);
+    transform: scale(1.1);
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.tree-wand {
+    opacity: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    transition: all var(--transition-fast);
+    cursor: pointer;
+}
+
+.tree-row:hover .tree-wand {
+    opacity: 1;
+}
+
+.tree-wand:hover {
+    background: rgba(168, 85, 247, 0.15);
+    color: #a855f7;
+    transform: scale(1.1);
+}
+
 .tree-row-dragging {
     opacity: 0.6;
     cursor: grabbing;
+}
+
+.tree-row-highlighted {
+    background: rgba(99, 102, 241, 0.12) !important;
+    animation: highlight-fade 0.3s ease-out;
+}
+
+@keyframes highlight-fade {
+    from {
+        background: rgba(99, 102, 241, 0.25);
+    }
+    to {
+        background: rgba(99, 102, 241, 0.12);
+    }
 }
 </style>

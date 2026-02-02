@@ -30,14 +30,17 @@
         :selected-tokens="getSelectedTokens(item.node)"
         :allow-select-binary="allowSelectBinary"
         :is-dragging-selection="isDraggingSelection"
+        :class="{ 'tree-row-highlighted': highlightedDependencyPaths.has(item.node.path) }"
         @toggle-select="handleToggleSelect"
         @toggle-expand="$emit('toggle-expand', $event)"
         @contextmenu="(node, event) => $emit('contextmenu', node, event)"
         @quicklook="$emit('quicklook', $event)"
         @select-related="handleSelectRelated"
         @add-dependency="handleAddDependency"
+        @add-all-dependencies="handleAddAllDependencies"
         @checkbox-mousedown="handleCheckboxMouseDown"
         @row-mouseenter="handleRowMouseEnter"
+        @dependency-hover="handleDependencyHover"
       />
     </RecycleScroller>
     <div v-if="flattenedNodes.length === 0" class="empty-state">
@@ -115,6 +118,9 @@ const flattenedNodes = computed(() => flattenedVisibleNodes.value)
 const isDraggingSelection = ref(false)
 const dragInitialAction = ref<'select' | 'deselect'>('select')
 const draggedPaths = new Set<string>()
+
+// Dependency highlighting state
+const highlightedDependencyPaths = ref<Set<string>>(new Set())
 
 // Heavy file warning state
 const showHeavyFileModal = ref(false)
@@ -431,6 +437,37 @@ function handleAddDependency(path: string) {
     'success',
     2000
   )
+}
+
+function handleAddAllDependencies(path: string) {
+  // Add all dependencies for this file
+  const count = fileStore.addDependencies(path)
+  
+  if (count > 0) {
+    uiStore.addToast(
+      t('files.dependenciesAdded').replace('{count}', String(count)),
+      'success',
+      2000
+    )
+  }
+}
+
+function handleDependencyHover(payload: { path: string, isHovering: boolean }) {
+  if (!payload.isHovering) {
+    highlightedDependencyPaths.value.clear()
+    return
+  }
+
+  // Get all dependencies for this file
+  const deps = fileStore.allFileDependencies.get(payload.path)
+  if (!deps) return
+
+  // Highlight all related files
+  const pathsToHighlight = new Set<string>()
+  deps.incoming.forEach(p => pathsToHighlight.add(p))
+  deps.outgoing.forEach(p => pathsToHighlight.add(p))
+  
+  highlightedDependencyPaths.value = pathsToHighlight
 }
 
 // Drag-to-select handlers
