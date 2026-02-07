@@ -11,6 +11,7 @@
             class="px-1.5 py-0.5 bg-indigo-500/20 text-indigo-300 rounded text-[9px] font-black border border-indigo-500/20">
             {{ fileStore.selectedCount }}
           </div>
+          <MiniSparklines class="ml-1" />
         </div>
         
         <div class="flex items-center gap-0.5">
@@ -205,6 +206,7 @@ import VirtualFileTree from './VirtualFileTree.vue'
 import ViewOptionsDropdown from './ViewOptionsDropdown.vue'
 import SystemFiltersDropdown from './SystemFiltersDropdown.vue'
 import SkeletonFileTree from '@/components/SkeletonFileTree.vue'
+import MiniSparklines from '@/components/ui/MiniSparklines.vue'
 
 const QuickLookModal = defineAsyncComponent(() => import('@/components/QuickLookModal.vue'))
 const IgnoreRulesModal = defineAsyncComponent(() => import('./IgnoreRulesModal.vue'))
