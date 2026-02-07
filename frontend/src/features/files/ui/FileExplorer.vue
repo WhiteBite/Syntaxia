@@ -1,6 +1,6 @@
 <template>
   <div class="file-explorer">
-    <!-- Header -->
+    <!-- Header: High-density single row -->
     <div class="flex flex-col border-b border-white/5 bg-[#0f111a]/80 backdrop-blur-md">
       <div class="flex items-center justify-between h-9 px-3">
         <div class="flex items-center gap-2 overflow-hidden">
@@ -31,45 +31,35 @@
 
           <div v-if="recommendationsCount > 0" class="w-px h-3 bg-white/10 mx-1"></div>
 
-          <!-- Expand/Collapse All -->
+          <!-- Actions -->
           <BaseButton 
-            variant="ghost" 
-            size="xs" 
-            icon-only 
+            variant="ghost" size="xs" icon-only 
             class="w-7 h-7 text-gray-500 hover:text-white"
-            @click="fileStore.expandAll()"
-            :title="t('files.expandAll')"
+            @click="fileStore.expandAll()" :title="t('files.expandAll')"
           >
             <ChevronDownSquare class="w-3.5 h-3.5" />
           </BaseButton>
           <BaseButton 
-            variant="ghost" 
-            size="xs" 
-            icon-only 
+            variant="ghost" size="xs" icon-only 
             class="w-7 h-7 text-gray-500 hover:text-white"
-            @click="fileStore.collapseAll()"
-            :title="t('files.collapseAll')"
+            @click="fileStore.collapseAll()" :title="t('files.collapseAll')"
           >
             <ChevronUpSquare class="w-3.5 h-3.5" />
           </BaseButton>
 
           <div class="w-px h-3 bg-white/10 mx-1"></div>
 
-          <!-- View & Filters -->
           <ViewOptionsDropdown />
           <SystemFiltersDropdown @open-advanced="showAdvancedFilters = true" />
 
           <BaseButton 
-            variant="ghost" 
-            size="xs" 
-            icon-only 
+            variant="ghost" size="xs" icon-only 
             class="w-7 h-7 text-gray-500 hover:text-white"
-            @click="explorer.handleRefresh"
-            :title="t('files.refresh')"
+            @click="explorer.handleRefresh" :title="t('files.refresh')"
           >
             <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': fileStore.isLoading }" />
           </BaseButton>
-
+          
           <SettingsPopover 
             @open-ignore-rules="ignoreRulesModalRef?.open()" 
             @settings-changed="explorer.handleSettingsChange"
@@ -176,14 +166,7 @@
       v-model="showDependencyModal"
       :file-path="selectedFileForDeps"
     />
-
-    <!-- Analysis Status Bar (Cleaned up from main view) -->
-    <div v-if="false">
-      <AnalysisStatusBar 
-        :selected-files="Array.from(fileStore.selectedPaths)"
-        @add-files="handleAddSuggestedFiles"
-      />
-    </div>
+    <AnalysisStatusBar v-if="false" :selected-files="[]" @add-files="handleAddSuggestedFiles" />
 
     <!-- Footer: Magic Control Bar -->
     <div class="file-explorer__footer">
@@ -358,17 +341,6 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-.file-explorer__header {
-  flex-shrink: 0;
-  border-bottom: 1px solid var(--border-default);
-}
-
-.file-explorer__search {
-  flex-shrink: 0;
-  padding: 0.5rem;
-  border-bottom: 1px solid var(--border-default);
-}
-
 .file-explorer__tree {
   flex: 1 1 0;
   min-height: 0;
@@ -393,87 +365,5 @@ onUnmounted(() => {
   padding: 0.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   background: #0f111a;
-}
-
-.focus-mode-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  border-left: 3px solid rgb(99, 102, 241);
-  border-radius: 0.375rem;
-  margin: 0.5rem;
-  gap: 1rem;
-}
-
-.focus-mode-content {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex: 1;
-  min-width: 0;
-}
-
-.focus-mode-label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #e5e7eb;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.focus-mode-back-btn {
-  flex-shrink: 0;
-  color: rgb(99, 102, 241);
-  font-weight: 500;
-}
-
-.focus-mode-back-btn:hover {
-  color: rgb(129, 140, 248);
-  background: rgba(99, 102, 241, 0.1);
-}
-
-.selected-only-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  border-left: 3px solid rgb(16, 185, 129);
-  border-radius: 0.375rem;
-  margin: 0.5rem;
-  gap: 1rem;
-}
-
-.selected-only-content {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex: 1;
-  min-width: 0;
-}
-
-.selected-only-label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #d1fae5;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.selected-only-exit-btn {
-  flex-shrink: 0;
-  color: rgb(16, 185, 129);
-  font-weight: 500;
-}
-
-.selected-only-exit-btn:hover {
-  color: rgb(52, 211, 153);
-  background: rgba(16, 185, 129, 0.1);
 }
 </style>
