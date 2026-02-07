@@ -179,6 +179,7 @@ import { RefreshCw, Search as SearchIcon, X } from 'lucide-vue-next'
 import { defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import { useFileExplorer } from '../composables/useFileExplorer'
+import { useQuickFilters } from '../composables/useQuickFilters'
 import { provideHoveredFile } from '../composables/useHoveredFile'
 import { useFileStore, type FileNode } from '../model/file.store'
 import AnalysisStatusBar from './AnalysisStatusBar.vue'
