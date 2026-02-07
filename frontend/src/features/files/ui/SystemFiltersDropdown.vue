@@ -1,6 +1,6 @@
 <template>
   <div class="relative">
-    <BaseDropdown placement="bottom-end">
+    <BaseDropdown v-model="isOpen" placement="bottom-end">
       <template #trigger>
         <slot name="trigger">
           <BaseButton 
@@ -24,7 +24,8 @@
           <label class="flex items-center px-3 py-2 hover:bg-gray-700/30 cursor-pointer transition-colors group">
             <input 
               type="checkbox" 
-              v-model="settingsStore.settings.fileExplorer.hideNodeModules"
+              :model-value="(settingsStore.settings.fileExplorer as any).hideNodeModules"
+              @update:model-value="(settingsStore.settings.fileExplorer as any).hideNodeModules = $event"
               class="form-checkbox w-3.5 h-3.5 text-indigo-500 rounded border-gray-600 bg-gray-800 focus:ring-offset-0 focus:ring-1 focus:ring-indigo-500 mr-2"
             />
             <span class="text-sm text-gray-300 group-hover:text-white transition-colors">{{ t('filters.hideNodeModules') }}</span>
@@ -33,7 +34,8 @@
           <label class="flex items-center px-3 py-2 hover:bg-gray-700/30 cursor-pointer transition-colors group">
             <input 
               type="checkbox" 
-              v-model="settingsStore.settings.fileExplorer.hideHiddenFiles"
+              :model-value="(settingsStore.settings.fileExplorer as any).hideHiddenFiles"
+              @update:model-value="(settingsStore.settings.fileExplorer as any).hideHiddenFiles = $event"
               class="form-checkbox w-3.5 h-3.5 text-indigo-500 rounded border-gray-600 bg-gray-800 focus:ring-offset-0 focus:ring-1 focus:ring-indigo-500 mr-2"
             />
             <span class="text-sm text-gray-300 group-hover:text-white transition-colors">{{ t('filters.hideDotfiles') }}</span>
@@ -42,7 +44,8 @@
           <label class="flex items-center px-3 py-2 hover:bg-gray-700/30 cursor-pointer transition-colors group">
             <input 
               type="checkbox" 
-              v-model="settingsStore.settings.fileExplorer.hideTestFiles"
+              :model-value="(settingsStore.settings.fileExplorer as any).hideTestFiles"
+              @update:model-value="(settingsStore.settings.fileExplorer as any).hideTestFiles = $event"
               class="form-checkbox w-3.5 h-3.5 text-indigo-500 rounded border-gray-600 bg-gray-800 focus:ring-offset-0 focus:ring-1 focus:ring-indigo-500 mr-2"
             />
             <span class="text-sm text-gray-300 group-hover:text-white transition-colors">{{ t('filters.hideTests') }}</span>
@@ -64,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useSettingsStore } from '@/stores/settings.store'
 import { BaseDropdown, BaseButton } from '@/components/ui'
 import { Filter as FilterIcon, PlusCircle } from 'lucide-vue-next'
@@ -76,10 +79,11 @@ const emit = defineEmits<{
 
 const settingsStore = useSettingsStore()
 const { t } = useI18n()
+const isOpen = ref(false)
 
 const hasActiveFilters = computed(() => {
   const s = settingsStore.settings.fileExplorer
-  return s.hideNodeModules || s.hideHiddenFiles || s.hideTestFiles
+  return (s as any).hideNodeModules || (s as any).hideHiddenFiles || (s as any).hideTestFiles
 })
 
 function openAdvancedFilters() {

@@ -136,7 +136,7 @@
     <IgnoreRulesModal ref="ignoreRulesModalRef" />
     <AdvancedFiltersModal 
       :is-open="showAdvancedFilters" 
-      :filters="explorer.editableFilters.value"
+      :filters="explorer.typeFilters.value"
       :get-count="explorer.getFilterCount"
       @close="showAdvancedFilters = false"
       @reset="explorer.resetFilters"
@@ -211,8 +211,6 @@ const logger = useLogger('FileExplorer')
 
 const ignoreRulesModalRef = ref<InstanceType<typeof IgnoreRulesModal>>()
 const searchInputRef = ref<HTMLInputElement | null>(null)
-const showAdvancedFilters = ref(false)
-const showAdvancedFilters = ref(false)
 const showAdvancedFilters = ref(false)
 
 // Dependency modal state

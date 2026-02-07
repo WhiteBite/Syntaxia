@@ -1,6 +1,6 @@
 <template>
   <div class="relative">
-    <BaseDropdown placement="bottom-end">
+    <BaseDropdown v-model="isOpen" placement="bottom-end">
       <template #trigger>
         <slot name="trigger">
           <BaseButton 
@@ -116,6 +116,7 @@ const uiStore = useUIStore()
 const showSaveModal = ref(false)
 const newPresetName = ref('')
 const nameInputRef = ref<HTMLInputElement | null>(null)
+const isOpen = ref(false)
 
 watch(showSaveModal, (val) => {
   if (val) {

@@ -3,7 +3,6 @@ export { useFileStore } from './model/file.store'
 export type { FileNode } from './model/file.store'
 export { default as BreadcrumbsNav } from './ui/BreadcrumbsNav.vue'
 export { default as FileExplorer } from './ui/FileExplorer.vue'
-export { default as FileFilterDropdown } from './ui/FileFilterDropdown.vue'
 export { default as FileSearchModal } from './ui/FileSearchModal.vue'
 export { default as FileTreeNode } from './ui/FileTreeNode.vue'
 
