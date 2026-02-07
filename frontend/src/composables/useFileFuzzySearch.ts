@@ -101,27 +101,54 @@ export function useFileFuzzySearch(options: UseFileFuzzySearchOptions) {
 
         // Fallback to frontend search
         const allFiles = flattenedNodes.value.filter(node => !node.isDir)
+        const rawQuery = searchQuery.value.trim().toLowerCase()
 
-        // For large trees, use simple string matching
-        if (allFiles.length > 2000) {
-            const query = searchQuery.value.toLowerCase()
+        // Operator handling
+        const isExclude = rawQuery.startsWith('!')
+        const isExtensionOnly = rawQuery.startsWith('.') && !rawQuery.includes(' ')
+        const searchTerm = isExclude ? rawQuery.substring(1).trim() : rawQuery
+
+        if (isExtensionOnly) {
             return allFiles
-                .filter(
-                    (file) =>
-                        file.name.toLowerCase().includes(query) ||
-                        file.path.toLowerCase().includes(query)
-                )
-                .map(file => {
-                    const nameIndex = file.name.toLowerCase().indexOf(query)
-                    const matches: FuseResultMatch[] = []
+                .filter(f => f.name.toLowerCase().endsWith(searchTerm))
+                .map(f => ({
+                    ...f,
+                    depth: 0,
+                    relativePath: rootPath?.value ? f.path.replace(rootPath.value + '/', '') : f.path
+                }))
+                .slice(0, maxResults)
+        }
 
-                    if (nameIndex !== -1) {
-                        matches.push({
-                            indices: [[nameIndex, nameIndex + query.length - 1]],
-                            value: file.name,
-                            key: 'name',
-                            refIndex: 0
-                        })
+        // For large trees or complex queries, use simple string matching
+        if (allFiles.length > 2000 || isExclude || searchTerm.includes(' ')) {
+            const terms = searchTerm.split(' ').filter(Boolean)
+            
+            return allFiles
+                .filter(file => {
+                    const name = file.name.toLowerCase()
+                    const path = file.path.toLowerCase()
+                    
+                    if (isExclude) {
+                        return !name.includes(searchTerm) && !path.includes(searchTerm)
+                    }
+                    
+                    // All terms must match (AND logic)
+                    return terms.every(term => name.includes(term) || path.includes(term))
+                })
+                .map(file => {
+                    const matches: FuseResultMatch[] = []
+                    // Highlight first term for simplicity in non-fuse mode
+                    const firstTerm = terms[0]
+                    if (firstTerm) {
+                        const nameIndex = file.name.toLowerCase().indexOf(firstTerm)
+                        if (nameIndex !== -1) {
+                            matches.push({
+                                indices: [[nameIndex, nameIndex + firstTerm.length - 1]],
+                                value: file.name,
+                                key: 'name',
+                                refIndex: 0
+                            })
+                        }
                     }
 
                     return {

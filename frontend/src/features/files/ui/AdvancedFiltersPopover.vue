@@ -98,9 +98,10 @@
     </div>
 
     <!-- Hints -->
-    <div class="mt-3 pt-2 border-t border-gray-700/50 text-[10px] text-gray-500 flex justify-between px-1">
+    <div class="mt-3 pt-2 border-t border-white/5 text-[9px] text-gray-500 flex justify-between px-1 uppercase tracking-tighter font-bold">
       <span>Click to toggle</span>
-      <span>Shift+Click to exclude</span>
+      <span class="text-indigo-400/50">Ctrl+Click multi</span>
+      <span>Shift+Click exclude</span>
     </div>
   </div>
 </template>
