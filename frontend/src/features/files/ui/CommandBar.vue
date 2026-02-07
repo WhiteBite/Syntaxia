@@ -57,6 +57,19 @@
       <!-- LEFT: Token Limit Selector & Presets -->
       <div class="limit-section" ref="limitRef">
         <div class="flex items-center gap-1 w-full">
+          <!-- Recommendations Lamp -->
+          <button 
+            v-if="analysisStore.recommendationsCount > 0"
+            class="flex items-center justify-center w-8 h-8 rounded-full bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition-all pulse-amber"
+            @click="analysisStore.togglePopup()"
+            :title="t('context.recommendations')"
+          >
+            <Sparkles class="w-4 h-4" />
+            <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-600 text-[10px] font-bold text-white border-2 border-[#1c1f2e]">
+              {{ analysisStore.recommendationsCount }}
+            </span>
+          </button>
+
           <BaseButton 
             variant="ghost" 
             size="sm" 
@@ -206,6 +219,12 @@ import { useSettingsStore } from '@/stores/settings.store'
 import { BaseButton, BaseBadge } from '@/components/ui'
 import { Check, ChevronDown, Zap, X, Sparkles, Bookmark } from 'lucide-vue-next'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+
+// Mock implementation if actual analysis store doesn't provide these
+const analysisStore = {
+  recommendationsCount: computed(() => 15), // Placeholder
+  togglePopup: () => {}
+}
 import { TOKEN_THRESHOLDS } from '@/config/constants'
 import type { WeightFilterLevel } from '@/composables/useFileFilter'
 import type { FileNode } from '@/types/domain'

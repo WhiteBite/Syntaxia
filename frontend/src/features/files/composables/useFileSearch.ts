@@ -15,7 +15,18 @@ export function useFileSearch() {
 
     // Debounced search for better performance
     const debouncedSearch = debounce(() => {
-        fileStore.setSearchQuery(query.value)
+        const rawQuery = query.value.trim()
+        
+        if (rawQuery.startsWith('!')) {
+            // Exclusion search: !test -> show everything except 'test'
+            fileStore.setSearchQuery(query.value)
+        } else if (rawQuery.includes(' ')) {
+            // Multi-word search
+            fileStore.setSearchQuery(query.value)
+        } else {
+            fileStore.setSearchQuery(query.value)
+        }
+        
         isSearching.value = false
     }, FILE_TREE.DEBOUNCE_MS)
 

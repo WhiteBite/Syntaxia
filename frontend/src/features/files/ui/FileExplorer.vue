@@ -24,6 +24,30 @@
             </template>
           </BasePopover>
 
+          <!-- Collapse/Expand All -->
+          <div class="flex items-center gap-0.5 border-l border-white/10 ml-1 pl-1">
+            <BaseButton 
+              variant="ghost" 
+              size="xs" 
+              icon-only 
+              class="w-6 h-6 text-gray-500 hover:text-white"
+              @click="fileStore.expandAll()"
+              :title="t('files.expandAll')"
+            >
+              <ChevronDownSquare class="w-3.5 h-3.5" />
+            </BaseButton>
+            <BaseButton 
+              variant="ghost" 
+              size="xs" 
+              icon-only 
+              class="w-6 h-6 text-gray-500 hover:text-white"
+              @click="fileStore.collapseAll()"
+              :title="t('files.collapseAll')"
+            >
+              <ChevronUpSquare class="w-3.5 h-3.5" />
+            </BaseButton>
+          </div>
+
           <!-- Settings -->
           <SettingsPopover 
             @open-ignore-rules="ignoreRulesModalRef?.open()" 
@@ -148,11 +172,13 @@
       :file-path="selectedFileForDeps"
     />
 
-    <!-- Analysis Status Bar -->
-    <AnalysisStatusBar 
-      :selected-files="Array.from(fileStore.selectedPaths)"
-      @add-files="handleAddSuggestedFiles"
-    />
+    <!-- Analysis Status Bar (Cleaned up from main view) -->
+    <div v-if="false">
+      <AnalysisStatusBar 
+        :selected-files="Array.from(fileStore.selectedPaths)"
+        @add-files="handleAddSuggestedFiles"
+      />
+    </div>
 
     <!-- Footer: Magic Control Bar -->
     <div class="file-explorer__footer">
@@ -175,7 +201,7 @@ import { useProjectStore } from '@/stores/project.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useUIStore } from '@/stores/ui.store'
 import { BaseButton, BaseEmptyState, BasePopover } from '@/components/ui'
-import { RefreshCw, Search as SearchIcon, X } from 'lucide-vue-next'
+import { RefreshCw, Search as SearchIcon, X, ChevronDownSquare, ChevronUpSquare } from 'lucide-vue-next'
 import { defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import { useFileExplorer } from '../composables/useFileExplorer'
@@ -214,6 +240,8 @@ const logger = useLogger('FileExplorer')
 const ignoreRulesModalRef = ref<InstanceType<typeof IgnoreRulesModal>>()
 const searchInputRef = ref<HTMLInputElement | null>(null)
 const showAdvancedFilters = ref(false)
+
+// Logic for Magic Search operators could go here or in useFileSearch.ts expansion
 
 // Dependency modal state
 const showDependencyModal = ref(false)
