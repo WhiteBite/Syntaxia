@@ -7,7 +7,6 @@
           <h2 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest select-none truncate">
             {{ t('files.title') }}
           </h2>
-          <!-- Stats Badge (Tiny) -->
           <div v-if="fileStore.selectedCount > 0" 
             class="px-1.5 py-0.5 bg-indigo-500/20 text-indigo-300 rounded text-[9px] font-black border border-indigo-500/20">
             {{ fileStore.selectedCount }}
@@ -164,7 +163,6 @@
 
     <!-- Modals -->
     <IgnoreRulesModal ref="ignoreRulesModalRef" />
-    <!-- Advanced Filters Modal (was content of popover, now standalone for clarity) -->
     <AdvancedFiltersModal 
       :is-open="showAdvancedFilters" 
       :filters="quickFilters.typeFilters.value"
@@ -244,6 +242,7 @@ const quickFilters = useQuickFilters()
 const contextMenu = useContextMenu()
 const logger = useLogger('FileExplorer')
 
+// Real analysis status integration for the "Lamp"
 const selectedFilesRef = computed(() => Array.from(fileStore.selectedPaths))
 const analysis = useAnalysisStatus({
   selectedFiles: selectedFilesRef,
@@ -259,8 +258,6 @@ const toggleAnalysisPopup = () => {
 const ignoreRulesModalRef = ref<InstanceType<typeof IgnoreRulesModal>>()
 const searchInputRef = ref<HTMLInputElement | null>(null)
 const showAdvancedFilters = ref(false)
-
-// Logic for Magic Search operators could go here or in useFileSearch.ts expansion
 
 // Dependency modal state
 const showDependencyModal = ref(false)
