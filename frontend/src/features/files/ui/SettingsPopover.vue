@@ -25,44 +25,49 @@
       <div class="settings-popover__body">
         <!-- Quick Toggles -->
         <div class="settings-popover__toggles">
-          <div class="settings-toggle" @click="toggleSetting('useGitignore')">
+          <div class="settings-toggle" @click.stop="toggleSetting('useGitignore')">
             <span class="settings-toggle__label">{{ t('settings.useGitignore') }}</span>
-            <ToggleSwitch 
-              :model-value="settings.fileExplorer.useGitignore"
-              @update:model-value="v => updateSetting('useGitignore', v)"
-            />
+            <div class="pointer-events-none">
+              <ToggleSwitch 
+                :model-value="settings.fileExplorer.useGitignore"
+              />
+            </div>
           </div>
 
-          <div class="settings-toggle" @click="toggleSetting('useCustomIgnore')">
+          <div class="settings-toggle" @click.stop="toggleSetting('useCustomIgnore')">
             <span class="settings-toggle__label">{{ t('settings.useCustomIgnore') }}</span>
-            <ToggleSwitch 
-              :model-value="settings.fileExplorer.useCustomIgnore"
-              @update:model-value="v => updateSetting('useCustomIgnore', v)"
-            />
+            <div class="pointer-events-none">
+              <ToggleSwitch 
+                :model-value="settings.fileExplorer.useCustomIgnore"
+              />
+            </div>
           </div>
 
-          <div class="settings-toggle" @click="toggleSetting('compactNestedFolders')">
+          <div class="settings-toggle" @click.stop="toggleSetting('compactNestedFolders')">
             <span class="settings-toggle__label">{{ t('settings.compactFolders') }}</span>
-            <ToggleSwitch 
-              :model-value="settings.fileExplorer.compactNestedFolders"
-              @update:model-value="v => updateSetting('compactNestedFolders', v)"
-            />
+            <div class="pointer-events-none">
+              <ToggleSwitch 
+                :model-value="settings.fileExplorer.compactNestedFolders"
+              />
+            </div>
           </div>
 
-          <div class="settings-toggle" @click="toggleSetting('foldersFirst')">
+          <div class="settings-toggle" @click.stop="toggleSetting('foldersFirst')">
             <span class="settings-toggle__label">{{ t('settings.foldersFirst') }}</span>
-            <ToggleSwitch 
-              :model-value="settings.fileExplorer.foldersFirst"
-              @update:model-value="v => updateSetting('foldersFirst', v)"
-            />
+            <div class="pointer-events-none">
+              <ToggleSwitch 
+                :model-value="settings.fileExplorer.foldersFirst"
+              />
+            </div>
           </div>
 
-          <div class="settings-toggle" @click="toggleSetting('allowSelectBinary')">
+          <div class="settings-toggle" @click.stop="toggleSetting('allowSelectBinary')">
             <span class="settings-toggle__label">{{ t('settings.allowSelectBinary') }}</span>
-            <ToggleSwitch 
-              :model-value="settings.fileExplorer.allowSelectBinary"
-              @update:model-value="v => updateSetting('allowSelectBinary', v)"
-            />
+            <div class="pointer-events-none">
+              <ToggleSwitch 
+                :model-value="settings.fileExplorer.allowSelectBinary"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -173,5 +178,10 @@ function openIgnoreRules() {
 
 .settings-popover-content {
   width: 16rem;
+  background: #1c1f2e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
 }
 </style>

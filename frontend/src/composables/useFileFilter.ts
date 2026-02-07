@@ -167,6 +167,33 @@ export function useFileFilter(options: UseFileFilterOptions) {
             result = filterTreeByWeight(result, threshold, getAllFilesInNode)
         }
 
+        // Apply System Filters (tests, node_modules, hidden)
+        const s = settingsStore.settings.fileExplorer
+        if (s.hideNodeModules || s.hideHiddenFiles || s.hideTestFiles) {
+            const filterBySystem = (nodes: FileNode[]): FileNode[] => {
+                return nodes.reduce<FileNode[]>((acc, node) => {
+                    const name = node.name.toLowerCase()
+                    
+                    if (s.hideNodeModules && name === 'node_modules') return acc
+                    if (s.hideHiddenFiles && node.name.startsWith('.') && node.name !== '.midas') return acc
+                    if (s.hideTestFiles && (
+                        name.includes('test') || 
+                        name.includes('spec') || 
+                        name === '__tests__'
+                    )) return acc
+
+                    if (node.isDir && node.children) {
+                        const filteredChildren = filterBySystem(node.children)
+                        acc.push({ ...node, children: filteredChildren })
+                    } else {
+                        acc.push(node)
+                    }
+                    return acc
+                }, [])
+            }
+            result = filterBySystem(result)
+        }
+
         // Apply folders first sorting
         if (settingsStore.settings.fileExplorer.foldersFirst) {
             result = sortFoldersFirst(result)

@@ -57,11 +57,6 @@
         :title="locale === 'ru' ? 'Switch to English' : 'Переключить на русский'">
         {{ locale.toUpperCase() }}
       </button>
-
-      <!-- Mini Sparklines -->
-      <div class="ml-2 pl-2 border-l border-white/10 h-6 flex items-center">
-        <MiniSparklines />
-      </div>
     </div>
   </div>
 </template>
@@ -74,7 +69,6 @@ import { useTemplateStore } from '@/features/templates'
 import { useProjectStore } from '@/stores/project.store'
 import { useUIStore } from '@/stores/ui.store'
 import { computed } from 'vue'
-import MiniSparklines from '@/components/ui/MiniSparklines.vue'
 
 const logger = useLogger('ActionBar')
 

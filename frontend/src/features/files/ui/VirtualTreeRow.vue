@@ -138,17 +138,7 @@
     </div>
 
     <!-- File/Folder Icon -->
-    <div class="tree-icon" :class="{
-      'tree-icon-critical': isCriticalSize,
-      'tree-icon-heavy': isHeavySize
-    }">
-      <FolderOpenIcon v-if="item.node.isDir && item.node.isExpanded" />
-      <FolderIcon v-else-if="item.node.isDir" />
-      <span v-else class="tree-file-icon">{{ getFileIcon(item.node.name) }}</span>
-    </div>
-
-    <!-- Name with search highlighting -->
-    <span class="tree-name" :style="heatmapColor ? { color: heatmapColor } : {}">
+    <div class="tree-icon" :class="{\n      'tree-icon-critical': isCriticalSize,\n      'tree-icon-heavy': isHeavySize\n    }\" :style=\"heatmapColor ? { color: heatmapColor } : {}\">\n      <FolderOpenIcon v-if=\"item.node.isDir && item.node.isExpanded\" />\n      <FolderIcon v-else-if=\"item.node.isDir\" />\n      <span v-else class=\"tree-file-icon\">{{ getFileIcon(item.node.name) }}</span>\n    </div>\n\n    <!-- Name with search highlighting -->\n    <span class=\"tree-name\">
       <template v-if="nameSegments.length > 1">
         <template v-for="(segment, idx) in nameSegments" :key="idx">
           <mark v-if="segment.isMatch" class="tree-highlight">{{ segment.text }}</mark>

@@ -11,6 +11,9 @@
             class="px-1.5 py-0.5 bg-indigo-500/20 text-indigo-300 rounded text-[9px] font-black border border-indigo-500/20">
             {{ fileStore.selectedCount }}
           </div>
+          <div class="ml-1 flex items-center">
+            <MiniSparklines />
+          </div>
         </div>
         
         <div class="flex items-center gap-0.5">
@@ -65,6 +68,27 @@
             @settings-changed="explorer.handleSettingsChange"
           />
         </div>
+      </div>
+
+      <!-- Compact Search -->
+      <div class="px-2 pb-2">
+        <div class="relative group">
+          <input 
+            v-model="explorer.searchQuery.value"
+            type="text"
+            :placeholder="t('files.searchShort')"
+            class="w-full h-7 bg-white/5 text-xs text-gray-300 placeholder-gray-600 rounded border border-transparent focus:border-indigo-500/30 focus:bg-white/10 focus:outline-none transition-all pl-7 pr-7"
+            @input="explorer.handleSearch" 
+            @keydown.escape="clearSearch"
+          />
+          <SearchIcon class="w-3 h-3 text-gray-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none group-focus-within:text-indigo-400" />
+          <button v-if="explorer.searchQuery.value" @click="clearSearch" 
+            class="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 text-gray-500 hover:text-white">
+            <X class="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+    </div>
       </div>
 
       <!-- Compact Search -->
@@ -205,6 +229,7 @@ import VirtualFileTree from './VirtualFileTree.vue'
 import ViewOptionsDropdown from './ViewOptionsDropdown.vue'
 import SystemFiltersDropdown from './SystemFiltersDropdown.vue'
 import SkeletonFileTree from '@/components/SkeletonFileTree.vue'
+import MiniSparklines from '@/components/ui/MiniSparklines.vue'
 
 const QuickLookModal = defineAsyncComponent(() => import('@/components/QuickLookModal.vue'))
 const IgnoreRulesModal = defineAsyncComponent(() => import('./IgnoreRulesModal.vue'))
@@ -232,10 +257,16 @@ const analysis = useAnalysisStatus({
   onAddFiles: (files) => fileStore.selectMultiple(files)
 })
 
-const recommendationsCount = computed(() => (analysis.relatedCount.value || 0) + (analysis.dependentCount.value || 0))
+const recommendationsCount = computed(() => {
+  if (!analysis) return 0
+  const count = (analysis.relatedCount?.value || 0) + (analysis.dependentCount?.value || 0)
+  return count
+})
+
 const toggleAnalysisPopup = () => {
-    if (analysis.relatedCount.value > 0) analysis.showRelatedPopup.value = true
-    else if (analysis.dependentCount.value > 0) analysis.showImpactPopup.value = true
+  if (!analysis) return
+  if (analysis.relatedCount.value > 0) analysis.showRelatedPopup.value = true
+  else if (analysis.dependentCount.value > 0) analysis.showImpactPopup.value = true
 }
 
 const ignoreRulesModalRef = ref<InstanceType<typeof IgnoreRulesModal>>()
