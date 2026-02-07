@@ -7,13 +7,31 @@
           <h2 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest select-none truncate">
             {{ t('files.title') }}
           </h2>
+          <!-- Stats Badge (Tiny) -->
           <div v-if="fileStore.selectedCount > 0" 
-            class="px-1.5 py-0.5 bg-indigo-500/20 text-indigo-300 rounded text-[9px] font-bold">
+            class="px-1.5 py-0.5 bg-indigo-500/20 text-indigo-300 rounded text-[9px] font-black border border-indigo-500/20">
             {{ fileStore.selectedCount }}
           </div>
         </div>
         
         <div class="flex items-center gap-0.5">
+          <!-- Recommendations Lamp -->
+          <button 
+            v-if="recommendationsCount > 0"
+            class="flex items-center justify-center w-7 h-7 rounded-full bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition-all group/lamp"
+            @click="toggleAnalysisPopup"
+            :title="t('context.recommendations')"
+          >
+            <div class="relative">
+              <Sparkles class="w-3.5 h-3.5" />
+              <span class="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-600 text-[8px] font-black text-white border-2 border-[#0f111a] animate-pulse">
+                {{ recommendationsCount }}
+              </span>
+            </div>
+          </button>
+
+          <div v-if="recommendationsCount > 0" class="w-px h-3 bg-white/10 mx-1"></div>
+
           <!-- Expand/Collapse All -->
           <BaseButton 
             variant="ghost" 
@@ -190,13 +208,14 @@ import { useProjectStore } from '@/stores/project.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useUIStore } from '@/stores/ui.store'
 import { BaseButton, BaseEmptyState } from '@/components/ui'
-import { RefreshCw, Search as SearchIcon, X, ChevronDownSquare, ChevronUpSquare } from 'lucide-vue-next'
-import { defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
+import { RefreshCw, Search as SearchIcon, X, ChevronDownSquare, ChevronUpSquare, Sparkles } from 'lucide-vue-next'
+import { defineAsyncComponent, onMounted, onUnmounted, ref, watch, computed } from 'vue'
 
 import { useFileExplorer } from '../composables/useFileExplorer'
 import { useQuickFilters } from '../composables/useQuickFilters'
 import { provideHoveredFile } from '../composables/useHoveredFile'
 import { useFileStore, type FileNode } from '../model/file.store'
+import { useAnalysisStatus } from '../composables/useAnalysisStatus'
 import AnalysisStatusBar from './AnalysisStatusBar.vue'
 import CommandBar from './CommandBar.vue'
 import FileContextMenu from './FileContextMenu.vue'
@@ -224,6 +243,18 @@ const explorer = useFileExplorer()
 const quickFilters = useQuickFilters()
 const contextMenu = useContextMenu()
 const logger = useLogger('FileExplorer')
+
+const selectedFilesRef = computed(() => Array.from(fileStore.selectedPaths))
+const analysis = useAnalysisStatus({
+  selectedFiles: selectedFilesRef,
+  onAddFiles: (files) => fileStore.selectMultiple(files)
+})
+
+const recommendationsCount = computed(() => (analysis.relatedCount.value || 0) + (analysis.dependentCount.value || 0))
+const toggleAnalysisPopup = () => {
+    if (analysis.relatedCount.value > 0) analysis.showRelatedPopup.value = true
+    else if (analysis.dependentCount.value > 0) analysis.showImpactPopup.value = true
+}
 
 const ignoreRulesModalRef = ref<InstanceType<typeof IgnoreRulesModal>>()
 const searchInputRef = ref<HTMLInputElement | null>(null)
