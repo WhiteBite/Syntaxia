@@ -76,6 +76,10 @@ export interface FileExplorerSettings {
     heavyFileThreshold: number
     showDependencyIndicators: boolean
     autoHighlightDependencies: boolean
+    hideNodeModules: boolean
+    hideHiddenFiles: boolean
+    hideTestFiles: boolean
+    showTokenBars: boolean
 }
 
 export interface ContextStorageSettings {
@@ -153,7 +157,11 @@ const DEFAULT_SETTINGS: AppSettings = {
         warnHeavyFiles: true,
         heavyFileThreshold: 100000,
         showDependencyIndicators: true,
-        autoHighlightDependencies: true
+        autoHighlightDependencies: true,
+        hideNodeModules: true,
+        hideHiddenFiles: true,
+        hideTestFiles: false,
+        showTokenBars: true
     },
     aiModel: 'gpt-4',
     theme: 'dark',

@@ -166,7 +166,7 @@ const allNodes = computed(() => {
   function traverse(node: any) {
     if (!node.isDir) nodes.push(node)
     if (node.children) {
-      node.children.forEach(traverse)
+      node.children.forEach((child: any) => traverse(child))
     }
   }
   fileStore.nodes.forEach(traverse)

@@ -71,8 +71,7 @@
             <label class="flex items-center px-3 py-2 hover:bg-gray-700/30 cursor-pointer transition-colors group">
               <input 
                 type="checkbox" 
-                :model-value="(settingsStore.settings.fileExplorer as any).showTokenBars"
-                @update:model-value="(settingsStore.settings.fileExplorer as any).showTokenBars = $event"
+                v-model="settingsStore.settings.fileExplorer.showTokenBars"
                 class="form-checkbox w-3.5 h-3.5 text-indigo-500 rounded border-gray-600 bg-gray-800 focus:ring-offset-0 focus:ring-1 focus:ring-indigo-500 mr-2"
               />
               <span class="text-sm text-gray-300 group-hover:text-white transition-colors">{{ t('viewOptions.showTokenBars') }}</span>

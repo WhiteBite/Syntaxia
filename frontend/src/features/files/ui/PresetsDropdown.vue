@@ -109,6 +109,7 @@ import { useFileStore } from '../model/file.store'
 import { useUIStore } from '@/stores/ui.store'
 import { BaseDropdown, BaseButton } from '@/components/ui'
 import { TrashIcon, PlusIcon } from 'lucide-vue-next'
+import type { SelectionPreset } from '@/composables/useFilePersistence'
 
 const fileStore = useFileStore()
 const uiStore = useUIStore()
@@ -127,7 +128,7 @@ watch(showSaveModal, (val) => {
   }
 })
 
-function loadPreset(preset: any) {
+function loadPreset(preset: SelectionPreset) {
   fileStore.loadPreset(preset.name)
   uiStore.addToast(`Loaded preset: ${preset.name}`, 'success')
 }

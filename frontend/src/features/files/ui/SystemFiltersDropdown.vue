@@ -24,8 +24,7 @@
           <label class="flex items-center px-3 py-2 hover:bg-gray-700/30 cursor-pointer transition-colors group">
             <input 
               type="checkbox" 
-              :model-value="(settingsStore.settings.fileExplorer as any).hideNodeModules"
-              @update:model-value="(settingsStore.settings.fileExplorer as any).hideNodeModules = $event"
+              v-model="settingsStore.settings.fileExplorer.hideNodeModules"
               class="form-checkbox w-3.5 h-3.5 text-indigo-500 rounded border-gray-600 bg-gray-800 focus:ring-offset-0 focus:ring-1 focus:ring-indigo-500 mr-2"
             />
             <span class="text-sm text-gray-300 group-hover:text-white transition-colors">{{ t('filters.hideNodeModules') }}</span>
@@ -34,8 +33,7 @@
           <label class="flex items-center px-3 py-2 hover:bg-gray-700/30 cursor-pointer transition-colors group">
             <input 
               type="checkbox" 
-              :model-value="(settingsStore.settings.fileExplorer as any).hideHiddenFiles"
-              @update:model-value="(settingsStore.settings.fileExplorer as any).hideHiddenFiles = $event"
+              v-model="settingsStore.settings.fileExplorer.hideHiddenFiles"
               class="form-checkbox w-3.5 h-3.5 text-indigo-500 rounded border-gray-600 bg-gray-800 focus:ring-offset-0 focus:ring-1 focus:ring-indigo-500 mr-2"
             />
             <span class="text-sm text-gray-300 group-hover:text-white transition-colors">{{ t('filters.hideDotfiles') }}</span>
@@ -44,8 +42,7 @@
           <label class="flex items-center px-3 py-2 hover:bg-gray-700/30 cursor-pointer transition-colors group">
             <input 
               type="checkbox" 
-              :model-value="(settingsStore.settings.fileExplorer as any).hideTestFiles"
-              @update:model-value="(settingsStore.settings.fileExplorer as any).hideTestFiles = $event"
+              v-model="settingsStore.settings.fileExplorer.hideTestFiles"
               class="form-checkbox w-3.5 h-3.5 text-indigo-500 rounded border-gray-600 bg-gray-800 focus:ring-offset-0 focus:ring-1 focus:ring-indigo-500 mr-2"
             />
             <span class="text-sm text-gray-300 group-hover:text-white transition-colors">{{ t('filters.hideTests') }}</span>
@@ -83,7 +80,7 @@ const isOpen = ref(false)
 
 const hasActiveFilters = computed(() => {
   const s = settingsStore.settings.fileExplorer
-  return (s as any).hideNodeModules || (s as any).hideHiddenFiles || (s as any).hideTestFiles
+  return s.hideNodeModules || s.hideHiddenFiles || s.hideTestFiles
 })
 
 function openAdvancedFilters() {
