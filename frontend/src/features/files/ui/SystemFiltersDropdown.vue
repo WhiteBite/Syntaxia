@@ -2,17 +2,15 @@
   <div class="relative">
     <BaseDropdown v-model="isOpen" placement="bottom-end">
       <template #trigger>
-        <slot name="trigger">
-          <BaseButton 
-            variant="ghost" 
-            size="xs" 
-            icon-only 
-            :class="{ 'text-indigo-400': hasActiveFilters, 'text-gray-500 hover:text-white': !hasActiveFilters }"
-            :title="t('filters.title')"
-          >
-            <FilterIcon class="w-4 h-4" />
-          </BaseButton>
-        </slot>
+        <BaseButton 
+          variant="ghost" 
+          size="xs" 
+          icon-only 
+          :class="{ 'text-indigo-400': hasActiveFilters, 'text-gray-500 hover:text-white': !hasActiveFilters }"
+          :title="t('filters.title')"
+        >
+          <FilterIcon class="w-4 h-4" />
+        </BaseButton>
       </template>
 
       <template #content>
@@ -21,7 +19,7 @@
             {{ t('filters.systemFilters') }}
           </div>
           
-          <label class="flex items-center px-3 py-2 hover:bg-gray-700/30 cursor-pointer transition-colors group">
+          <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer transition-colors group">
             <input 
               type="checkbox" 
               v-model="settingsStore.settings.fileExplorer.hideNodeModules"
@@ -30,7 +28,7 @@
             <span class="text-sm text-gray-300 group-hover:text-white transition-colors">{{ t('filters.hideNodeModules') }}</span>
           </label>
 
-          <label class="flex items-center px-3 py-2 hover:bg-gray-700/30 cursor-pointer transition-colors group">
+          <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer transition-colors group">
             <input 
               type="checkbox" 
               v-model="settingsStore.settings.fileExplorer.hideHiddenFiles"
@@ -39,7 +37,7 @@
             <span class="text-sm text-gray-300 group-hover:text-white transition-colors">{{ t('filters.hideDotfiles') }}</span>
           </label>
 
-          <label class="flex items-center px-3 py-2 hover:bg-gray-700/30 cursor-pointer transition-colors group">
+          <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer transition-colors group">
             <input 
               type="checkbox" 
               v-model="settingsStore.settings.fileExplorer.hideTestFiles"
@@ -48,13 +46,13 @@
             <span class="text-sm text-gray-300 group-hover:text-white transition-colors">{{ t('filters.hideTests') }}</span>
           </label>
 
-          <div class="border-t border-gray-700/50 mt-1 pt-1">
+          <div class="border-t border-white/5 mt-1 pt-1">
             <button 
               @click="openAdvancedFilters"
-              class="w-full text-left px-3 py-2 text-sm text-indigo-400 hover:bg-gray-700/30 transition-colors flex items-center gap-2 group"
+              class="w-full text-left px-3 py-2 text-xs text-indigo-400 hover:bg-indigo-500/10 transition-colors flex items-center gap-2 group"
             >
               <PlusCircle class="w-3.5 h-3.5" />
-              <span>{{ t('filters.addTypeFilter') }}...</span>
+              <span>{{ t('filters.addTypeFilter') }}</span>
             </button>
           </div>
         </div>

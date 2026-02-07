@@ -148,7 +148,7 @@
     </div>
 
     <!-- Name with search highlighting -->
-    <span class="tree-name" :style="heatmapColor ? { color: heatmapColor, fontWeight: 600 } : {}">
+    <span class="tree-name" :style="heatmapColor ? { color: heatmapColor } : {}">
       <template v-if="nameSegments.length > 1">
         <template v-for="(segment, idx) in nameSegments" :key="idx">
           <mark v-if="segment.isMatch" class="tree-highlight">{{ segment.text }}</mark>
@@ -306,15 +306,18 @@ const fileTokens = computed(() => {
 })
 
 const heatmapColor = computed(() => {
+  if (!settingsStore.settings.fileExplorer.showTokenBars) return null
+  
   if (props.item.node.isDir) {
-    if (props.selectedTokens >= TOKEN_THRESHOLDS.CRITICAL) return 'var(--color-danger)'
-    if (props.selectedTokens >= TOKEN_THRESHOLDS.HEAVY) return 'var(--color-warning)'
-    if (props.selectedTokens >= TOKEN_THRESHOLDS.MEDIUM) return 'var(--accent-amber, #fbbf24)'
+    if (props.selectedTokens >= TOKEN_THRESHOLDS.CRITICAL) return 'rgba(248, 113, 113, 0.4)'
+    if (props.selectedTokens >= TOKEN_THRESHOLDS.HEAVY) return 'rgba(251, 146, 60, 0.4)'
+    if (props.selectedTokens >= TOKEN_THRESHOLDS.MEDIUM) return 'rgba(252, 211, 77, 0.4)'
     return null
   }
-  if (fileTokens.value >= TOKEN_THRESHOLDS.CRITICAL) return 'var(--color-danger)'
-  if (fileTokens.value >= TOKEN_THRESHOLDS.HEAVY) return 'var(--color-warning)'
-  if (fileTokens.value >= TOKEN_THRESHOLDS.MEDIUM) return 'var(--accent-amber, #fbbf24)'
+  
+  if (fileTokens.value >= TOKEN_THRESHOLDS.CRITICAL) return 'rgba(248, 113, 113, 0.4)'
+  if (fileTokens.value >= TOKEN_THRESHOLDS.HEAVY) return 'rgba(251, 146, 60, 0.4)'
+  if (fileTokens.value >= TOKEN_THRESHOLDS.MEDIUM) return 'rgba(252, 211, 77, 0.4)'
   return null
 })
 
