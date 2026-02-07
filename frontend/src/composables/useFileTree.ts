@@ -15,11 +15,12 @@ import {
     walkTree,
     type DomainNode,
 } from '@/utils/fileTreeUtils'
-import { computed, ref, shallowRef } from 'vue'
+import { computed, ref, shallowRef, triggerRef } from 'vue'
 
 export function useFileTree() {
     // State
-    const nodes = ref<FileNode[]>([])
+    // Use shallowRef for nodes to prevent deep reactivity overhead (performance optimization for large trees)
+    const nodes = shallowRef<FileNode[]>([])
     const rootPath = ref<string>('')
     const currentDirectory = ref<string>('')
     const directoryHistory = ref<string[]>([])
@@ -134,8 +135,10 @@ export function useFileTree() {
             if (soloMode && willExpand) {
                 collapseSiblings(path)
             }
-            // Note: We don't invalidate flattenedNodesCache here for performance
-            // The cache is only used for search, not for rendering expanded state
+            
+            // Invalidate cache and trigger update so computed properties re-evaluate
+            flattenedNodesCache.value = null
+            triggerRef(nodes)
         }
     }
 
@@ -175,6 +178,8 @@ export function useFileTree() {
         const node = findNode(path)
         if (node && node.isDir) {
             node.isExpanded = true
+            flattenedNodesCache.value = null
+            triggerRef(nodes)
         }
     }
 
@@ -182,6 +187,8 @@ export function useFileTree() {
         const node = findNode(path)
         if (node && node.isDir) {
             node.isExpanded = false
+            flattenedNodesCache.value = null
+            triggerRef(nodes)
         }
     }
 
@@ -198,6 +205,9 @@ export function useFileTree() {
             }
         }
         expandNode(node)
+        
+        flattenedNodesCache.value = null
+        triggerRef(nodes)
     }
 
     function collapseRecursive(path: string) {
@@ -213,6 +223,9 @@ export function useFileTree() {
             }
         }
         collapseNode(node)
+        
+        flattenedNodesCache.value = null
+        triggerRef(nodes)
     }
 
     function expandAll() {
@@ -221,6 +234,9 @@ export function useFileTree() {
                 node.isExpanded = true
             }
         })
+        
+        flattenedNodesCache.value = null
+        triggerRef(nodes)
     }
 
     function collapseAll() {
@@ -229,6 +245,9 @@ export function useFileTree() {
                 node.isExpanded = false
             }
         })
+        
+        flattenedNodesCache.value = null
+        triggerRef(nodes)
     }
 
     function getExpandedPaths(): string[] {
@@ -256,6 +275,11 @@ export function useFileTree() {
 
     function getRecursiveFileCount(node: FileNode): number {
         if (!node.isDir) return 0
+        // Use pre-computed FileCount from backend (O(1) instead of O(n))
+        if (node.fileCount !== undefined) {
+            return node.fileCount
+        }
+        // Fallback to expensive calculation if metadata not available
         return getAllFilesInNode(node).length
     }
 

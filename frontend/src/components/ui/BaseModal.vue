@@ -66,6 +66,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'close'): void
+  (e: 'keydown', event: KeyboardEvent): void
 }>()
 
 const sizeClass = computed(() => `base-modal-size-${props.size}`)

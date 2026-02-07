@@ -840,7 +840,9 @@
 }
 
 /* Disable animations during scroll to prevent jitter */
-.is-scrolling * {
+.is-scrolling *,
+.is-scrolling *::before,
+.is-scrolling *::after {
     animation: none !important;
     transition: none !important;
 }

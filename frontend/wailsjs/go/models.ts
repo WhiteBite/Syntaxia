@@ -953,6 +953,45 @@ export namespace domain {
 		    return a;
 		}
 	}
+	export class DependencyGraphStats {
+	    fileCount: number;
+	    dependencyCount: number;
+	    // Go type: time
+	    lastAnalyzed: any;
+	    isCached: boolean;
+	    cacheSize: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new DependencyGraphStats(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.fileCount = source["fileCount"];
+	        this.dependencyCount = source["dependencyCount"];
+	        this.lastAnalyzed = this.convertValues(source["lastAnalyzed"], null);
+	        this.isCached = source["isCached"];
+	        this.cacheSize = source["cacheSize"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class DiffImpact {
 	    RiskLevel: string;
 	    AffectedTests: string[];
@@ -1398,6 +1437,12 @@ export namespace domain {
 	    isGitignored: boolean;
 	    isCustomIgnored: boolean;
 	    isIgnored: boolean;
+	    fileCount: number;
+	    totalSize: number;
+	    depth: number;
+	    directFileCount: number;
+	    extensionStats?: Record<string, number>;
+	    tokenCount?: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new FileNode(source);
@@ -1415,6 +1460,12 @@ export namespace domain {
 	        this.isGitignored = source["isGitignored"];
 	        this.isCustomIgnored = source["isCustomIgnored"];
 	        this.isIgnored = source["isIgnored"];
+	        this.fileCount = source["fileCount"];
+	        this.totalSize = source["totalSize"];
+	        this.depth = source["depth"];
+	        this.directFileCount = source["directFileCount"];
+	        this.extensionStats = source["extensionStats"];
+	        this.tokenCount = source["tokenCount"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -1462,6 +1513,64 @@ export namespace domain {
 	        this.importance = source["importance"];
 	        this.suggestions = source["suggestions"];
 	    }
+	}
+	export class MatchRange {
+	    start: number;
+	    end: number;
+	    field: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new MatchRange(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.start = source["start"];
+	        this.end = source["end"];
+	        this.field = source["field"];
+	    }
+	}
+	export class FileSearchResult {
+	    path: string;
+	    name: string;
+	    score: number;
+	    matches?: MatchRange[];
+	    size: number;
+	    contentType: string;
+	    depth: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new FileSearchResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.path = source["path"];
+	        this.name = source["name"];
+	        this.score = source["score"];
+	        this.matches = this.convertValues(source["matches"], MatchRange);
+	        this.size = source["size"];
+	        this.contentType = source["contentType"];
+	        this.depth = source["depth"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 	export class FileStatus {
 	    path: string;
@@ -1760,6 +1869,7 @@ export namespace domain {
 	
 	
 	
+	
 	export class PerformanceMetrics {
 	    TaskID: string;
 	    MemoryUsage: number;
@@ -1961,6 +2071,26 @@ export namespace domain {
 	
 	
 	
+	export class SearchOptions {
+	    maxResults: number;
+	    fuzzyMatch: boolean;
+	    caseSensitive: boolean;
+	    includePath: boolean;
+	    fileTypes?: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new SearchOptions(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.maxResults = source["maxResults"];
+	        this.fuzzyMatch = source["fuzzyMatch"];
+	        this.caseSensitive = source["caseSensitive"];
+	        this.includePath = source["includePath"];
+	        this.fileTypes = source["fileTypes"];
+	    }
+	}
 	export class SettingsDTO {
 	    customIgnoreRules: string;
 	    customPromptRules: string;

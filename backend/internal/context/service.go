@@ -19,11 +19,12 @@ import (
 
 // Service handles all context management operations with memory-safe streaming by default
 type Service struct {
-	fileReader   domain.FileContentReader
-	tokenCounter TokenCounter
-	eventBus     domain.EventBus
-	logger       domain.Logger
-	contextDir   string
+	fileReader       domain.FileContentReader
+	tokenCounter     TokenCounter
+	eventBus         domain.EventBus
+	logger           domain.Logger
+	contextDir       string
+	contentOptimizer domain.ContentOptimizer // NEW: Content optimizer for noise reduction
 
 	// Streaming support with RWMutex for concurrent reads
 	streams   map[string]*Stream
@@ -107,6 +108,7 @@ func NewService(
 		eventBus:           eventBus,
 		logger:             logger,
 		contextDir:         contextDir,
+		contentOptimizer:   nil, // Will be set via SetContentOptimizer
 		streams:            make(map[string]*Stream),
 		defaultMaxMemoryMB: 30,
 		defaultMaxTokens:   5000,
@@ -119,6 +121,11 @@ func NewService(
 	go svc.periodicCleanup()
 
 	return svc, nil
+}
+
+// SetContentOptimizer sets the content optimizer (for dependency injection)
+func (s *Service) SetContentOptimizer(optimizer domain.ContentOptimizer) {
+	s.contentOptimizer = optimizer
 }
 
 // Shutdown gracefully stops the service
@@ -196,6 +203,31 @@ func (s *Service) buildStreamingContext(ctx context.Context, projectPath string,
 	}, nil
 }
 
+// optimizeContents applies content optimization to file contents if optimizer is available
+func (s *Service) optimizeContents(ctx context.Context, contents map[string]string, options *BuildOptions) map[string]string {
+	if s.contentOptimizer == nil {
+		return contents
+	}
+
+	// Build optimization options from BuildOptions
+	opts := domain.ContentOptimizeOptions{
+		StripComments:      options.StripComments,
+		CollapseEmptyLines: options.CollapseEmptyLines,
+		StripLicense:       options.StripLicense,
+		CompactDataFiles:   options.CompactDataFiles,
+		SkeletonMode:       options.SkeletonMode,
+		TrimWhitespace:     options.TrimWhitespace,
+	}
+
+	// Optimize each file's content
+	optimized := make(map[string]string, len(contents))
+	for path, content := range contents {
+		optimized[path] = s.contentOptimizer.Optimize(ctx, content, path, opts)
+	}
+
+	return optimized
+}
+
 func (s *Service) handleGenerationError(err error) {
 	if errors.Is(err, context.DeadlineExceeded) {
 		s.logger.Error("Context generation timed out")
@@ -266,6 +298,18 @@ func (s *Service) generateContextSafe(ctx context.Context, rootDir string, inclu
 				s.emitEvent("syntaxiaContextGenerationProgress", map[string]interface{}{"current": current, "total": total})
 			}
 		})
+		
+		// NEW: Optimize content if optimizer is available
+		if err == nil && s.contentOptimizer != nil {
+			opts := &BuildOptions{
+				StripComments:      true,
+				CollapseEmptyLines: true,
+				StripLicense:       true,
+				TrimWhitespace:     true,
+			}
+			contents = s.optimizeContents(gctx, contents, opts)
+		}
+		
 		return err
 	})
 

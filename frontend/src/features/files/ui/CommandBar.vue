@@ -54,19 +54,37 @@
 
     <!-- MAGIC CONTROL BAR -->
     <div class="magic-bar">
-      <!-- LEFT: Token Limit Selector -->
+      <!-- LEFT: Token Limit Selector & Presets -->
       <div class="limit-section" ref="limitRef">
-        <BaseButton 
-          variant="ghost" 
-          size="sm" 
-          class="limit-trigger"
-          @click="toggleDropdown"
-        >
-          <span class="limit-value">{{ formatTokens(settings.maxTokens) }}</span>
-          <ChevronDown class="limit-chevron" :class="{ open: showDropdown }" />
-        </BaseButton>
-        
-        <!-- Dropdown -->
+        <div class="flex items-center gap-1 w-full">
+          <BaseButton 
+            variant="ghost" 
+            size="sm" 
+            class="limit-trigger flex-1"
+            @click="toggleDropdown"
+          >
+            <span class="limit-value">{{ formatTokens(settings.maxTokens) }}</span>
+            <ChevronDown class="limit-chevron" :class="{ open: showDropdown }" />
+          </BaseButton>
+
+          <div class="w-px h-4 bg-white/10 mx-1"></div>
+
+          <PresetsDropdown>
+            <template #trigger>
+              <BaseButton 
+                variant="ghost" 
+                size="sm" 
+                icon-only 
+                class="w-8 h-8 text-gray-400 hover:text-indigo-400 transition-colors"
+                :title="t('presets.title')"
+              >
+                <Bookmark class="w-4 h-4" />
+              </BaseButton>
+            </template>
+          </PresetsDropdown>
+        </div>
+
+        <!-- Limit Dropdown -->
         <Transition name="dropdown">
           <div v-if="showDropdown" class="limit-dropdown">
             <button 
@@ -91,8 +109,6 @@
                 :placeholder="t('commandBar.customLimit')"
                 @click.stop
                 @keydown.enter="applyCustomLimit"
-                @focus="isCustomFocused = true"
-                @blur="isCustomFocused = false"
               />
               <span class="limit-custom-suffix">K</span>
               <BaseButton 
@@ -188,11 +204,12 @@ import { useI18n } from '@/composables/useI18n'
 import { useFileStore } from '@/features/files/model/file.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { BaseButton, BaseBadge } from '@/components/ui'
-import { Check, ChevronDown, Zap, X, Sparkles } from 'lucide-vue-next'
+import { Check, ChevronDown, Zap, X, Sparkles, Bookmark } from 'lucide-vue-next'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { TOKEN_THRESHOLDS } from '@/config/constants'
 import type { WeightFilterLevel } from '@/composables/useFileFilter'
 import type { FileNode } from '@/types/domain'
+import PresetsDropdown from './PresetsDropdown.vue'
 
 
 const props = defineProps<{
@@ -212,7 +229,6 @@ const settings = computed(() => settingsStore.settings.context)
 const showDropdown = ref(false)
 const limitRef = ref<HTMLElement | null>(null)
 const customTokenValue = ref('')
-const isCustomFocused = ref(false)
 
 const isDisabled = computed(() => props.selectedCount === 0)
 const isButtonDisabled = computed(() => props.selectedCount === 0 || props.isBuilding)
@@ -587,7 +603,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 /* LIMIT SECTION */
 .limit-section {
   position: relative;
-  width: 35%;
+  width: 45%;
   display: flex;
   align-items: center;
   justify-content: center;

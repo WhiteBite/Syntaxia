@@ -151,3 +151,241 @@ func (a *App) ClearDependencyCache() error {
 	a.container.DependencyAnalyzer.ClearCache()
 	return nil
 }
+
+// SearchFiles searches for files in a project using the backend search index
+func (a *App) SearchFiles(projectRoot, query string, options domain.SearchOptions) ([]domain.FileSearchResult, error) {
+	if projectRoot == "" {
+		return nil, fmt.Errorf("projectRoot is required")
+	}
+	if query == "" {
+		return []domain.FileSearchResult{}, nil
+	}
+	if a.container.FileSearcher == nil {
+		return nil, fmt.Errorf("file searcher not initialized")
+	}
+
+	// Set default max results if not specified
+	if options.MaxResults == 0 {
+		options.MaxResults = 100
+	}
+
+	return a.container.FileSearcher.SearchFiles(projectRoot, query, options)
+}
+
+// FilterFilesByExtension filters files by extension using pre-computed metadata
+func (a *App) FilterFilesByExtension(projectRoot string, includeExts, excludeExts []string) ([]*domain.FileNode, error) {
+	if projectRoot == "" {
+		return nil, fmt.Errorf("projectRoot is required")
+	}
+
+	// Get cached tree
+	tree, err := a.projectHandler.ListFiles(projectRoot, true, true)
+	if err != nil {
+		return nil, err
+	}
+
+	// Filter tree by extensions
+	return filterTreeByExtensions(tree, includeExts, excludeExts), nil
+}
+
+// FilterFilesByWeight filters files by token weight using pre-computed TotalSize
+func (a *App) FilterFilesByWeight(projectRoot string, minTokens int) ([]*domain.FileNode, error) {
+	if projectRoot == "" {
+		return nil, fmt.Errorf("projectRoot is required")
+	}
+
+	// Get cached tree
+	tree, err := a.projectHandler.ListFiles(projectRoot, true, true)
+	if err != nil {
+		return nil, err
+	}
+
+	// Filter tree by weight
+	return filterTreeByWeight(tree, minTokens), nil
+}
+
+// filterTreeByExtensions filters file tree by extensions
+func filterTreeByExtensions(nodes []*domain.FileNode, includeExts, excludeExts []string) []*domain.FileNode {
+	if len(includeExts) == 0 && len(excludeExts) == 0 {
+		return nodes
+	}
+
+	result := make([]*domain.FileNode, 0, len(nodes))
+
+	for _, node := range nodes {
+		if node.IsDir {
+			// For directories, recursively filter children
+			filteredChildren := filterTreeByExtensions(node.Children, includeExts, excludeExts)
+			if len(filteredChildren) > 0 {
+				nodeCopy := *node
+				nodeCopy.Children = filteredChildren
+				result = append(result, &nodeCopy)
+			}
+		} else {
+			// For files, check extension
+			ext := filepath.Ext(node.Name)
+			
+			// Check exclude list first
+			if len(excludeExts) > 0 && containsString(excludeExts, ext) {
+				continue
+			}
+			
+			// Check include list
+			if len(includeExts) > 0 {
+				if containsString(includeExts, ext) {
+					result = append(result, node)
+				}
+			} else {
+				// No include list, include all (except excluded)
+				result = append(result, node)
+			}
+		}
+	}
+
+	return result
+}
+
+// filterTreeByWeight filters file tree by token weight
+func filterTreeByWeight(nodes []*domain.FileNode, minTokens int) []*domain.FileNode {
+	if minTokens <= 0 {
+		return nodes
+	}
+
+	const bytesPerToken = 4 // Approximate: 1 token ≈ 4 bytes
+
+	result := make([]*domain.FileNode, 0, len(nodes))
+
+	for _, node := range nodes {
+		if node.IsDir {
+			// For directories, check if TotalSize meets threshold
+			estimatedTokens := int(node.TotalSize / bytesPerToken)
+			if estimatedTokens >= minTokens {
+				// Recursively filter children
+				filteredChildren := filterTreeByWeight(node.Children, minTokens)
+				if len(filteredChildren) > 0 {
+					nodeCopy := *node
+					nodeCopy.Children = filteredChildren
+					result = append(result, &nodeCopy)
+				}
+			}
+		} else {
+			// For files, check if Size meets threshold
+			estimatedTokens := int(node.Size / bytesPerToken)
+			if estimatedTokens >= minTokens {
+				result = append(result, node)
+			}
+		}
+	}
+
+	return result
+}
+
+// containsString checks if a string slice contains a value
+func containsString(slice []string, value string) bool {
+	for _, item := range slice {
+		if item == value {
+			return true
+		}
+	}
+	return false
+}
+
+
+// GetFileDependenciesBatch returns dependencies for multiple files (batch query)
+func (a *App) GetFileDependenciesBatch(projectRoot string, filePaths []string) (map[string][]domain.FileDependency, error) {
+	if projectRoot == "" {
+		return nil, fmt.Errorf("projectRoot is required")
+	}
+	if a.container.DependencyAnalyzer == nil {
+		return nil, fmt.Errorf("dependency analyzer not initialized")
+	}
+
+	// Validate all paths
+	for _, filePath := range filePaths {
+		if err := validateRelativePath(projectRoot, filePath); err != nil {
+			return nil, fmt.Errorf("invalid path %s: %w", filePath, err)
+		}
+	}
+
+	return a.container.DependencyAnalyzer.GetFileDependenciesBatch(projectRoot, filePaths)
+}
+
+// GetIncomingDependencies returns files that import this file
+func (a *App) GetIncomingDependencies(projectRoot, filePath string) ([]string, error) {
+	if projectRoot == "" {
+		return nil, fmt.Errorf("projectRoot is required")
+	}
+	if err := validateRelativePath(projectRoot, filePath); err != nil {
+		return nil, err
+	}
+	if a.container.DependencyAnalyzer == nil {
+		return nil, fmt.Errorf("dependency analyzer not initialized")
+	}
+
+	return a.container.DependencyAnalyzer.GetIncomingDependencies(projectRoot, filePath)
+}
+
+// GetOutgoingDependencies returns files that this file imports
+func (a *App) GetOutgoingDependencies(projectRoot, filePath string) ([]string, error) {
+	if projectRoot == "" {
+		return nil, fmt.Errorf("projectRoot is required")
+	}
+	if err := validateRelativePath(projectRoot, filePath); err != nil {
+		return nil, err
+	}
+	if a.container.DependencyAnalyzer == nil {
+		return nil, fmt.Errorf("dependency analyzer not initialized")
+	}
+
+	return a.container.DependencyAnalyzer.GetOutgoingDependencies(projectRoot, filePath)
+}
+
+// IsDependencyGraphCached checks if graph is cached
+func (a *App) IsDependencyGraphCached(projectRoot string) bool {
+	if projectRoot == "" || a.container.DependencyAnalyzer == nil {
+		return false
+	}
+	return a.container.DependencyAnalyzer.IsDependencyGraphCached(projectRoot)
+}
+
+// GetDependencyGraphStats returns cache statistics
+func (a *App) GetDependencyGraphStats(projectRoot string) (*domain.DependencyGraphStats, error) {
+	if projectRoot == "" {
+		return nil, fmt.Errorf("projectRoot is required")
+	}
+	if a.container.DependencyAnalyzer == nil {
+		return nil, fmt.Errorf("dependency analyzer not initialized")
+	}
+
+	return a.container.DependencyAnalyzer.GetDependencyGraphStats(projectRoot)
+}
+
+// UpdateDependencyFile updates single file in cached graph (incremental update)
+func (a *App) UpdateDependencyFile(projectRoot, filePath string) error {
+	if projectRoot == "" {
+		return fmt.Errorf("projectRoot is required")
+	}
+	if err := validateRelativePath(projectRoot, filePath); err != nil {
+		return err
+	}
+	if a.container.DependencyAnalyzer == nil {
+		return fmt.Errorf("dependency analyzer not initialized")
+	}
+
+	return a.container.DependencyAnalyzer.UpdateFile(projectRoot, filePath)
+}
+
+// RemoveDependencyFile removes file from cached graph
+func (a *App) RemoveDependencyFile(projectRoot, filePath string) error {
+	if projectRoot == "" {
+		return fmt.Errorf("projectRoot is required")
+	}
+	if err := validateRelativePath(projectRoot, filePath); err != nil {
+		return err
+	}
+	if a.container.DependencyAnalyzer == nil {
+		return fmt.Errorf("dependency analyzer not initialized")
+	}
+
+	return a.container.DependencyAnalyzer.RemoveFile(projectRoot, filePath)
+}

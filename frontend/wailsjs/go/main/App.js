@@ -122,6 +122,10 @@ export function ClearFileTreeCache() {
   return window['go']['main']['App']['ClearFileTreeCache']();
 }
 
+export function ClearGitCache() {
+  return window['go']['main']['App']['ClearGitCache']();
+}
+
 export function ClearStartupPath() {
   return window['go']['main']['App']['ClearStartupPath']();
 }
@@ -216,6 +220,14 @@ export function ExportProject(arg1, arg2, arg3) {
 
 export function ExportReport(arg1, arg2) {
   return window['go']['main']['App']['ExportReport'](arg1, arg2);
+}
+
+export function FilterFilesByExtension(arg1, arg2, arg3) {
+  return window['go']['main']['App']['FilterFilesByExtension'](arg1, arg2, arg3);
+}
+
+export function FilterFilesByWeight(arg1, arg2) {
+  return window['go']['main']['App']['FilterFilesByWeight'](arg1, arg2);
 }
 
 export function FindContextByTopic(arg1, arg2) {
@@ -342,6 +354,10 @@ export function GetCustomIgnoreRules() {
   return window['go']['main']['App']['GetCustomIgnoreRules']();
 }
 
+export function GetDependencyGraphStats(arg1) {
+  return window['go']['main']['App']['GetDependencyGraphStats'](arg1);
+}
+
 export function GetExportHistory(arg1) {
   return window['go']['main']['App']['GetExportHistory'](arg1);
 }
@@ -358,6 +374,10 @@ export function GetFileDependencies(arg1, arg2) {
   return window['go']['main']['App']['GetFileDependencies'](arg1, arg2);
 }
 
+export function GetFileDependenciesBatch(arg1, arg2) {
+  return window['go']['main']['App']['GetFileDependenciesBatch'](arg1, arg2);
+}
+
 export function GetFileQuickInfo(arg1, arg2) {
   return window['go']['main']['App']['GetFileQuickInfo'](arg1, arg2);
 }
@@ -368,6 +388,10 @@ export function GetFileStats(arg1) {
 
 export function GetFullContextContent(arg1) {
   return window['go']['main']['App']['GetFullContextContent'](arg1);
+}
+
+export function GetGitCacheStats() {
+  return window['go']['main']['App']['GetGitCacheStats']();
 }
 
 export function GetGitignoreContent(arg1) {
@@ -390,8 +414,16 @@ export function GetImports(arg1, arg2) {
   return window['go']['main']['App']['GetImports'](arg1, arg2);
 }
 
+export function GetIncomingDependencies(arg1, arg2) {
+  return window['go']['main']['App']['GetIncomingDependencies'](arg1, arg2);
+}
+
 export function GetMetricsSummary() {
   return window['go']['main']['App']['GetMetricsSummary']();
+}
+
+export function GetOutgoingDependencies(arg1, arg2) {
+  return window['go']['main']['App']['GetOutgoingDependencies'](arg1, arg2);
 }
 
 export function GetProjectContexts(arg1) {
@@ -610,6 +642,14 @@ export function HasSandboxChanges() {
   return window['go']['main']['App']['HasSandboxChanges']();
 }
 
+export function InvalidateGitCacheForProject(arg1) {
+  return window['go']['main']['App']['InvalidateGitCacheForProject'](arg1);
+}
+
+export function IsDependencyGraphCached(arg1) {
+  return window['go']['main']['App']['IsDependencyGraphCached'](arg1);
+}
+
 export function IsGitAvailable() {
   return window['go']['main']['App']['IsGitAvailable']();
 }
@@ -706,6 +746,10 @@ export function RemoveBudgetPolicy(arg1) {
   return window['go']['main']['App']['RemoveBudgetPolicy'](arg1);
 }
 
+export function RemoveDependencyFile(arg1, arg2) {
+  return window['go']['main']['App']['RemoveDependencyFile'](arg1, arg2);
+}
+
 export function RemoveGuardrailPolicy(arg1) {
   return window['go']['main']['App']['RemoveGuardrailPolicy'](arg1);
 }
@@ -788,6 +832,10 @@ export function ScanLicenses(arg1) {
 
 export function ScanVulnerabilities(arg1) {
   return window['go']['main']['App']['ScanVulnerabilities'](arg1);
+}
+
+export function SearchFiles(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SearchFiles'](arg1, arg2, arg3);
 }
 
 export function SearchSymbols(arg1, arg2, arg3) {
@@ -880,6 +928,10 @@ export function UpdateBudgetPolicy(arg1) {
 
 export function UpdateCustomIgnoreRules(arg1) {
   return window['go']['main']['App']['UpdateCustomIgnoreRules'](arg1);
+}
+
+export function UpdateDependencyFile(arg1, arg2) {
+  return window['go']['main']['App']['UpdateDependencyFile'](arg1, arg2);
 }
 
 export function UpdateGuardrailPolicy(arg1) {

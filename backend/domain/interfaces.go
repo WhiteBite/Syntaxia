@@ -36,6 +36,21 @@ type TreeBuilder interface {
 	InvalidateCache()
 }
 
+// FileSearcher определяет интерфейс для поиска файлов
+type FileSearcher interface {
+	// BuildSearchIndex создает индекс поиска для проекта
+	BuildSearchIndex(projectRoot string) error
+	
+	// SearchFiles выполняет поиск файлов по запросу
+	SearchFiles(projectRoot, query string, options SearchOptions) ([]FileSearchResult, error)
+	
+	// InvalidateSearchIndex инвалидирует индекс поиска для проекта
+	InvalidateSearchIndex(projectRoot string)
+	
+	// GetSearchStats возвращает статистику индекса поиска
+	GetSearchStats() map[string]interface{}
+}
+
 // FileContentReader определяет интерфейс для чтения содержимого файлов
 type FileContentReader interface {
 	ReadContents(

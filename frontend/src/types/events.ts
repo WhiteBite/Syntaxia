@@ -27,7 +27,15 @@ export interface AppCustomEvents {
 
 // Extend WindowEventMap for type-safe event listeners
 declare global {
-    interface WindowEventMap extends AppCustomEvents { }
+    interface WindowEventMap {
+        'global-build-context': CustomEvent<void>
+        'global-open-export': CustomEvent<void>
+        'global-copy-context': CustomEvent<void>
+        'global-undo-selection': CustomEvent<void>
+        'global-redo-selection': CustomEvent<void>
+        'add-files-to-context': CustomEvent<AddFilesToContextDetail>
+        'ai:stream:chunk': CustomEvent<AIStreamChunkDetail>
+    }
 }
 
 // Helper to create typed custom events

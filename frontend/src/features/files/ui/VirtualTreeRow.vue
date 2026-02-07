@@ -44,7 +44,7 @@
               `tree-guide-${Math.min(item.depth, 5)}`,
               { 'tree-guide-highlight': shouldHighlightGuide(item.depth - 1) }
             ]" />
-      <line :x1="8 + item.depth * 16" y1="rowHeight / 2" 
+      <line :x1="8 + item.depth * 16" :y1="rowHeight / 2" 
             :x2="8 + item.depth * 16 + 10" :y2="rowHeight / 2"
             :class="[
               'tree-guide-line',
@@ -765,7 +765,17 @@ function handleDependencyHover(isHovering: boolean) {
 .tree-cb-warning {
     border-color: #fb923c;
     background: rgba(251, 146, 60, 0.1);
+}
+
+.virtual-tree-scroller:not(.is-scrolling) .tree-cb-warning {
     animation: pulse-warning 2s ease-in-out infinite;
+}
+
+.tree-icon-critical {
+}
+
+.virtual-tree-scroller:not(.is-scrolling) .tree-icon-critical {
+    animation: pulse-critical 2s ease-in-out infinite;
 }
 
 .tree-cb-warning:hover {
@@ -882,9 +892,39 @@ function handleDependencyHover(isHovering: boolean) {
 
 .tree-preview {
     opacity: 0;
+    visibility: hidden;
     margin-left: auto;
     margin-right: var(--space-1);
     transition: all var(--transition-fast);
+}
+
+.tree-row:hover .tree-preview {
+    opacity: 1;
+    visibility: visible;
+}
+
+.tree-wand {
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-fast);
+}
+
+.tree-row:hover .tree-wand {
+    opacity: 1;
+    visibility: visible;
+}
+
+.tree-dependency-container {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-right: var(--space-1);
+    opacity: 0.6;
+    transition: opacity var(--transition-fast);
+}
+
+.tree-row:hover .tree-dependency-container {
+    opacity: 1;
 }
 
 .tree-row:hover .tree-preview {
@@ -939,6 +979,9 @@ function handleDependencyHover(isHovering: boolean) {
 }
 
 .tree-dependency-batch {
+}
+
+.virtual-tree-scroller:not(.is-scrolling) .tree-dependency-batch {
     animation: slideIn 0.2s ease-out;
 }
 
@@ -969,6 +1012,9 @@ function handleDependencyHover(isHovering: boolean) {
 
 .tree-row-highlighted {
     background: rgba(99, 102, 241, 0.12) !important;
+}
+
+.virtual-tree-scroller:not(.is-scrolling) .tree-row-highlighted {
     animation: highlight-fade 0.3s ease-out;
 }
 

@@ -45,7 +45,7 @@ import SettingsToggle from './SettingsToggle.vue'
 const { t } = useI18n()
 const contextStore = useContextStore()
 
-const props = defineProps<{
+const _props = defineProps<{
   excludeTests: boolean
   stripLicense: boolean
   compactDataFiles: boolean

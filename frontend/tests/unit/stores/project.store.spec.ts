@@ -2,6 +2,19 @@ import { useProjectStore } from '@/stores/project.store'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+// Mock file and context stores before importing
+vi.mock('@/features/files', () => ({
+  useFileStore: vi.fn(() => ({
+    resetStore: vi.fn()
+  }))
+}))
+
+vi.mock('@/features/context', () => ({
+  useContextStore: vi.fn(() => ({
+    clearContext: vi.fn()
+  }))
+}))
+
 vi.mock('@/services/api.service', () => ({
   apiService: {
     selectDirectory: vi.fn(),
@@ -65,11 +78,12 @@ describe('project.store.ts', () => {
     it('должен устанавливать currentPath и currentName', async () => {
       const testPath = '/path/to/project'
 
-      await projectStore.openProjectByPath(testPath)
+      const result = await projectStore.openProjectByPath(testPath)
 
+      expect(result).toBe(true)
       expect(projectStore.currentPath).toBe(testPath)
       expect(projectStore.currentName).toBe('project') // Using split instead of basename
-    })
+    }, 5000) // Increase timeout for async operations
 
     it('должен вызывать addRecentProject с правильными параметрами', async () => {
       const testPath = '/path/to/project'
@@ -77,19 +91,21 @@ describe('project.store.ts', () => {
       const { apiService } = await import('@/services/api.service')
       const addRecentProjectSpy = vi.spyOn(apiService, 'addRecentProject')
 
-      await projectStore.openProjectByPath(testPath)
+      const result = await projectStore.openProjectByPath(testPath)
 
+      expect(result).toBe(true)
       expect(addRecentProjectSpy).toHaveBeenCalledWith(testPath, 'project') // Using split instead of basename
-    })
+    }, 5000) // Increase timeout for async operations
 
     it('должен сохранять проект в localStorage', async () => {
       const testPath = '/path/to/project'
 
-      await projectStore.openProjectByPath(testPath)
+      const result = await projectStore.openProjectByPath(testPath)
 
+      expect(result).toBe(true)
       const storedRecent = JSON.parse(localStorage.getItem('Syntaxia_recent_projects') || '[]')
       expect(storedRecent).toContainEqual({ path: testPath, name: 'project', lastOpened: expect.any(Number) })
-    })
+    }, 5000) // Increase timeout for async operations
 
     it('должен обрабатывать ошибки backend и продолжать работу', async () => {
       const testPath = '/path/to/project'
@@ -98,12 +114,13 @@ describe('project.store.ts', () => {
       vi.spyOn(apiService, 'addRecentProject').mockRejectedValue(new Error('Backend error'))
 
       // Проверяем, что ошибка не прерывает выполнение
-      await expect(projectStore.openProjectByPath(testPath)).resolves.not.toThrow()
+      const result = await projectStore.openProjectByPath(testPath)
+      expect(result).toBe(true)
 
       // Проект все равно должен быть добавлен в store
       expect(projectStore.currentPath).toBe(testPath)
       expect(projectStore.currentName).toBe('project')
-    })
+    }, 5000) // Increase timeout for async operations
   })
 
   describe('fetchRecentProjects', () => {

@@ -95,6 +95,12 @@ func (c *AppContainer) initializeServices(ctx context.Context) error {
 		return fmt.Errorf("failed to create context service: %w", err)
 	}
 
+	// Create and set ContentOptimizer for noise reduction
+	contentOptimizer := c.infrastructureComponents.contentOptimizer
+	if contentOptimizer != nil {
+		c.ContextService.SetContentOptimizer(contentOptimizer)
+	}
+
 	// ContextService implements ContextRepository interface
 	c.ContextRepository = c.ContextService
 

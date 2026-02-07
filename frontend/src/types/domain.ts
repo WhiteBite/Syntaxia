@@ -20,6 +20,14 @@ export interface FileNode {
     size?: number
     isIgnored?: boolean
     contentType?: FileContentType
+
+    // Pre-computed metadata from backend (for performance optimization)
+    fileCount?: number              // Total files in directory (recursive)
+    totalSize?: number              // Total size in bytes (recursive)
+    tokenCount?: number             // Estimated token count for AI context
+    depth?: number                  // Depth from root
+    directFileCount?: number        // Files directly in this folder (non-recursive)
+    extensionStats?: Record<string, number> // Extension counts (e.g., {".ts": 45, ".vue": 12})
 }
 
 /**
@@ -35,6 +43,14 @@ export interface DomainFileNode {
     isGitignored?: boolean
     isCustomIgnored?: boolean
     contentType?: FileContentType
+
+    // Pre-computed metadata from backend (for performance optimization)
+    fileCount?: number              // Total files in directory (recursive)
+    totalSize?: number              // Total size in bytes (recursive)
+    tokenCount?: number             // Estimated token count for AI context
+    depth?: number                  // Depth from root
+    directFileCount?: number        // Files directly in this folder (non-recursive)
+    extensionStats?: Record<string, number> // Extension counts
 }
 
 /**

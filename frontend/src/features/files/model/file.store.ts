@@ -11,10 +11,12 @@ import { useFileSelection } from '@/composables/useFileSelection'
 import { useFileTree } from '@/composables/useFileTree'
 import { useLogger } from '@/composables/useLogger'
 import { useSettingsStore } from '@/stores/settings.store'
-import type { FileNode } from '@/types/domain'
+import type { FileDependency, FileNode } from '@/types/domain'
 import { walkTree } from '@/utils/fileTreeUtils'
+import { useDebounceFn } from '@vueuse/core'
 import { defineStore } from 'pinia'
-import { computed, ref, triggerRef } from 'vue'
+import { computed, ref, triggerRef, watch } from 'vue'
+import { dependencyApi } from '../api/dependency.api'
 import { filesApi } from '../api/files.api'
 
 const logger = useLogger('FileStore')
@@ -165,8 +167,100 @@ export const useFileStore = defineStore('file', () => {
         return deps
     })
 
-    // Computed: Get all dependencies (incoming + outgoing) for each file
-    const allFileDependencies = computed(() => {
+    // Backend-powered dependency graph (replaces O(n) frontend computation)
+    const allFileDependencies = ref<Map<string, { incoming: string[], outgoing: string[] }>>(new Map())
+    const isDependencyGraphLoading = ref(false)
+    const useBackendDependencyGraph = ref(true) // Feature flag
+
+    /**
+     * Load dependency graph from backend on project open
+     * This builds the complete graph once and caches it
+     */
+    async function loadDependencyGraph() {
+        if (!tree.rootPath.value || !useBackendDependencyGraph.value) {
+            return
+        }
+
+        try {
+            isDependencyGraphLoading.value = true
+            logger.info('Building dependency graph on backend...')
+
+            await dependencyApi.buildGraph(tree.rootPath.value)
+
+            const stats = await dependencyApi.getStats(tree.rootPath.value)
+            if (stats) {
+                logger.info(`Dependency graph built: ${stats.fileCount} files, ${stats.dependencyCount} dependencies`)
+            }
+
+            // Refresh dependencies for currently selected files
+            await refreshDependencies()
+        } catch (error) {
+            logger.error('Failed to load dependency graph:', error)
+            // Fallback to frontend implementation
+            useBackendDependencyGraph.value = false
+        } finally {
+            isDependencyGraphLoading.value = false
+        }
+    }
+
+    /**
+     * Refresh dependencies for selected files (batch query)
+     * This is called when selection changes
+     */
+    async function refreshDependencies() {
+        if (!tree.rootPath.value || !useBackendDependencyGraph.value) {
+            // Fallback to legacy frontend implementation
+            refreshDependenciesLegacy()
+            return
+        }
+
+        if (selection.selectedPaths.value.size === 0) {
+            allFileDependencies.value.clear()
+            return
+        }
+
+        try {
+            const selectedArray = Array.from(selection.selectedPaths.value)
+            const depsMap = await dependencyApi.getDependenciesBatch(tree.rootPath.value, selectedArray)
+
+            const newDepsMap = new Map<string, { incoming: string[], outgoing: string[] }>()
+
+            // Process each selected file's dependencies
+            for (const [filePath, deps] of Object.entries(depsMap)) {
+                // Track outgoing dependencies (files this file imports)
+                const outgoing = (deps as FileDependency[]).map(d => d.targetPath)
+
+                for (const targetPath of outgoing) {
+                    if (!newDepsMap.has(targetPath)) {
+                        newDepsMap.set(targetPath, { incoming: [], outgoing: [] })
+                    }
+                    newDepsMap.get(targetPath)!.incoming.push(filePath)
+                }
+
+                // Get incoming dependencies (files that import this file)
+                const incoming = await dependencyApi.getIncoming(tree.rootPath.value, filePath)
+
+                for (const sourcePath of incoming) {
+                    if (!newDepsMap.has(sourcePath)) {
+                        newDepsMap.set(sourcePath, { incoming: [], outgoing: [] })
+                    }
+                    newDepsMap.get(sourcePath)!.outgoing.push(filePath)
+                }
+            }
+
+            allFileDependencies.value = newDepsMap
+        } catch (error) {
+            logger.error('Failed to refresh dependencies:', error)
+            // Fallback to legacy implementation
+            refreshDependenciesLegacy()
+        }
+    }
+
+    /**
+     * Legacy frontend dependency computation (fallback)
+     * Used when backend is unavailable or feature flag is disabled
+     */
+    function refreshDependenciesLegacy() {
         const allNodes = getAllFileNodes()
         const depsMap = new Map<string, { incoming: string[], outgoing: string[] }>()
 
@@ -190,8 +284,22 @@ export const useFileStore = defineStore('file', () => {
             }
         }
 
-        return depsMap
-    })
+        allFileDependencies.value = depsMap
+    }
+
+    // Watch selection changes and refresh dependencies (debounced for performance)
+    const debouncedRefreshDependencies = useDebounceFn(refreshDependencies, 300)
+
+    watch(
+        () => selection.selectedPaths.value.size,
+        () => {
+            if (useBackendDependencyGraph.value) {
+                debouncedRefreshDependencies()
+            } else {
+                refreshDependenciesLegacy()
+            }
+        }
+    )
 
     function getAllFileNodes(): FileNode[] {
         const result: FileNode[] = []
@@ -231,6 +339,11 @@ export const useFileStore = defineStore('file', () => {
                 if (savedSelection.length > 0) {
                     selection.selectMultiple(savedSelection)
                 }
+
+                // Build dependency graph in background (non-blocking)
+                loadDependencyGraph().catch(err => {
+                    logger.warn('Failed to build dependency graph:', err)
+                })
             } else if (directory) {
                 tree.currentDirectory.value = directory
             }
@@ -582,6 +695,8 @@ export const useFileStore = defineStore('file', () => {
         estimatedContextSize,
         selectedFileDependencies,
         allFileDependencies,
+        isDependencyGraphLoading,
+        useBackendDependencyGraph,
         isFlatSearchMode,
 
         // Actions (tree)
@@ -637,6 +752,8 @@ export const useFileStore = defineStore('file', () => {
         getSelectedFilesSize,
         resetStore,
         getMemoryUsage,
+        loadDependencyGraph,
+        refreshDependencies,
         pruneUnusedBranches,
         toggleZenMode,
         shouldDimNode,

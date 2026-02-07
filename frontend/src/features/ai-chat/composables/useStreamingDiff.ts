@@ -61,7 +61,15 @@ function getLcs(a: string[], b: string[]): string[] {
     for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++)
         dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1])
     const r: string[] = []
-    for (let i = a.length, j = b.length; i > 0 && j > 0;)
-        if (a[i - 1] === b[j - 1]) { r.unshift(a[--i]); j-- } else dp[i - 1][j] > dp[i][j - 1] ? i-- : j--
+    for (let i = a.length, j = b.length; i > 0 && j > 0;) {
+        if (a[i - 1] === b[j - 1]) {
+            r.unshift(a[--i])
+            j--
+        } else if (dp[i - 1][j] > dp[i][j - 1]) {
+            i--
+        } else {
+            j--
+        }
+    }
     return r
 }

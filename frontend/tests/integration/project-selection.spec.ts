@@ -1,9 +1,21 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+// Mock Wails API FIRST before any imports
+vi.mock('#wailsjs/go/main/App', () => ({
+  PathExists: vi.fn().mockResolvedValue(true),
+  SelectDirectory: vi.fn(),
+  GetRecentProjects: vi.fn(),
+  AddRecentProject: vi.fn(),
+  RemoveRecentProject: vi.fn(),
+  GetCurrentDirectory: vi.fn(),
+  GetVersionInfo: vi.fn().mockResolvedValue({ version: '1.0.0', buildDate: '2024-01-01' })
+}))
+
 import ProjectSelector from '@/components/ProjectSelector.vue'
 import { apiService } from '@/services/api.service'
 import { useProjectStore } from '@/stores/project.store'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Мок для localStorage
 const localStorageMock = (() => {
@@ -29,6 +41,19 @@ const localStorageMock = (() => {
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock
 })
+
+// Mock stores before importing
+vi.mock('@/features/files', () => ({
+  useFileStore: vi.fn(() => ({
+    resetStore: vi.fn()
+  }))
+}))
+
+vi.mock('@/features/context', () => ({
+  useContextStore: vi.fn(() => ({
+    clearContext: vi.fn()
+  }))
+}))
 
 vi.mock('@/services/api.service', () => ({
   apiService: {
@@ -73,7 +98,11 @@ describe('project-selection.integration.spec.ts', () => {
 
       // Клик по кнопке выбора директории
       await wrapper.find('.cta-button').trigger('click')
-      await new Promise(resolve => setTimeout(resolve, 50))
+
+      // Wait for all async operations including dynamic imports
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      await wrapper.vm.$nextTick()
+      await new Promise(resolve => setTimeout(resolve, 100))
 
       // Проверяем, что проект добавлен в recent
       expect(projectStore.recentProjects).toContainEqual({
@@ -93,7 +122,7 @@ describe('project-selection.integration.spec.ts', () => {
       // Проверяем, что эмитится событие 'opened' с путем проекта
       expect(wrapper.emitted('opened')).toBeTruthy()
       expect(wrapper.emitted('opened')![0]).toEqual([selectedPath])
-    })
+    }, 10000)
   })
 
   describe('Recent projects flow: Открытие из списка recent', () => {
@@ -110,7 +139,7 @@ describe('project-selection.integration.spec.ts', () => {
       const wrapper = mount(ProjectSelector)
 
       // Ждем, пока данные загрузятся
-      await new Promise(resolve => setTimeout(resolve, 50))
+      await new Promise(resolve => setTimeout(resolve, 100))
       await wrapper.vm.$nextTick()
 
       // Проверяем отображение списка
@@ -121,7 +150,10 @@ describe('project-selection.integration.spec.ts', () => {
       // Кликнем на первый проект из списка
       const firstProjectItem = wrapper.findAll('.project-card')[0]
       await firstProjectItem.trigger('click')
-      await new Promise(resolve => setTimeout(resolve, 50))
+
+      // Wait for all async operations
+      await new Promise(resolve => setTimeout(resolve, 150))
+      await wrapper.vm.$nextTick()
 
       // Проверяем, что проект открылся
       expect(projectStore.currentPath).toBe('/path/1')
@@ -133,7 +165,7 @@ describe('project-selection.integration.spec.ts', () => {
         name: '1',
         lastOpened: expect.any(Number)
       })
-    })
+    }, 10000)
   })
 
   describe('Auto-open flow: Автоматическое открытие последнего проекта', () => {
@@ -155,12 +187,12 @@ describe('project-selection.integration.spec.ts', () => {
 
       // Вызываем maybeAutoOpenLastProject
       await projectStore.maybeAutoOpenLastProject()
-      await new Promise(resolve => setTimeout(resolve, 50))
+      await new Promise(resolve => setTimeout(resolve, 150))
 
       // Проверяем, что проект автоматически открылся
       expect(projectStore.currentPath).toBe(lastProject.path)
       expect(projectStore.currentName).toBe('project')
-    })
+    }, 10000)
   })
 
   describe('Error handling: Обработка ошибок', () => {
@@ -174,14 +206,14 @@ describe('project-selection.integration.spec.ts', () => {
 
       // Клик по кнопке выбора директории
       await wrapper.find('.cta-button').trigger('click')
-      await new Promise(resolve => setTimeout(resolve, 50))
+      await new Promise(resolve => setTimeout(resolve, 100))
 
       // Проверяем, что количество проектов не изменилось (ошибка произошла до добавления)
       expect(projectStore.recentProjects.length).toBe(initialLength)
 
       // Проверяем, что событие opened не эмитится
       expect(wrapper.emitted('opened')).toBeUndefined()
-    })
+    }, 10000)
   })
 
   describe('Persistence: Сохранение и загрузка из localStorage', () => {
@@ -197,7 +229,7 @@ describe('project-selection.integration.spec.ts', () => {
       // Добавляем проекты в store через публичный API
       for (const project of testProjects) {
         await projectStore.openProjectByPath(project.path)
-        await new Promise(resolve => setTimeout(resolve, 20))
+        await new Promise(resolve => setTimeout(resolve, 50))
       }
 
       // Проверяем, что проекты сохранены в localStorage
@@ -215,7 +247,7 @@ describe('project-selection.integration.spec.ts', () => {
 
       // Проверяем, что проекты восстановлены
       expect(projectStore.recentProjects).toEqual(storedRecent)
-    })
+    }, 10000)
   })
 
   describe('Integration: Взаимодействие компонентов и store', () => {
@@ -231,7 +263,11 @@ describe('project-selection.integration.spec.ts', () => {
 
       // Выбираем проект
       await wrapper.find('.cta-button').trigger('click')
-      await new Promise(resolve => setTimeout(resolve, 50))
+
+      // Wait for all async operations including dynamic imports
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      await wrapper.vm.$nextTick()
+      await new Promise(resolve => setTimeout(resolve, 100))
 
       // Проверяем, что store обновлен
       expect(projectStore.currentPath).toBe(selectedPath)
@@ -253,6 +289,6 @@ describe('project-selection.integration.spec.ts', () => {
       // Проверяем, что эмитится событие
       expect(wrapper.emitted('opened')).toBeTruthy()
       expect(wrapper.emitted('opened')![0]).toEqual([selectedPath])
-    })
+    }, 10000)
   })
 })

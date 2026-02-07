@@ -1,7 +1,13 @@
 <template>
   <div class="base-input-wrapper" :class="{ 'base-input-wrapper--disabled': disabled }">
     <label v-if="label" class="base-input-label">{{ label }}</label>
-    <div class="base-input-container" :class="{ 'base-input-container--focused': isFocused }">
+    <div 
+      class="base-input-container" 
+      :class="{ 
+        'base-input-container--focused': isFocused,
+        'base-input-container--ghost': variant === 'ghost'
+      }"
+    >
       <span v-if="$slots.prefix || prefixIcon" class="base-input__prefix">
         <slot name="prefix">
           <component :is="prefixIcon" />
@@ -40,11 +46,13 @@ interface Props {
   error?: string
   prefixIcon?: Component
   suffixIcon?: Component
+  variant?: 'default' | 'ghost'
 }
 
-const props = withDefaults(defineProps<Props>(), {
+const _props = withDefaults(defineProps<Props>(), {
   type: 'text',
-  disabled: false
+  disabled: false,
+  variant: 'default'
 })
 
 const emit = defineEmits<{
@@ -95,6 +103,24 @@ defineExpose({
 .base-input-container:hover {
   border-color: var(--border-strong);
   background: var(--bg-2);
+}
+
+.base-input-container--ghost {
+  background: transparent;
+  border-color: transparent;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.base-input-container--ghost:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.base-input-container--ghost.base-input-container--focused {
+  background: var(--bg-2);
+  border-color: var(--accent-indigo);
+  padding-left: var(--space-2);
+  padding-right: var(--space-2);
 }
 
 .base-input-container--focused {

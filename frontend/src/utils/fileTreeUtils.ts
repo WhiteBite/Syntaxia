@@ -17,6 +17,12 @@ export interface DomainNode {
     isIgnored?: boolean
     isGitignored?: boolean
     isCustomIgnored?: boolean
+    // Pre-computed metadata from backend
+    fileCount?: number
+    totalSize?: number
+    depth?: number
+    directFileCount?: number
+    extensionStats?: Record<string, number>
 }
 
 /**
@@ -114,6 +120,12 @@ export function convertDomainNodes(domainNodes: DomainNode[]): FileNode[] {
         children: node.children ? convertDomainNodes(node.children) : undefined,
         size: node.size,
         isIgnored: node.isIgnored || node.isGitignored || node.isCustomIgnored,
+        // Preserve pre-computed metadata from backend
+        fileCount: node.fileCount,
+        totalSize: node.totalSize,
+        depth: node.depth,
+        directFileCount: node.directFileCount,
+        extensionStats: node.extensionStats,
     }))
 }
 

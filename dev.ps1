@@ -1,12 +1,12 @@
 # Syntaxia - Development Script
 param(
     [switch]$Verbose,
-    [int]$NodeMemory = 2048  # MB, увеличено для стабильной сборки
+    [int]$NodeMemory = 2048
 )
 
-Write-Host "🚀 Запуск Syntaxia..." -ForegroundColor Green
+Write-Host "--- Syntaxia Dev Start ---" -ForegroundColor Green
 
-# Найти wails
+# Find wails
 $wails = Get-Command wails -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
 if (-not $wails) {
     $gopath = $env:GOPATH
@@ -15,14 +15,14 @@ if (-not $wails) {
     if (Test-Path $wailsPath) { $wails = $wailsPath }
 }
 
-# Проверка зависимостей
+# Dependency check
 $missing = @()
 if (-not $wails) { $missing += "wails (go install github.com/wailsapp/wails/v2/cmd/wails@latest)" }
 if (-not (Get-Command node -ErrorAction SilentlyContinue)) { $missing += "node" }
 if (-not (Get-Command go -ErrorAction SilentlyContinue)) { $missing += "go" }
 
 if ($missing.Count -gt 0) {
-    Write-Host "❌ Не установлено: $($missing -join ', ')" -ForegroundColor Red
+    Write-Host "Error: Missing dependencies: $($missing -join ', ')" -ForegroundColor Red
     exit 1
 }
 
@@ -36,13 +36,15 @@ try {
     if ($Verbose) {
         & $wails dev
     } else {
-        Write-Host "ℹ️  Флаги: -Verbose, -NodeMemory <MB> (default 512)" -ForegroundColor Gray
+        Write-Host "Info: Flags: -Verbose, -NodeMemory [MB] (default 2048)" -ForegroundColor Gray
         & $wails @wailsArgs 2>&1 | Where-Object { 
             $_ -and $_ -notmatch "KnownStructs:|Not found: time\.Time|^\s*$" 
         }
     }
+} catch {
+    Write-Host "Process finished or error occurred: $_" -ForegroundColor Yellow
 } finally {
     Pop-Location
-    Remove-Item Env:GOGC -ErrorAction SilentlyContinue
-    Remove-Item Env:NODE_OPTIONS -ErrorAction SilentlyContinue
+    if (Test-Path Env:GOGC) { Remove-Item Env:GOGC }
+    if (Test-Path Env:NODE_OPTIONS) { Remove-Item Env:NODE_OPTIONS }
 }

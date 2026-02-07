@@ -64,6 +64,8 @@ export function ClearDependencyCache():Promise<void>;
 
 export function ClearFileTreeCache():Promise<void>;
 
+export function ClearGitCache():Promise<void>;
+
 export function ClearStartupPath():Promise<void>;
 
 export function CloneRepository(arg1:string):Promise<string>;
@@ -111,6 +113,10 @@ export function ExportContext(arg1:string):Promise<domain.ExportResult>;
 export function ExportProject(arg1:string,arg2:string,arg3:string):Promise<string>;
 
 export function ExportReport(arg1:string,arg2:string):Promise<string>;
+
+export function FilterFilesByExtension(arg1:string,arg2:Array<string>,arg3:Array<string>):Promise<Array<domain.FileNode>>;
+
+export function FilterFilesByWeight(arg1:string,arg2:number):Promise<Array<domain.FileNode>>;
 
 export function FindContextByTopic(arg1:string,arg2:string):Promise<Array<main.ContextMemoryEntry>>;
 
@@ -174,6 +180,8 @@ export function GetCurrentDirectory():Promise<string>;
 
 export function GetCustomIgnoreRules():Promise<string>;
 
+export function GetDependencyGraphStats(arg1:string):Promise<domain.DependencyGraphStats>;
+
 export function GetExportHistory(arg1:string):Promise<string>;
 
 export function GetFileAtRef(arg1:string,arg2:string,arg3:string):Promise<string>;
@@ -182,11 +190,15 @@ export function GetFileContentAtCommit(arg1:string,arg2:string,arg3:string):Prom
 
 export function GetFileDependencies(arg1:string,arg2:string):Promise<Array<domain.FileDependency>>;
 
+export function GetFileDependenciesBatch(arg1:string,arg2:Array<string>):Promise<Record<string, Array<domain.FileDependency>>>;
+
 export function GetFileQuickInfo(arg1:string,arg2:string):Promise<main.FileQuickInfo>;
 
 export function GetFileStats(arg1:string):Promise<string>;
 
 export function GetFullContextContent(arg1:string):Promise<string>;
+
+export function GetGitCacheStats():Promise<string>;
 
 export function GetGitignoreContent(arg1:string):Promise<string>;
 
@@ -198,7 +210,11 @@ export function GetImpactPreview(arg1:string,arg2:Array<string>):Promise<main.Im
 
 export function GetImports(arg1:string,arg2:string):Promise<main.ImportInfo>;
 
+export function GetIncomingDependencies(arg1:string,arg2:string):Promise<Array<string>>;
+
 export function GetMetricsSummary():Promise<Record<string, any>>;
+
+export function GetOutgoingDependencies(arg1:string,arg2:string):Promise<Array<string>>;
 
 export function GetProjectContexts(arg1:string):Promise<string>;
 
@@ -308,6 +324,10 @@ export function HasAPIKey(arg1:string):Promise<boolean>;
 
 export function HasSandboxChanges():Promise<boolean>;
 
+export function InvalidateGitCacheForProject(arg1:string):Promise<void>;
+
+export function IsDependencyGraphCached(arg1:string):Promise<boolean>;
+
 export function IsGitAvailable():Promise<boolean>;
 
 export function IsGitHubURL(arg1:string):Promise<boolean>;
@@ -356,6 +376,8 @@ export function RegisterShellIntegration():Promise<void>;
 
 export function RemoveBudgetPolicy(arg1:string):Promise<void>;
 
+export function RemoveDependencyFile(arg1:string,arg2:string):Promise<void>;
+
 export function RemoveGuardrailPolicy(arg1:string):Promise<void>;
 
 export function RemoveRecentProject(arg1:string):Promise<void>;
@@ -397,6 +419,8 @@ export function SaveWindowState():Promise<void>;
 export function ScanLicenses(arg1:string):Promise<domain.LicenseScanResult>;
 
 export function ScanVulnerabilities(arg1:string):Promise<domain.VulnerabilityScanResult>;
+
+export function SearchFiles(arg1:string,arg2:string,arg3:domain.SearchOptions):Promise<Array<domain.FileSearchResult>>;
 
 export function SearchSymbols(arg1:string,arg2:string,arg3:string):Promise<Array<main.SymbolInfo>>;
 
@@ -443,6 +467,8 @@ export function UnregisterShellIntegration():Promise<void>;
 export function UpdateBudgetPolicy(arg1:domain.BudgetPolicy):Promise<void>;
 
 export function UpdateCustomIgnoreRules(arg1:string):Promise<void>;
+
+export function UpdateDependencyFile(arg1:string,arg2:string):Promise<void>;
 
 export function UpdateGuardrailPolicy(arg1:domain.GuardrailPolicy):Promise<void>;
 

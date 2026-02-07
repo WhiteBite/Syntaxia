@@ -113,6 +113,9 @@ type AppContainer struct {
 	// Dependency Analysis
 	DependencyAnalyzer domain.DependencyAnalyzer
 
+	// File Search
+	FileSearcher domain.FileSearcher
+
 	// Lazy initialization support
 	lazyInitOnce              sync.Once
 	testServiceOnce           sync.Once

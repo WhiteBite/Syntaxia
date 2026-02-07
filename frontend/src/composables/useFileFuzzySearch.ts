@@ -1,14 +1,17 @@
 /**
- * useFileFuzzySearch - Fuzzy file search functionality using Fuse.js
+ * useFileFuzzySearch - Fuzzy file search functionality with backend optimization
  * Used by file.store for search results computation
  * 
  * Note: This is different from features/files/composables/useFileSearch.ts
  * which handles search input with debounce for the UI
+ * 
+ * OPTIMIZATION: Uses backend search API for better performance on large projects
  */
 
+import { searchFiles } from '@/services/search.api'
 import type { FileNode } from '@/types/domain'
 import Fuse, { type FuseResultMatch } from 'fuse.js'
-import { computed, ref, type ComputedRef } from 'vue'
+import { computed, ref, watch, type ComputedRef } from 'vue'
 
 export interface UseFileFuzzySearchOptions {
     flattenedNodes: ComputedRef<FileNode[]>
@@ -29,12 +32,74 @@ export function useFileFuzzySearch(options: UseFileFuzzySearchOptions) {
 
     // State
     const searchQuery = ref('')
+    const backendResults = ref<SearchResultNode[]>([])
+    const isSearching = ref(false)
+    const useBackend = ref(true) // Feature flag for backend search
 
-    // Computed
+    // Watch for search query changes and trigger backend search
+    watch(searchQuery, async (newQuery) => {
+        if (!newQuery || !rootPath?.value || !useBackend.value) {
+            backendResults.value = []
+            return
+        }
+
+        isSearching.value = true
+        try {
+            const results = await searchFiles(rootPath.value as string, newQuery, {
+                maxResults,
+                fuzzyMatch: false,
+                caseSensitive: false,
+                includePath: true,
+            })
+
+            // Convert to SearchResultNode format
+            backendResults.value = results.map(result => {
+                const fuseMatches: FuseResultMatch[] = result.matches?.map(match => ({
+                    indices: [[match.start, match.end - 1]] as [number, number][],
+                    value: match.field === 'name' ? result.name : result.path,
+                    key: match.field,
+                    refIndex: 0
+                })) || []
+
+                return {
+                    name: result.name,
+                    path: result.path,
+                    relPath: result.path.replace((rootPath?.value || '') + '/', ''),
+                    isDir: false,
+                    size: result.size,
+                    contentType: result.contentType as 'text' | 'binary' | 'unknown',
+                    children: [],
+                    isGitignored: false,
+                    isCustomIgnored: false,
+                    isIgnored: false,
+                    fileCount: 1,
+                    totalSize: result.size,
+                    depth: result.depth || 0,
+                    directFileCount: 0,
+                    relativePath: result.path.replace((rootPath?.value || '') + '/', ''),
+                    score: result.score,
+                    matches: fuseMatches
+                } as SearchResultNode
+            })
+        } catch (error) {
+            // Fallback to frontend search on error
+            useBackend.value = false
+            backendResults.value = []
+        } finally {
+            isSearching.value = false
+        }
+    })
+
+    // Computed - returns backend results if available, otherwise frontend fallback
     const searchResults = computed((): SearchResultNode[] => {
         if (!searchQuery.value) return []
 
-        // FLAT SEARCH: Only files, no hierarchy
+        // Use backend results if available
+        if (useBackend.value && backendResults.value.length > 0) {
+            return backendResults.value
+        }
+
+        // Fallback to frontend search
         const allFiles = flattenedNodes.value.filter(node => !node.isDir)
 
         // For large trees, use simple string matching
@@ -47,7 +112,6 @@ export function useFileFuzzySearch(options: UseFileFuzzySearchOptions) {
                         file.path.toLowerCase().includes(query)
                 )
                 .map(file => {
-                    // Create simple match indices for highlighting
                     const nameIndex = file.name.toLowerCase().indexOf(query)
                     const matches: FuseResultMatch[] = []
 
@@ -62,7 +126,6 @@ export function useFileFuzzySearch(options: UseFileFuzzySearchOptions) {
 
                     return {
                         ...file,
-                        // Flat list: no depth, show relative path
                         depth: 0,
                         relativePath: rootPath?.value ? file.path.replace(rootPath.value + '/', '') : file.path,
                         matches: matches.length > 0 ? matches : undefined
@@ -98,11 +161,13 @@ export function useFileFuzzySearch(options: UseFileFuzzySearchOptions) {
 
     function clearSearch() {
         searchQuery.value = ''
+        backendResults.value = []
     }
 
     return {
         // State
         searchQuery,
+        isSearching,
         // Computed
         searchResults,
         // Actions

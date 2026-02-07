@@ -639,3 +639,40 @@ func (a *App) GitLabBuildContext(repoURL string, files []string, ref string) (st
 
 	return contextBuilder.String(), nil
 }
+
+// ============ GIT CACHE MANAGEMENT ============
+
+// ClearGitCache clears all cached git data
+func (a *App) ClearGitCache() error {
+	if repo, ok := a.gitRepo.(interface{ ClearCache() }); ok {
+		repo.ClearCache()
+		return nil
+	}
+	return fmt.Errorf("git repository does not support cache clearing")
+}
+
+// InvalidateGitCacheForProject invalidates all cache entries for a specific project
+func (a *App) InvalidateGitCacheForProject(projectPath string) error {
+	if err := validateProjectRoot(projectPath); err != nil {
+		return err
+	}
+
+	if repo, ok := a.gitRepo.(interface{ InvalidateProjectCache(string) }); ok {
+		repo.InvalidateProjectCache(projectPath)
+		return nil
+	}
+	return fmt.Errorf("git repository does not support cache invalidation")
+}
+
+// GetGitCacheStats returns cache statistics
+func (a *App) GetGitCacheStats() (string, error) {
+	if repo, ok := a.gitRepo.(interface{ GetCacheStats() map[string]interface{} }); ok {
+		stats := repo.GetCacheStats()
+		result, err := json.Marshal(stats)
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal cache stats: %w", err)
+		}
+		return string(result), nil
+	}
+	return "", fmt.Errorf("git repository does not support cache statistics")
+}

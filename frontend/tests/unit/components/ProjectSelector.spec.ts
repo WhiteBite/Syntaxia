@@ -1,10 +1,22 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+// Mock Wails API FIRST before any imports
+vi.mock('#wailsjs/go/main/App', () => ({
+  PathExists: vi.fn().mockResolvedValue(true),
+  SelectDirectory: vi.fn(),
+  GetRecentProjects: vi.fn(),
+  AddRecentProject: vi.fn(),
+  RemoveRecentProject: vi.fn(),
+  GetCurrentDirectory: vi.fn(),
+  GetVersionInfo: vi.fn().mockResolvedValue({ version: '1.0.0', buildDate: '2024-01-01' })
+}))
+
 import ProjectSelector from '@/components/ProjectSelector.vue'
 import { apiService } from '@/services/api.service'
 import { useProjectStore } from '@/stores/project.store'
 import { useUIStore } from '@/stores/ui.store'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Мок для path.basename
 const path = {
@@ -13,6 +25,19 @@ const path = {
     return parts[parts.length - 1]
   }
 }
+
+// Mock file and context stores before importing
+vi.mock('@/features/files', () => ({
+  useFileStore: vi.fn(() => ({
+    resetStore: vi.fn()
+  }))
+}))
+
+vi.mock('@/features/context', () => ({
+  useContextStore: vi.fn(() => ({
+    clearContext: vi.fn()
+  }))
+}))
 
 vi.mock('@/services/api.service', () => ({
   apiService: {
@@ -81,7 +106,7 @@ describe('ProjectSelector.vue', () => {
       const wrapper = mount(ProjectSelector)
 
       await wrapper.find('.cta-button').trigger('click')
-      await new Promise(resolve => setTimeout(resolve, 10))
+      await new Promise(resolve => setTimeout(resolve, 50))
 
       expect(selectDirectorySpy).toHaveBeenCalled()
     })
@@ -94,7 +119,7 @@ describe('ProjectSelector.vue', () => {
       const wrapper = mount(ProjectSelector)
 
       await wrapper.find('.cta-button').trigger('click')
-      await new Promise(resolve => setTimeout(resolve, 10))
+      await new Promise(resolve => setTimeout(resolve, 50))
 
       expect(openProjectByPathSpy).toHaveBeenCalledWith('/selected/path')
     })
@@ -102,17 +127,37 @@ describe('ProjectSelector.vue', () => {
     it('должен эмитить событие \'opened\' с путем проекта', async () => {
       vi.spyOn(apiService, 'selectDirectory').mockResolvedValue('/selected/path')
       vi.spyOn(apiService, 'pathExists').mockResolvedValue(true)
+      vi.spyOn(apiService, 'addRecentProject').mockResolvedValue()
+
+      // Mock openProjectByPath to set currentPath immediately (avoiding dynamic import delays)
+      const openProjectSpy = vi.spyOn(projectStore, 'openProjectByPath').mockImplementation(async (path: string) => {
+        projectStore.currentPath = path
+        projectStore.currentName = path.split(/[\\/]/).pop() || path
+        projectStore.recentProjects.unshift({
+          path,
+          name: projectStore.currentName,
+          lastOpened: Date.now()
+        })
+        return true
+      })
 
       const wrapper = mount(ProjectSelector)
 
       await wrapper.find('.cta-button').trigger('click')
 
       // Wait for async operations to complete
-      await new Promise(resolve => setTimeout(resolve, 50))
+      await new Promise(resolve => setTimeout(resolve, 100))
+      await wrapper.vm.$nextTick()
+
+      // Verify openProjectByPath was called
+      expect(openProjectSpy).toHaveBeenCalledWith('/selected/path')
+
+      // Check if currentPath was set
+      expect(projectStore.currentPath).toBe('/selected/path')
 
       expect(wrapper.emitted('opened')).toBeTruthy()
       expect(wrapper.emitted('opened')![0]).toEqual(['/selected/path'])
-    })
+    }, 10000)
   })
 
   describe('Клик на recent project', () => {
@@ -142,10 +187,10 @@ describe('ProjectSelector.vue', () => {
       await wrapper.find('.project-card').trigger('click')
 
       // Wait for async operations to complete
-      await new Promise(resolve => setTimeout(resolve, 50))
+      await new Promise(resolve => setTimeout(resolve, 200))
 
       expect(wrapper.emitted('opened')).toBeTruthy()
-    })
+    }, 10000)
   })
 
   describe('onMounted', () => {

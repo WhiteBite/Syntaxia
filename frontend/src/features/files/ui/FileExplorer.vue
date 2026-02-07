@@ -1,197 +1,74 @@
 <template>
   <div class="file-explorer">
-    <!-- Header -->
-    <div class="file-explorer__header">
-      <div class="panel-header-unified">
-        <div class="panel-header-unified-title">
-          <div class="panel-header-unified-icon panel-header-unified-icon-indigo">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
-            </svg>
-          </div>
-          <h2>{{ t('files.title') }}</h2>
-        </div>
-
-        <div class="flex items-center gap-1">
-          <!-- Selection Stats -->
-          <div class="flex items-center gap-2 text-xs mr-2">
-            <div class="relative group">
-              <BaseBadge variant="accent" class="cursor-help">
-                {{ fileStore.selectedCount }}
-              </BaseBadge>
-              <!-- Tooltip with stats -->
-              <div class="absolute right-0 top-full mt-2 hidden group-hover:block z-50">
-                <BaseCard glass class="shadow-2xl">
-                  <div class="text-xs space-y-1.5 whitespace-nowrap">
-                    <div class="text-white font-semibold mb-2">Selection Stats</div>
-                    <div class="text-gray-400">Files: <span class="text-white">{{ fileStore.selectedCount }}</span></div>
-                    <div class="text-gray-400">Total: <span class="text-white">{{ explorer.totalFileCount.value }}</span> files</div>
-                    <div class="text-gray-400">Progress: <span class="text-indigo-400">{{ explorer.selectionProgress.value }}%</span></div>
-                    <div class="text-gray-400">Est. Size: <span class="text-white">{{ Math.round(fileStore.estimatedContextSize * 100) / 100 }}MB</span></div>
-                    <div class="text-gray-400">Est. Tokens: <span class="text-emerald-400">~{{ Math.round(fileStore.estimatedTokenCount / 1000) }}K</span></div>
-                  </div>
-                </BaseCard>
-              </div>
-            </div>
-            <span class="text-gray-400">{{ t('files.selected') }}</span>
-            <!-- Clear selection button -->
-            <BaseButton
-              v-if="fileStore.selectedCount > 0"
-              variant="ghost"
-              size="xs"
-              icon-only
-              @click="fileStore.clearSelection"
-              class="text-gray-500 hover:text-red-400"
-              :title="t('files.clearSelection')"
-            >
-              <X class="w-3.5 h-3.5" />
-            </BaseButton>
+    <!-- Header & Toolbar -->
+    <div class="flex flex-col border-b border-white/5 bg-[#0f111a]/50 backdrop-blur-sm">
+      <div class="flex items-center justify-between px-3 py-2">
+        <h2 class="text-xs font-bold text-gray-500 uppercase tracking-wider select-none">{{ t('files.title') }}</h2>
+        
+        <div class="flex items-center gap-0.5">
+          <!-- Stats Badge (Tiny) -->
+          <div v-if="fileStore.selectedCount > 0" class="flex items-center mr-2 px-1.5 py-0.5 bg-indigo-500/10 border border-indigo-500/20 rounded text-[10px] font-medium text-indigo-300">
+            {{ fileStore.selectedCount }}
           </div>
 
-          <!-- Settings Popover -->
+          <!-- View Options -->
+          <ViewOptionsDropdown />
+
+          <!-- Filters -->
+          <BasePopover placement="bottom-end" :offset="8">
+            <template #trigger>
+              <SystemFiltersDropdown @open-advanced="showAdvancedFilters = true" />
+            </template>
+            <template #content>
+               <AdvancedFiltersPopover />
+            </template>
+          </BasePopover>
+
+          <!-- Settings -->
           <SettingsPopover 
             @open-ignore-rules="ignoreRulesModalRef?.open()" 
             @settings-changed="explorer.handleSettingsChange"
           />
-          
-          <!-- Solo Expansion Mode Toggle -->
-          <BaseButton
-            variant="ghost"
-            size="sm"
-            icon-only
-            @click="fileStore.toggleSoloExpansionMode()"
-            :class="{ 'text-indigo-400': fileStore.isSoloExpansionMode }"
-            :title="t('files.soloExpansionMode')"
-          >
-            <List class="w-4 h-4" />
-          </BaseButton>
-          
-          <!-- Selected Only Mode Toggle -->
-          <BaseButton
-            v-if="fileStore.selectedCount > 0"
-            variant="ghost"
-            size="sm"
-            icon-only
-            @click="fileStore.toggleSelectedOnlyMode()"
-            :class="{ 'text-indigo-400': fileStore.isSelectedOnlyMode }"
-            :title="t('files.selectedOnlyMode')"
-          >
-            <CheckSquare class="w-4 h-4" />
-          </BaseButton>
-          
-          <!-- Zen Mode Toggle -->
-          <BaseButton
-            variant="ghost"
-            size="sm"
-            icon-only
-            @click="fileStore.toggleZenMode()"
-            :class="{ 'text-indigo-400': fileStore.isZenMode }"
-            :title="t('files.zenMode')"
-          >
-            <Eye class="w-4 h-4" />
-          </BaseButton>
 
-          <!-- Refresh Button -->
-          <BaseButton
-            variant="ghost"
-            size="sm"
-            icon-only
+          <!-- Refresh -->
+          <BaseButton 
+            variant="ghost" 
+            size="xs" 
+            icon-only 
+            class="w-6 h-6 text-gray-500 hover:text-white"
             @click="explorer.handleRefresh"
             :title="t('files.refresh')"
           >
-            <BaseSpinner v-if="fileStore.isLoading" size="sm" />
-            <RefreshCw v-else class="w-4 h-4" />
+            <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': fileStore.isLoading }" />
           </BaseButton>
         </div>
-
       </div>
 
-      <!-- Breadcrumbs -->
-      <div v-if="fileStore.breadcrumbs.length > 0" class="px-3 pb-3">
-        <BreadcrumbsNav 
-          :segments="fileStore.breadcrumbs" 
-          :root-name="fileStore.projectName"
-          @navigate="handleBreadcrumbNavigate"
-          @open-in-explorer="handleOpenInExplorer"
-        />
-      </div>
-    </div>
-
-    <!-- Folder Focus Mode Banner -->
-    <div v-if="fileStore.focusedFolderPath" class="focus-mode-banner">
-      <div class="focus-mode-content">
-        <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="3" stroke-width="2"/>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12c0-4.5 4-8 9-8s9 3.5 9 8-4 8-9 8-9-3.5-9-8z"/>
-        </svg>
-        <span class="focus-mode-label">{{ t('files.focusedOn', { folder: getFocusedFolderName() }) }}</span>
-      </div>
-      <BaseButton
-        variant="ghost"
-        size="sm"
-        @click="fileStore.clearFolderFocus()"
-        class="focus-mode-back-btn"
-      >
-        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        {{ t('files.backToRoot') }}
-      </BaseButton>
-    </div>
-
-    <!-- Selected Only Mode Banner -->
-    <div v-if="fileStore.isSelectedOnlyMode" class="selected-only-banner">
-      <div class="selected-only-content">
-        <CheckSquare class="w-4 h-4 text-emerald-400" />
-        <span class="selected-only-label">{{ t('files.selectedOnlyModeActive', { count: fileStore.selectedCount }) }}</span>
-      </div>
-      <BaseButton
-        variant="ghost"
-        size="sm"
-        @click="fileStore.toggleSelectedOnlyMode()"
-        class="selected-only-exit-btn"
-      >
-        <X class="w-4 h-4 mr-1.5" />
-        {{ t('files.exitSelectedOnlyMode') }}
-      </BaseButton>
-    </div>
-
-    <!-- Quick Filters -->
-    <QuickFiltersBar />
-
-    <!-- Presets Panel -->
-    <PresetsPanel />
-
-    <!-- Favorites Section -->
-    <FavoritesPanel @select="handleFavoriteSelect" />
-
-    <!-- Search -->
-    <div class="file-explorer__search">
-      <BaseInput 
-        ref="searchInputRef"
-        v-model="explorer.searchQuery.value" 
-        :placeholder="t('files.searchShort')" 
-        @input="explorer.handleSearch" 
-        @keydown.escape="clearSearch"
-      >
-        <template #prefix>
-          <SearchIcon class="w-4 h-4" />
-        </template>
-        <template #suffix v-if="explorer.searchQuery.value">
+      <!-- Compact Search (borderless integration) -->
+      <div class="px-2 pb-2">
+        <div class="relative group">
+          <input 
+            v-model="explorer.searchQuery.value"
+            type="text"
+            :placeholder="t('files.searchShort')"
+            class="w-full bg-[#1a1d2d] text-xs text-gray-300 placeholder-gray-600 rounded border border-transparent focus:border-indigo-500/50 focus:bg-[#1e2235] focus:outline-none transition-all py-1.5 pl-8 pr-7"
+            @input="explorer.handleSearch" 
+            @keydown.escape="clearSearch"
+          />
+          <SearchIcon class="w-3.5 h-3.5 text-gray-600 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none group-focus-within:text-indigo-400 transition-colors" />
+          
           <button 
+            v-if="explorer.searchQuery.value"
             @click="clearSearch"
-            class="p-1 rounded hover:bg-gray-700/50 text-gray-400 hover:text-white transition-colors"
-            :title="t('files.clear')"
+            class="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 text-gray-500 hover:text-white rounded-full hover:bg-gray-700/50 transition-colors"
           >
-            <X class="w-3.5 h-3.5" />
+            <X class="w-3 h-3" />
           </button>
-        </template>
-      </BaseInput>
+        </div>
+      </div>
     </div>
 
-
-    <!-- File Tree - MAIN SCROLLABLE AREA -->
+    <!-- File Tree -->
     <div class="file-explorer__tree" data-tour="file-tree">
       <div v-if="fileStore.isLoading" class="loading-state">
         <SkeletonFileTree :rows="10" />
@@ -257,6 +134,14 @@
 
     <!-- Modals -->
     <IgnoreRulesModal ref="ignoreRulesModalRef" />
+    <AdvancedFiltersModal 
+      :is-open="showAdvancedFilters" 
+      :filters="explorer.editableFilters.value"
+      :get-count="explorer.getFilterCount"
+      @close="showAdvancedFilters = false"
+      @reset="explorer.resetFilters"
+      @update-extensions="explorer.updateFilterExtensions"
+    />
     <QuickLookModal v-model="explorer.quickLookVisible.value" :file-path="explorer.quickLookPath.value" @add-to-context="explorer.handleAddToContext" />
     <DependencyVisualizerModal
       v-model="showDependencyModal"
@@ -289,27 +174,27 @@ import { useContextStore } from '@/features/context'
 import { useProjectStore } from '@/stores/project.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useUIStore } from '@/stores/ui.store'
-import { BaseBadge, BaseButton, BaseCard, BaseSpinner, BaseEmptyState } from '@/components/ui'
-import { RefreshCw, Search as SearchIcon, X, Eye, CheckSquare, List } from 'lucide-vue-next'
+import { BaseButton, BaseEmptyState, BasePopover } from '@/components/ui'
+import { RefreshCw, Search as SearchIcon, X } from 'lucide-vue-next'
 import { defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import { useFileExplorer } from '../composables/useFileExplorer'
 import { provideHoveredFile } from '../composables/useHoveredFile'
 import { useFileStore, type FileNode } from '../model/file.store'
 import AnalysisStatusBar from './AnalysisStatusBar.vue'
-import BreadcrumbsNav from './BreadcrumbsNav.vue'
 import CommandBar from './CommandBar.vue'
 import FileContextMenu from './FileContextMenu.vue'
-import QuickFiltersBar from './QuickFiltersBar.vue'
 import SettingsPopover from './SettingsPopover.vue'
 import VirtualFileTree from './VirtualFileTree.vue'
-import FavoritesPanel from './FavoritesPanel.vue'
-import PresetsPanel from './PresetsPanel.vue'
+import ViewOptionsDropdown from './ViewOptionsDropdown.vue'
+import SystemFiltersDropdown from './SystemFiltersDropdown.vue'
+import AdvancedFiltersPopover from './AdvancedFiltersPopover.vue'
 import SkeletonFileTree from '@/components/SkeletonFileTree.vue'
 
 const QuickLookModal = defineAsyncComponent(() => import('@/components/QuickLookModal.vue'))
 const IgnoreRulesModal = defineAsyncComponent(() => import('./IgnoreRulesModal.vue'))
 const DependencyVisualizerModal = defineAsyncComponent(() => import('./DependencyVisualizerModal.vue'))
+const AdvancedFiltersModal = defineAsyncComponent(() => import('./FilterSettingsModal.vue'))
 
 provideHoveredFile()
 
@@ -326,6 +211,9 @@ const logger = useLogger('FileExplorer')
 
 const ignoreRulesModalRef = ref<InstanceType<typeof IgnoreRulesModal>>()
 const searchInputRef = ref<HTMLInputElement | null>(null)
+const showAdvancedFilters = ref(false)
+const showAdvancedFilters = ref(false)
+const showAdvancedFilters = ref(false)
 
 // Dependency modal state
 const showDependencyModal = ref(false)
@@ -356,10 +244,6 @@ function handleContextMenu(node: FileNode, event: MouseEvent) {
   contextMenu.show(node, event)
 }
 
-function handleBreadcrumbNavigate(path: string) {
-  fileStore.expandPath(path)
-}
-
 function handleAddSuggestedFiles(files: string[]) {
   const normalizedFiles = files
     .map(path => path.replace(/\\/g, '/'))
@@ -367,18 +251,6 @@ function handleAddSuggestedFiles(files: string[]) {
   
   if (normalizedFiles.length > 0) {
     fileStore.selectMultiple(normalizedFiles)
-  }
-}
-
-async function handleOpenInExplorer(_path: string) {
-  if (projectStore.currentPath) {
-    try {
-      const runtime = await import('#wailsjs/runtime/runtime')
-      runtime.BrowserOpenURL('file://' + projectStore.currentPath)
-    } catch (error) {
-      logger.error('Failed to open in explorer:', error)
-      uiStore.addToast('Failed to open in file explorer', 'error')
-    }
   }
 }
 
@@ -392,17 +264,6 @@ function handleRedoSelection() {
   if (fileStore.redoSelection()) {
     uiStore.addToast(t('files.redoSelection'), 'info')
   }
-}
-
-function handleFavoriteSelect(_path: string) {
-  // File is already added to context in FavoritesPanel
-  // This handler can be used for additional actions if needed
-}
-
-function getFocusedFolderName(): string {
-  if (!fileStore.focusedFolderPath) return ''
-  const parts = fileStore.focusedFolderPath.split(/[/\\]/)
-  return parts[parts.length - 1] || fileStore.focusedFolderPath
 }
 
 onMounted(async () => {

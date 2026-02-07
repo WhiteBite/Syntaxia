@@ -52,7 +52,7 @@ This is a test project for integration testing.`,
 
 	// Create build context options
 	options := &domain.ContextBuildOptions{
-		IncludeManifest: true,
+		IncludeFileTree: true,
 		StripComments:   false,
 		MaxTokens:       10000,
 	}

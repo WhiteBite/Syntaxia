@@ -11,12 +11,14 @@ import (
 )
 
 type Repository struct {
-	log domain.Logger
+	log   domain.Logger
+	cache *GitCache
 }
 
 func New(log domain.Logger) domain.GitRepository {
 	return &Repository{
-		log: log,
+		log:   log,
+		cache: NewGitCache(),
 	}
 }
 
@@ -222,8 +224,17 @@ func parseMetadataLine(commit *domain.CommitWithFiles, line string) {
 	}
 }
 
-// GetBranches returns all git branches
+// GetBranches returns all git branches (cached for 5 minutes)
 func (r *Repository) GetBranches(projectRoot string) ([]string, error) {
+	cacheKey := buildBranchesCacheKey(projectRoot)
+
+	// Check cache
+	if cached, ok := r.cache.Get(cacheKey); ok {
+		r.log.Debug(fmt.Sprintf("Cache hit for branches in %s", projectRoot))
+		return cached.([]string), nil
+	}
+
+	// Execute git command
 	cmd := exec.Command("git", "branch", "-a")
 	executil.HideWindow(cmd)
 	cmd.Dir = projectRoot
@@ -259,12 +270,24 @@ func (r *Repository) GetBranches(projectRoot string) ([]string, error) {
 		}
 	}
 
+	// Cache result (5 min TTL)
+	r.cache.Set(cacheKey, branches, 5*time.Minute)
+
 	r.log.Info(fmt.Sprintf("Found %d branches in %s.", len(branches), projectRoot))
 	return branches, nil
 }
 
-// GetCurrentBranch returns the current git branch
+// GetCurrentBranch returns the current git branch (cached for 2 minutes)
 func (r *Repository) GetCurrentBranch(projectRoot string) (string, error) {
+	cacheKey := buildCurrentBranchCacheKey(projectRoot)
+
+	// Check cache
+	if cached, ok := r.cache.Get(cacheKey); ok {
+		r.log.Debug(fmt.Sprintf("Cache hit for current branch in %s", projectRoot))
+		return cached.(string), nil
+	}
+
+	// Execute git command
 	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
 	executil.HideWindow(cmd)
 	cmd.Dir = projectRoot
@@ -275,6 +298,10 @@ func (r *Repository) GetCurrentBranch(projectRoot string) (string, error) {
 	}
 
 	branch := strings.TrimSpace(string(output))
+
+	// Cache result (2 min TTL)
+	r.cache.Set(cacheKey, branch, 2*time.Minute)
+
 	r.log.Info(fmt.Sprintf("Current branch in %s: %s", projectRoot, branch))
 	return branch, nil
 }
@@ -378,8 +405,17 @@ func (r *Repository) CheckoutCommit(projectPath, commitHash string) error {
 	return nil
 }
 
-// ListFilesAtRef returns list of files at a specific branch or commit without checkout
+// ListFilesAtRef returns list of files at a specific branch or commit without checkout (cached for 10 minutes)
 func (r *Repository) ListFilesAtRef(projectPath, ref string) ([]string, error) {
+	cacheKey := buildFilesAtRefCacheKey(projectPath, ref)
+
+	// Check cache
+	if cached, ok := r.cache.Get(cacheKey); ok {
+		r.log.Debug(fmt.Sprintf("Cache hit for files at ref %s in %s", ref, projectPath))
+		return cached.([]string), nil
+	}
+
+	// Execute git command
 	cmd := exec.Command("git", "ls-tree", "-r", "--name-only", ref)
 	executil.HideWindow(cmd)
 	cmd.Dir = projectPath
@@ -395,12 +431,24 @@ func (r *Repository) ListFilesAtRef(projectPath, ref string) ([]string, error) {
 		files = append(files, scanner.Text())
 	}
 
+	// Cache result (10 min TTL - git tree at ref is immutable)
+	r.cache.Set(cacheKey, files, 10*time.Minute)
+
 	r.log.Info(fmt.Sprintf("Listed %d files at ref %s in %s", len(files), ref, projectPath))
 	return files, nil
 }
 
-// GetFileAtRef returns file content at a specific branch or commit without checkout
+// GetFileAtRef returns file content at a specific branch or commit without checkout (cached for 30 minutes - immutable)
 func (r *Repository) GetFileAtRef(projectPath, filePath, ref string) (string, error) {
+	cacheKey := buildFileAtRefCacheKey(projectPath, filePath, ref)
+
+	// Check cache - git objects are immutable, so cache aggressively
+	if cached, ok := r.cache.Get(cacheKey); ok {
+		r.log.Debug(fmt.Sprintf("Cache hit for file %s at ref %s", filePath, ref))
+		return cached.(string), nil
+	}
+
+	// Execute git command
 	cmd := exec.Command("git", "show", fmt.Sprintf("%s:%s", ref, filePath)) //nolint:gosec // Git command
 	executil.HideWindow(cmd)
 	cmd.Dir = projectPath
@@ -410,7 +458,12 @@ func (r *Repository) GetFileAtRef(projectPath, filePath, ref string) (string, er
 		return "", fmt.Errorf("failed to get file %s at ref %s: %w", filePath, ref, err)
 	}
 
-	return string(output), nil
+	content := string(output)
+
+	// Cache result (30 min TTL - git objects are immutable)
+	r.cache.Set(cacheKey, content, 30*time.Minute)
+
+	return content, nil
 }
 
 // GetTreeAtRef returns file tree structure at a specific ref
@@ -463,8 +516,17 @@ type GitTreeEntry struct {
 	IsDir bool   `json:"isDir"`
 }
 
-// GetCommitHistory returns recent commits with hash and subject
+// GetCommitHistory returns recent commits with hash and subject (cached for 2 minutes)
 func (r *Repository) GetCommitHistory(projectPath string, limit int) ([]domain.CommitInfo, error) {
+	cacheKey := buildCommitHistoryCacheKey(projectPath, limit)
+
+	// Check cache
+	if cached, ok := r.cache.Get(cacheKey); ok {
+		r.log.Debug(fmt.Sprintf("Cache hit for commit history in %s", projectPath))
+		return cached.([]domain.CommitInfo), nil
+	}
+
+	// Execute git command
 	cmd := exec.Command("git", "log", "--pretty=format:%H|%s|%an|%cI", fmt.Sprintf("-n%d", limit)) //nolint:gosec // Git command
 	executil.HideWindow(cmd)
 	cmd.Dir = projectPath
@@ -488,6 +550,9 @@ func (r *Repository) GetCommitHistory(projectPath string, limit int) ([]domain.C
 			})
 		}
 	}
+
+	// Cache result (2 min TTL)
+	r.cache.Set(cacheKey, commits, 2*time.Minute)
 
 	return commits, nil
 }
@@ -523,4 +588,33 @@ func (r *Repository) FetchRemoteBranches(projectPath string) ([]string, error) {
 	}
 
 	return branches, nil
+}
+
+// ClearCache clears all cached git data
+func (r *Repository) ClearCache() {
+	r.cache.Clear()
+	r.log.Info("Git cache cleared")
+}
+
+// InvalidateProjectCache invalidates all cache entries for a specific project
+func (r *Repository) InvalidateProjectCache(projectPath string) {
+	r.cache.InvalidateProject(projectPath)
+	r.log.Info(fmt.Sprintf("Git cache invalidated for project: %s", projectPath))
+}
+
+// GetCacheStats returns cache statistics
+func (r *Repository) GetCacheStats() map[string]interface{} {
+	stats := r.cache.GetStats()
+	return map[string]interface{}{
+		"hits":   stats.Hits,
+		"misses": stats.Misses,
+		"size":   stats.Size,
+		"hitRate": func() float64 {
+			total := stats.Hits + stats.Misses
+			if total == 0 {
+				return 0
+			}
+			return float64(stats.Hits) / float64(total) * 100
+		}(),
+	}
 }

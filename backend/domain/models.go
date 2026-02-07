@@ -16,6 +16,16 @@ type FileNode struct {
 	IsGitignored    bool        `json:"isGitignored"`
 	IsCustomIgnored bool        `json:"isCustomIgnored"`
 	IsIgnored       bool        `json:"isIgnored"`
+
+	// Performance optimization: Pre-computed metadata to eliminate frontend recursion
+	FileCount       int            `json:"fileCount"`       // Total files in directory (recursive)
+	TotalSize       int64          `json:"totalSize"`       // Total size in bytes (recursive)
+	Depth           int            `json:"depth"`           // Depth from root (0 = root level)
+	DirectFileCount int            `json:"directFileCount"` // Files directly in this folder (non-recursive)
+	ExtensionStats  map[string]int `json:"extensionStats,omitempty"` // Extension counts, e.g. {".ts": 45, ".vue": 12}
+
+	// Token counting for AI context optimization
+	TokenCount int `json:"tokenCount,omitempty"` // Estimated token count for this file/directory
 }
 
 type FileStatus struct {
@@ -497,4 +507,61 @@ type TaskContext struct {
 	Languages   []string          `json:"languages"`
 	Files       []string          `json:"files"`
 	Metadata    map[string]string `json:"metadata"`
+}
+
+// =============================================================================
+// Search & Filter Models
+// =============================================================================
+
+// SearchOptions опции для поиска файлов
+type SearchOptions struct {
+	MaxResults    int      `json:"maxResults"`
+	FuzzyMatch    bool     `json:"fuzzyMatch"`
+	CaseSensitive bool     `json:"caseSensitive"`
+	IncludePath   bool     `json:"includePath"`
+	FileTypes     []string `json:"fileTypes,omitempty"`
+}
+
+// FileSearchResult результат поиска файла
+type FileSearchResult struct {
+	Path        string       `json:"path"`
+	Name        string       `json:"name"`
+	Score       float64      `json:"score"`
+	Matches     []MatchRange `json:"matches,omitempty"`
+	Size        int64        `json:"size"`
+	ContentType string       `json:"contentType"`
+	Depth       int          `json:"depth"`
+}
+
+// MatchRange диапазон совпадения в строке
+type MatchRange struct {
+	Start int    `json:"start"`
+	End   int    `json:"end"`
+	Field string `json:"field"` // "name" or "path"
+}
+
+// FilterOptions опции для фильтрации файлов
+type FilterOptions struct {
+	IncludeExtensions []string `json:"includeExtensions,omitempty"`
+	ExcludeExtensions []string `json:"excludeExtensions,omitempty"`
+	MinTokens         int      `json:"minTokens,omitempty"`
+	MaxTokens         int      `json:"maxTokens,omitempty"`
+	MinSize           int64    `json:"minSize,omitempty"`
+	MaxSize           int64    `json:"maxSize,omitempty"`
+}
+
+// SearchAndFilterRequest запрос на поиск и фильтрацию
+type SearchAndFilterRequest struct {
+	ProjectRoot   string        `json:"projectRoot"`
+	Query         string        `json:"query"`
+	SearchOptions SearchOptions `json:"searchOptions"`
+	FilterOptions FilterOptions `json:"filterOptions"`
+}
+
+// SearchAndFilterResponse ответ на поиск и фильтрацию
+type SearchAndFilterResponse struct {
+	Results []FileSearchResult `json:"results"`
+	Total   int                `json:"total"`
+	Cached  bool               `json:"cached"`
+	Took    int64              `json:"took"` // milliseconds
 }

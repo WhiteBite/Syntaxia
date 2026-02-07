@@ -11,6 +11,7 @@ import (
 	"syntaxia/infrastructure/analyzers"
 	"syntaxia/infrastructure/applyengine"
 	"syntaxia/infrastructure/contextbuilder"
+	"syntaxia/infrastructure/contentoptimizer"
 	execinfra "syntaxia/infrastructure/exec"
 	"syntaxia/infrastructure/filereader"
 	"syntaxia/infrastructure/formatters"
@@ -76,6 +77,7 @@ func (c *AppContainer) initializeInfrastructure(ctx context.Context, embeddedIgn
 	c.FileReader = filereader.NewSecureFileReader(c.Log)
 	c.GitRepo = git.New(c.Log)
 	c.TreeBuilder = fsscanner.New(c.SettingsRepo, c.Log)
+	c.FileSearcher = fsscanner.NewFileSearcher(c.TreeBuilder, c.Log)
 	c.ContextSplitter = textutils.NewContextSplitter(c.Log)
 
 	c.Watcher, err = fswatcher.New(ctx, c.Bus)
@@ -225,6 +227,9 @@ func (c *AppContainer) initializeInfrastructure(ctx context.Context, embeddedIgn
 	arch := archiverinfra.NewZipArchiver(c.Log)
 	contextFormatter := contextbuilder.NewContextFormatter()
 
+	// Create ContentOptimizer for noise reduction
+	contentOptimizer := contentoptimizer.NewContentOptimizer(c.Log)
+
 	// Create UXReportRepository
 	uxReportRepo := uxreports.NewFileSystemUXReportRepository("reports/ux")
 
@@ -271,6 +276,7 @@ func (c *AppContainer) initializeInfrastructure(ctx context.Context, embeddedIgn
 		pdfGen:                 pdfGen,
 		arch:                   arch,
 		contextFormatter:       contextFormatter,
+		contentOptimizer:       contentOptimizer,
 		uxReportRepo:           uxReportRepo,
 		reportRepo:             reportRepo,
 		routerLLMConfig:        routerLLMConfig,
@@ -301,6 +307,7 @@ type infrastructureComponents struct {
 	pdfGen                 domain.PDFGenerator
 	arch                   domain.Archiver
 	contextFormatter       domain.ContextFormatter
+	contentOptimizer       domain.ContentOptimizer
 	uxReportRepo           domain.UXReportRepository
 	reportRepo             domain.ReportRepository
 	routerLLMConfig        router.LLMConfig

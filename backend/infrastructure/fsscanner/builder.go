@@ -79,6 +79,10 @@ func (b *fileTreeBuilder) BuildTree(dirPath string, useGitignore, useCustomIgnor
 	}
 
 	b.sortChildren(nodesMap)
+	
+	// Compute metadata for all nodes (FileCount, TotalSize, Depth, etc.)
+	b.computeMetadata(root, 0)
+	
 	result := []*domain.FileNode{root}
 	b.setCachedTree(dirPath, result)
 	return result, nil
@@ -397,4 +401,68 @@ func (b *fileTreeBuilder) getCustomIgnore() *gitignore.GitIgnore {
 	b.customHash = hash
 	b.mu.Unlock()
 	return ci
+}
+
+// computeMetadata recursively computes metadata for all nodes in the tree
+// This eliminates the need for expensive O(n) frontend recursion on every render
+func (b *fileTreeBuilder) computeMetadata(node *domain.FileNode, depth int) {
+	node.Depth = depth
+
+	if !node.IsDir {
+		// Leaf node (file)
+		node.FileCount = 1
+		node.TotalSize = node.Size
+		node.DirectFileCount = 0
+		node.ExtensionStats = nil
+		
+		// Calculate token count for file (simple estimation: 1 token ≈ 4 bytes)
+		node.TokenCount = int(node.Size / 4)
+		return
+	}
+
+	// Directory: aggregate from children
+	fileCount := 0
+	totalSize := int64(0)
+	tokenCount := 0
+	directFileCount := 0
+	extensionStats := make(map[string]int)
+
+	for _, child := range node.Children {
+		// Recursively compute child metadata first
+		b.computeMetadata(child, depth+1)
+
+		if child.IsDir {
+			// Child is a directory
+			fileCount += child.FileCount
+			totalSize += child.TotalSize
+			tokenCount += child.TokenCount
+
+			// Merge extension stats from subdirectory
+			for ext, count := range child.ExtensionStats {
+				extensionStats[ext] += count
+			}
+		} else {
+			// Child is a file
+			fileCount++
+			totalSize += child.Size
+			tokenCount += child.TokenCount
+			directFileCount++
+
+			// Track file extension
+			ext := filepath.Ext(child.Name)
+			if ext != "" {
+				extensionStats[ext]++
+			}
+		}
+	}
+
+	node.FileCount = fileCount
+	node.TotalSize = totalSize
+	node.TokenCount = tokenCount
+	node.DirectFileCount = directFileCount
+
+	// Only set ExtensionStats if there are files
+	if len(extensionStats) > 0 {
+		node.ExtensionStats = extensionStats
+	}
 }

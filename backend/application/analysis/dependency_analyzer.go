@@ -17,9 +17,9 @@ type DependencyAnalyzerImpl struct {
 	registry analysis.AnalyzerRegistry
 	logger   domain.Logger
 
-	// Cache for dependency graph
+	// Cache for dependency graph (keyed by project root)
 	mu    sync.RWMutex
-	cache *domain.DependencyGraph
+	cache map[string]*domain.DependencyGraph
 }
 
 // NewDependencyAnalyzer creates a new dependency analyzer
@@ -27,6 +27,7 @@ func NewDependencyAnalyzer(registry analysis.AnalyzerRegistry, logger domain.Log
 	return &DependencyAnalyzerImpl{
 		registry: registry,
 		logger:   logger,
+		cache:    make(map[string]*domain.DependencyGraph),
 	}
 }
 
@@ -138,7 +139,7 @@ func (d *DependencyAnalyzerImpl) BuildGraph(projectRoot string, ignorePatterns [
 	}
 
 	// Cache the graph
-	d.cache = graph
+	d.cache[projectRoot] = graph
 
 	d.logger.Info(fmt.Sprintf("Built dependency graph with %d files", len(graph.Files)))
 	return graph, nil
@@ -148,8 +149,183 @@ func (d *DependencyAnalyzerImpl) BuildGraph(projectRoot string, ignorePatterns [
 func (d *DependencyAnalyzerImpl) ClearCache() {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	d.cache = nil
+	d.cache = make(map[string]*domain.DependencyGraph)
 	d.logger.Debug("Dependency graph cache cleared")
+}
+
+// GetFileDependenciesBatch returns dependencies for multiple files (batch query)
+func (d *DependencyAnalyzerImpl) GetFileDependenciesBatch(projectRoot string, filePaths []string) (map[string][]domain.FileDependency, error) {
+	d.mu.RLock()
+	graph, exists := d.cache[projectRoot]
+	d.mu.RUnlock()
+
+	// If no cache, build it first
+	if !exists || graph == nil {
+		var err error
+		graph, err = d.BuildGraph(projectRoot, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build dependency graph: %w", err)
+		}
+	}
+
+	result := make(map[string][]domain.FileDependency)
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+
+	for _, filePath := range filePaths {
+		if deps, ok := graph.Files[filePath]; ok {
+			result[filePath] = deps
+		} else {
+			// File not in cache, return empty slice
+			result[filePath] = []domain.FileDependency{}
+		}
+	}
+
+	return result, nil
+}
+
+// GetIncomingDependencies returns files that import this file
+func (d *DependencyAnalyzerImpl) GetIncomingDependencies(projectRoot, filePath string) ([]string, error) {
+	d.mu.RLock()
+	graph, exists := d.cache[projectRoot]
+	d.mu.RUnlock()
+
+	if !exists || graph == nil {
+		var err error
+		graph, err = d.BuildGraph(projectRoot, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build dependency graph: %w", err)
+		}
+	}
+
+	incoming := make([]string, 0)
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+
+	// Iterate through all files and find those that depend on this file
+	for sourceFile, deps := range graph.Files {
+		for _, dep := range deps {
+			if dep.TargetPath == filePath {
+				incoming = append(incoming, sourceFile)
+				break
+			}
+		}
+	}
+
+	return incoming, nil
+}
+
+// GetOutgoingDependencies returns files that this file imports
+func (d *DependencyAnalyzerImpl) GetOutgoingDependencies(projectRoot, filePath string) ([]string, error) {
+	d.mu.RLock()
+	graph, exists := d.cache[projectRoot]
+	d.mu.RUnlock()
+
+	if !exists || graph == nil {
+		var err error
+		graph, err = d.BuildGraph(projectRoot, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build dependency graph: %w", err)
+		}
+	}
+
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+
+	deps, ok := graph.Files[filePath]
+	if !ok {
+		return []string{}, nil
+	}
+
+	outgoing := make([]string, 0, len(deps))
+	for _, dep := range deps {
+		outgoing = append(outgoing, dep.TargetPath)
+	}
+
+	return outgoing, nil
+}
+
+// IsDependencyGraphCached checks if graph is cached
+func (d *DependencyAnalyzerImpl) IsDependencyGraphCached(projectRoot string) bool {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	_, exists := d.cache[projectRoot]
+	return exists
+}
+
+// GetDependencyGraphStats returns cache statistics
+func (d *DependencyAnalyzerImpl) GetDependencyGraphStats(projectRoot string) (*domain.DependencyGraphStats, error) {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+
+	graph, exists := d.cache[projectRoot]
+	if !exists || graph == nil {
+		return &domain.DependencyGraphStats{
+			FileCount:       0,
+			DependencyCount: 0,
+			IsCached:        false,
+			CacheSize:       0,
+		}, nil
+	}
+
+	// Calculate total dependencies
+	totalDeps := 0
+	for _, deps := range graph.Files {
+		totalDeps += len(deps)
+	}
+
+	// Estimate cache size (rough approximation)
+	// Each file path ~100 bytes, each dependency ~150 bytes
+	cacheSize := int64(len(graph.Files)*100 + totalDeps*150)
+
+	return &domain.DependencyGraphStats{
+		FileCount:       len(graph.Files),
+		DependencyCount: totalDeps,
+		LastAnalyzed:    graph.LastAnalyzed,
+		IsCached:        true,
+		CacheSize:       cacheSize,
+	}, nil
+}
+
+// UpdateFile updates single file in cached graph (incremental update)
+func (d *DependencyAnalyzerImpl) UpdateFile(projectRoot, filePath string) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	graph, exists := d.cache[projectRoot]
+	if !exists || graph == nil {
+		return fmt.Errorf("no cached graph for project: %s", projectRoot)
+	}
+
+	// Analyze the file
+	deps, err := d.AnalyzeFile(projectRoot, filePath)
+	if err != nil {
+		return fmt.Errorf("failed to analyze file %s: %w", filePath, err)
+	}
+
+	// Update the graph
+	graph.Files[filePath] = deps
+	graph.LastAnalyzed = time.Now()
+
+	d.logger.Debug(fmt.Sprintf("Updated file in dependency graph: %s", filePath))
+	return nil
+}
+
+// RemoveFile removes file from cached graph
+func (d *DependencyAnalyzerImpl) RemoveFile(projectRoot, filePath string) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	graph, exists := d.cache[projectRoot]
+	if !exists || graph == nil {
+		return fmt.Errorf("no cached graph for project: %s", projectRoot)
+	}
+
+	delete(graph.Files, filePath)
+	graph.LastAnalyzed = time.Now()
+
+	d.logger.Debug(fmt.Sprintf("Removed file from dependency graph: %s", filePath))
+	return nil
 }
 
 // resolveImportPath resolves an import path to a project-relative file path

@@ -523,9 +523,16 @@ function saveChanges() {
 }
 
 function handleClose() {
-  if (hasChanges.value && !isEditingBuiltIn.value) { 
-    autoSaveOnClose.value ? (saveChanges(), setTimeout(close, 100)) : showUnsavedWarning.value = true 
-  } else close()
+  if (hasChanges.value && !isEditingBuiltIn.value) {
+    if (autoSaveOnClose.value) {
+      saveChanges()
+      setTimeout(close, 100)
+    } else {
+      showUnsavedWarning.value = true
+    }
+  } else {
+    close()
+  }
 }
 
 function close() { 

@@ -114,6 +114,49 @@ const { flattenedVisibleNodes } = useVirtualTree({
 
 const flattenedNodes = computed(() => flattenedVisibleNodes.value)
 
+// Pre-calculate selected counts for all visible folders in one batch
+const selectedCountsMap = computed(() => {
+  const folderNodes = flattenedNodes.value
+    .filter(item => item.node.isDir)
+    .map(item => item.node)
+  
+  const counts = new Map<string, number>()
+  
+  // Optimization: use a set for faster lookup
+  const selectedPaths = fileStore.selectedPaths
+  if (selectedPaths.size === 0) return counts
+
+  for (const node of folderNodes) {
+    // Skip expensive calculation for extremely large folders if they are not pre-computed
+    const fileCount = node.fileCount || 0
+    if (fileCount > 5000) {
+      counts.set(node.path, 0)
+      continue
+    }
+    
+    // Fast path: if 0 total files selected, or this folder is not selected at all
+    // we can skip. But wait, we need to know HOW MANY are selected.
+    
+    let count = 0
+    // Instead of deep recursion, use the store's knowledge if possible
+    // or a more shallow approach for visible items
+    count = countSelectedVisible(node, selectedPaths)
+    counts.set(node.path, count)
+  }
+  
+  return counts
+})
+
+// Optimized non-recursive (or shallow) counting
+function countSelectedVisible(node: FileNode, selectedPaths: Set<string>): number {
+  let count = 0
+  const allFiles = fileStore.getAllFilesInNode(node)
+  for (const path of allFiles) {
+    if (selectedPaths.has(path)) count++
+  }
+  return count
+}
+
 // Drag-to-select state
 const isDraggingSelection = ref(false)
 const dragInitialAction = ref<'select' | 'deselect'>('select')
@@ -288,19 +331,13 @@ function getCheckboxState(node: FileNode): 'none' | 'partial' | 'full' {
 
 function getFileCount(node: FileNode): number {
   if (!node.isDir) return 0
+  // Use pre-computed FileCount from backend (O(1) - pre-computed)
+  if (node.fileCount !== undefined) {
+    return node.fileCount
+  }
+  // Fallback to expensive calculation if metadata not available
   return fileStore.getAllFilesInNode(node).length
 }
-
-// Build a map of path -> size for quick lookup
-const fileSizeMap = computed(() => {
-  const map = new Map<string, number>()
-  for (const item of flattenedVisibleNodes.value) {
-    if (!item.node.isDir && item.node.size) {
-      map.set(item.node.path, item.node.size)
-    }
-  }
-  return map
-})
 
 // Get total tokens of selected files inside a folder (for bubble-up indicator)
 function getSelectedTokens(node: FileNode): number {
@@ -312,24 +349,41 @@ function getSelectedTokens(node: FileNode): number {
     return 0
   }
   
-  // For folders, sum tokens of all selected files inside
-  const allFiles = fileStore.getAllFilesInNode(node)
+  // Use pre-computed TotalSize if all files are selected
+  const fileCount = node.fileCount || 0
+  const selectedCount = selectedCountsMap.value.get(node.path) || 0
+  
+  if (selectedCount === fileCount && fileCount > 0 && node.totalSize) {
+    // All files selected - use pre-computed total (O(1))
+    return Math.round(node.totalSize / 4)
+  }
+  
+  // Partial selection - need to calculate
+  return calculatePartialTokens(node)
+}
+
+function calculatePartialTokens(node: FileNode): number {
   let totalTokens = 0
-  for (const filePath of allFiles) {
-    if (fileStore.selectedPaths.has(filePath)) {
-      const size = fileSizeMap.value.get(filePath)
-      if (size) {
-        totalTokens += Math.round(size / 4)
+  
+  for (const child of node.children || []) {
+    if (child.isDir) {
+      totalTokens += getSelectedTokens(child)
+    } else {
+      if (fileStore.selectedPaths.has(child.path) && child.size) {
+        totalTokens += Math.round(child.size / 4)
       }
     }
   }
+  
   return totalTokens
 }
 
 // Get count of selected files inside a folder (for bubble-up indicator)
 function getSelectedFileCount(node: FileNode): number {
   if (!node.isDir) return 0
-  return fileStore.getSelectedFileCountInNode(node)
+  
+  // Use pre-calculated value from batch computation
+  return selectedCountsMap.value.get(node.path) || 0
 }
 
 // Keyboard navigation handler

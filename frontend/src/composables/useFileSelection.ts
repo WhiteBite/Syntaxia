@@ -166,6 +166,24 @@ export function useFileSelection(options: UseFileSelectionOptions) {
         return allFiles.filter((filePath) => selectedPaths.value.has(filePath)).length
     }
 
+    // Batch calculate selected counts for multiple nodes in one pass
+    function batchCalculateSelectedCounts(nodes: FileNode[]): Map<string, number> {
+        const counts = new Map<string, number>()
+
+        for (const node of nodes) {
+            if (!node.isDir) continue
+
+            const allFiles = getAllFilesInNode(node)
+            const selectedCount = allFiles.filter((filePath) =>
+                selectedPaths.value.has(filePath)
+            ).length
+
+            counts.set(node.path, selectedCount)
+        }
+
+        return counts
+    }
+
     function isSelected(path: string): boolean {
         return selectedPaths.value.has(path)
     }
@@ -218,6 +236,7 @@ export function useFileSelection(options: UseFileSelectionOptions) {
         toggleSelectRecursive,
         selectByExtension,
         getSelectedFileCountInNode,
+        batchCalculateSelectedCounts,
         isSelected,
         getSelectionState,
         undoSelection,

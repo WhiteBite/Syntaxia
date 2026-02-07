@@ -143,7 +143,7 @@ describe('BaseDropdown', () => {
     })
 
     it('passes close function to default slot', async () => {
-        let closeFunction: (() => void) | null = null
+        const closeFunction: (() => void) | null = null
 
         const wrapper = mount(BaseDropdown, {
             props: {
