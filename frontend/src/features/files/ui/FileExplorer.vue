@@ -136,11 +136,11 @@
     <IgnoreRulesModal ref="ignoreRulesModalRef" />
     <AdvancedFiltersModal 
       :is-open="showAdvancedFilters" 
-      :filters="explorer.typeFilters.value"
-      :get-count="explorer.getFilterCount"
+      :filters="quickFilters.typeFilters.value"
+      :get-count="quickFilters.getFilterCount"
       @close="showAdvancedFilters = false"
-      @reset="explorer.resetFilters"
-      @update-extensions="explorer.updateFilterExtensions"
+      @reset="quickFilters.resetFilters"
+      @update-extensions="quickFilters.updateFilterExtensions"
     />
     <QuickLookModal v-model="explorer.quickLookVisible.value" :file-path="explorer.quickLookPath.value" @add-to-context="explorer.handleAddToContext" />
     <DependencyVisualizerModal
@@ -206,6 +206,7 @@ const settingsStore = useSettingsStore()
 const { t } = useI18n()
 
 const explorer = useFileExplorer()
+const quickFilters = useQuickFilters()
 const contextMenu = useContextMenu()
 const logger = useLogger('FileExplorer')
 
