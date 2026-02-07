@@ -14,18 +14,24 @@
         </div>
         
         <div class="flex items-center gap-0.5">
-          <!-- Quick Toggles -->
+          <!-- Expand/Collapse All -->
           <BaseButton 
-            variant="ghost" size="xs" icon-only 
+            variant="ghost" 
+            size="xs" 
+            icon-only 
             class="w-7 h-7 text-gray-500 hover:text-white"
-            @click="fileStore.expandAll()" :title="t('files.expandAll')"
+            @click="fileStore.expandAll()"
+            :title="t('files.expandAll')"
           >
             <ChevronDownSquare class="w-3.5 h-3.5" />
           </BaseButton>
           <BaseButton 
-            variant="ghost" size="xs" icon-only 
+            variant="ghost" 
+            size="xs" 
+            icon-only 
             class="w-7 h-7 text-gray-500 hover:text-white"
-            @click="fileStore.collapseAll()" :title="t('files.collapseAll')"
+            @click="fileStore.collapseAll()"
+            :title="t('files.collapseAll')"
           >
             <ChevronUpSquare class="w-3.5 h-3.5" />
           </BaseButton>
@@ -37,13 +43,16 @@
           <SystemFiltersDropdown @open-advanced="showAdvancedFilters = true" />
 
           <BaseButton 
-            variant="ghost" size="xs" icon-only 
+            variant="ghost" 
+            size="xs" 
+            icon-only 
             class="w-7 h-7 text-gray-500 hover:text-white"
-            @click="explorer.handleRefresh" :title="t('files.refresh')"
+            @click="explorer.handleRefresh"
+            :title="t('files.refresh')"
           >
             <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': fileStore.isLoading }" />
           </BaseButton>
-          
+
           <SettingsPopover 
             @open-ignore-rules="ignoreRulesModalRef?.open()" 
             @settings-changed="explorer.handleSettingsChange"
@@ -137,6 +146,7 @@
 
     <!-- Modals -->
     <IgnoreRulesModal ref="ignoreRulesModalRef" />
+    <!-- Advanced Filters Modal (was content of popover, now standalone for clarity) -->
     <AdvancedFiltersModal 
       :is-open="showAdvancedFilters" 
       :filters="quickFilters.typeFilters.value"
@@ -179,7 +189,7 @@ import { useContextStore } from '@/features/context'
 import { useProjectStore } from '@/stores/project.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useUIStore } from '@/stores/ui.store'
-import { BaseButton, BaseEmptyState, BasePopover } from '@/components/ui'
+import { BaseButton, BaseEmptyState } from '@/components/ui'
 import { RefreshCw, Search as SearchIcon, X, ChevronDownSquare, ChevronUpSquare } from 'lucide-vue-next'
 import { defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
 
@@ -194,7 +204,6 @@ import SettingsPopover from './SettingsPopover.vue'
 import VirtualFileTree from './VirtualFileTree.vue'
 import ViewOptionsDropdown from './ViewOptionsDropdown.vue'
 import SystemFiltersDropdown from './SystemFiltersDropdown.vue'
-import AdvancedFiltersPopover from './AdvancedFiltersPopover.vue'
 import SkeletonFileTree from '@/components/SkeletonFileTree.vue'
 
 const QuickLookModal = defineAsyncComponent(() => import('@/components/QuickLookModal.vue'))

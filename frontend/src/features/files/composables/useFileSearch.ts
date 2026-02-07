@@ -15,18 +15,16 @@ export function useFileSearch() {
 
     // Debounced search for better performance
     const debouncedSearch = debounce(() => {
-        const rawQuery = query.value.trim()
+        const rawQuery = query.value.trim().toLowerCase()
         
-        if (rawQuery.startsWith('!')) {
-            // Exclusion search: !test -> show everything except 'test'
-            fileStore.setSearchQuery(query.value)
-        } else if (rawQuery.includes(' ')) {
-            // Multi-word search
-            fileStore.setSearchQuery(query.value)
-        } else {
-            fileStore.setSearchQuery(query.value)
+        if (!rawQuery) {
+            fileStore.setSearchQuery('')
+            isSearching.value = false
+            return
         }
-        
+
+        // Pass full query to store for now, as store handles the filtering logic
+        fileStore.setSearchQuery(query.value)
         isSearching.value = false
     }, FILE_TREE.DEBOUNCE_MS)
 

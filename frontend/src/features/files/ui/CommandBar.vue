@@ -59,7 +59,7 @@
         <div class="flex items-center gap-1 w-full">
           <!-- Recommendations Lamp -->
           <button 
-            v-if="analysisStore.recommendationsCount > 0"
+            v-if="analysisStore.recommendationsCount.value > 0"
             class="flex items-center justify-center w-8 h-8 rounded-full bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition-all pulse-amber"
             @click="analysisStore.togglePopup()"
             :title="t('context.recommendations')"
