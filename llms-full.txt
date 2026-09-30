@@ -1,3 +1,14 @@
+<!-- rdk:generated:start -->
+# WhiteBite/Syntaxia — full documentation
+
+> TODO: one sentence describing what this does and who it is for
+
+This is the concatenated documentation intended for LLM grounding. Regenerate with `rdk fix`.
+
+---
+
+# README
+
 <p align="center">
   <img src="syntaxia-icon.png" alt="Syntaxia Logo" width="128" height="128">
 </p>
@@ -289,3 +300,8 @@ npm start
 ```bash
 npm start
 ```
+<!-- rdk:generated:end -->
+
+## Hand-written notes
+
+<!-- Everything below the end marker is preserved by `rdk fix`. Put hand-written context here; the block above is regenerated from .discoverability/project.yml. -->

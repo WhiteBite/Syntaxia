@@ -1,0 +1,24 @@
+<!-- rdk:generated:start -->
+# WhiteBite/Syntaxia
+
+> TODO: one sentence describing what this does and who it is for
+
+This file follows the llms.txt convention: a short, LLM-friendly index of the project.
+
+## Docs
+
+- [Issues](https://github.com/WhiteBite/Syntaxia/issues): roadmap and known gaps
+- [README.md](./README.md): install, run and test instructions
+
+## Key facts
+
+
+## Optional
+
+- [llms-full.txt](./llms-full.txt): the full documentation in a single file
+- [AGENTS.md](./AGENTS.md): instructions for coding agents
+<!-- rdk:generated:end -->
+
+## Hand-written notes
+
+<!-- Everything below the end marker is preserved by `rdk fix`. Put hand-written context here; the block above is regenerated from .discoverability/project.yml. -->

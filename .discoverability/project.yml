@@ -1,0 +1,52 @@
+# Docs: https://github.com/WhiteBite/repo-aeo/blob/main/docs/configuration.md
+
+schema_version: 1   # config schema revision; rdk warns on any other value
+
+project:
+  name: "WhiteBite/Syntaxia"
+  one_liner: "TODO: one sentence describing what this does and who it is for"   # 1 sentence, shown as the GitHub description
+  description: "TODO: one sentence describing what this does and who it is for"
+  category: "library"   # library | app | template | research | tool | dataset | mcp-server
+  copyright_holder: "WhiteBite"   # name on the LICENSE copyright line; seeded from the git owner
+
+audiences: []
+
+use_cases: []   # 3-7 concrete jobs this project does
+
+keywords:
+  github_topics:
+    - "open-source"
+    - "developer-tools"
+    - "library"
+    - "whitebite"
+    - "syntaxia"   # 8-20 terms, lowercase with hyphens
+  npm_keywords:
+    - "open-source"
+    - "developer-tools"
+    - "library"
+    - "whitebite"
+    - "syntaxia"   # 5-15 terms for package.json keywords
+
+links:
+  homepage:
+  docs:
+  demo:
+  issues: "https://github.com/WhiteBite/Syntaxia/issues"
+
+quickstart:
+  prerequisites:
+    - "Node.js >= 18"
+  install:
+  run:
+  test:
+
+artifacts:
+  has_npm_package: false
+  has_docs_site: false
+
+differentiators: []   # "why this repo, not the alternatives"
+
+safety:
+  allow_autofix: false          # lets the Action open autofix PRs
+  require_ack_for_publish: true
+  ack:   # optional override of the github-sync ACK string; empty keeps the default
